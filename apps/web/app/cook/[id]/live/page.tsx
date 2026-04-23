@@ -14,7 +14,13 @@ export default function LiveModePage({ params }) {
   const [steps, setSteps] = useState([]);
   const [line, setLine] = useState("");
 
-  // Auto-refresh every 10 seconds
+  const [progress, setProgress] = useState({
+    percent: 0,
+    phase: "",
+    finishTime: null,
+    remaining: "",
+  });
+
   useEffect(() => {
     loadAll();
     const interval = setInterval(loadAll, 10000);
@@ -40,6 +46,8 @@ export default function LiveModePage({ params }) {
     const timeline = generateTimeline(cookData, eventData || []);
     setSteps(timeline);
 
+    computeProgress(timeline);
+
     const lastEvent = eventData?.[eventData.length - 1];
 
     const preacher = preacherLine({
@@ -52,6 +60,44 @@ export default function LiveModePage({ params }) {
     });
 
     setLine(preacher);
+  };
+
+  const computeProgress = (timeline) => {
+    if (!timeline || timeline.length === 0) return;
+
+    const now = new Date();
+    const start = new Date(timeline[0].time.getTime() - 30 * 60000); // fire-up offset
+    const end = timeline[timeline.length - 1].time;
+
+    const total = end.getTime() - start.getTime();
+    const done = now.getTime() - start.getTime();
+
+    const percent = Math.min(Math.max((done / total) * 100, 0), 100);
+
+    // Determine current phase
+    let phase = "Starting";
+
+    for (let i = 0; i < timeline.length; i++) {
+      if (now < timeline[i].time) {
+        phase = timeline[i].label;
+        break;
+      }
+      if (i === timeline.length - 1) {
+        phase = "Resting";
+      }
+    }
+
+    // Time remaining
+    const remainingMs = end.getTime() - now.getTime();
+    const remainingMin = Math.max(Math.floor(remainingMs / 60000), 0);
+    const remaining = `${remainingMin} minutes`;
+
+    setProgress({
+      percent: Math.floor(percent),
+      phase,
+      finishTime: end,
+      remaining,
+    });
   };
 
   if (!cook) {
@@ -91,10 +137,13 @@ export default function LiveModePage({ params }) {
           marginBottom: "var(--space-5)",
         }}
       >
-        <p><strong>Meat:</strong> {cook.meat}</p>
-        <p><strong>Pit:</strong> {cook.pit}</p>
-        <p><strong>Status:</strong> {cook.status}</p>
-        <p><strong>Started:</strong> {new Date(cook.started_at).toLocaleString()}</p>
+        <p><strong>Phase:</strong> {progress.phase}</p>
+        <p><strong>Progress:</strong> {progress.percent}%</p>
+        <p><strong>Time Remaining:</strong> {progress.remaining}</p>
+        <p>
+          <strong>Estimated Finish:</strong>{" "}
+          {progress.finishTime?.toLocaleString()}
+        </p>
       </div>
 
       <h2
@@ -137,3 +186,4 @@ export default function LiveModePage({ params }) {
     </div>
   );
 }
+
