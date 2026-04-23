@@ -6,6 +6,20 @@ import { generateTimeline } from "../timeline/engine";
 import { preacherLine } from "../preacher/voice";
 import Button from "@/components/Button";
 
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  LinearScale,
+  TimeScale,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
+import "chartjs-adapter-date-fns";
+
+ChartJS.register(LineElement, PointElement, LinearScale, TimeScale, Tooltip, Legend);
+
 export default function LiveModePage({ params }) {
   const cookId = params.id;
 
@@ -85,7 +99,6 @@ export default function LiveModePage({ params }) {
 
     const tempDiff = lastTemp - firstTemp;
 
-    // Stall detected
     if (timeDiff >= 45 && tempDiff < 5 && !stallState.stalled) {
       setStallState({ stalled: true, lastTemp: lastTemp });
 
@@ -103,7 +116,6 @@ export default function LiveModePage({ params }) {
       return;
     }
 
-    // Stall broken
     if (stallState.stalled && tempDiff > 10) {
       setStallState({ stalled: false, lastTemp: lastTemp });
 
@@ -121,7 +133,6 @@ export default function LiveModePage({ params }) {
       return;
     }
 
-    // Normal preacher line
     setLine(
       preacherLine({
         meat: cookData.meat.toLowerCase(),
@@ -170,6 +181,43 @@ export default function LiveModePage({ params }) {
     });
   };
 
+  const tempLogs = events
+    .filter((e) => e.type === "temp_log")
+    .map((e) => ({
+      x: new Date(e.created_at),
+      y: parseInt(e.note || "0"),
+    }));
+
+  const chartData = {
+    datasets: [
+      {
+        label: "Internal Temp",
+        data: tempLogs,
+        borderColor: "var(--color-accent)",
+        backgroundColor: "var(--color-accent)",
+        tension: 0.3,
+        pointRadius: 3,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    scales: {
+      x: {
+        type: "time",
+        time: { unit: "minute" },
+        ticks: { color: "var(--color-text)" },
+      },
+      y: {
+        ticks: { color: "var(--color-text)" },
+      },
+    },
+    plugins: {
+      legend: { display: false },
+    },
+  };
+
   if (!cook) {
     return (
       <div style={{ padding: "40px" }}>
@@ -180,22 +228,11 @@ export default function LiveModePage({ params }) {
 
   return (
     <div style={{ padding: "40px" }}>
-      <h1
-        style={{
-          fontFamily: "var(--font-heading)",
-          marginBottom: "var(--space-4)",
-        }}
-      >
+      <h1 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-4)" }}>
         Live Mode
       </h1>
 
-      <p
-        style={{
-          marginBottom: "var(--space-5)",
-          fontStyle: "italic",
-          opacity: 0.9,
-        }}
-      >
+      <p style={{ marginBottom: "var(--space-5)", fontStyle: "italic", opacity: 0.9 }}>
         {line}
       </p>
 
@@ -216,12 +253,15 @@ export default function LiveModePage({ params }) {
         </p>
       </div>
 
-      <h2
-        style={{
-          fontFamily: "var(--font-heading)",
-          marginBottom: "var(--space-3)",
-        }}
-      >
+      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+        Temperature Chart
+      </h2>
+
+      <div style={{ marginBottom: "var(--space-5)" }}>
+        <Line data={chartData} options={chartOptions} />
+      </div>
+
+      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
         Timeline
       </h2>
 
