@@ -35,6 +35,13 @@ export default function LiveModePage({ params }) {
     remaining: "",
   });
 
+  const [nextStep, setNextStep] = useState({
+    label: "",
+    time: null,
+    minutes: 0,
+    preacher: "",
+  });
+
   const [stallState, setStallState] = useState({
     stalled: false,
     lastTemp: null,
@@ -66,7 +73,53 @@ export default function LiveModePage({ params }) {
     setSteps(timeline);
 
     computeProgress(timeline);
+    computeNextStep(timeline, cookData);
     detectStall(eventData || [], cookData);
+  };
+
+  const computeNextStep = (timeline, cookData) => {
+    const now = new Date();
+
+    for (let i = 0; i < timeline.length; i++) {
+      if (timeline[i].time > now) {
+        const minutes = Math.max(
+          Math.floor((timeline[i].time - now) / 60000),
+          0
+        );
+
+        const preacher = preacherLine({
+          meat: cookData.meat.toLowerCase(),
+          pit: cookData.pit.toLowerCase(),
+          event: timeline[i].label.toLowerCase(),
+          stall: false,
+          temp: null,
+          action: "next_step",
+        });
+
+        setNextStep({
+          label: timeline[i].label,
+          time: timeline[i].time,
+          minutes,
+          preacher,
+        });
+
+        return;
+      }
+    }
+
+    setNextStep({
+      label: "Resting",
+      time: null,
+      minutes: 0,
+      preacher: preacherLine({
+        meat: cookData.meat.toLowerCase(),
+        pit: cookData.pit.toLowerCase(),
+        event: "rest",
+        stall: false,
+        temp: null,
+        action: "next_step",
+      }),
+    });
   };
 
   const detectStall = (eventData, cookData) => {
@@ -251,6 +304,23 @@ export default function LiveModePage({ params }) {
           <strong>Estimated Finish:</strong>{" "}
           {progress.finishTime?.toLocaleString()}
         </p>
+      </div>
+
+      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+        Next Step
+      </h2>
+
+      <div
+        style={{
+          background: "var(--color-bg-alt)",
+          padding: "var(--space-3)",
+          borderRadius: "var(--radius-md)",
+          marginBottom: "var(--space-5)",
+        }}
+      >
+        <p><strong>{nextStep.label}</strong></p>
+        <p>In {nextStep.minutes} minutes</p>
+        <p style={{ fontStyle: "italic", opacity: 0.9 }}>{nextStep.preacher}</p>
       </div>
 
       <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
