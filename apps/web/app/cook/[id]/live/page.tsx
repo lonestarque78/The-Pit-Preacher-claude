@@ -45,6 +45,8 @@ export default function LiveModePage({ params }) {
 
   const [fire, setFire] = useState("");
 
+  const [health, setHealth] = useState(100);
+
   const [stallState, setStallState] = useState({
     stalled: false,
     lastTemp: null,
@@ -79,6 +81,44 @@ export default function LiveModePage({ params }) {
     computeNextStep(timeline, cookData);
     detectStall(eventData || [], cookData);
     computeFireTip(eventData || [], cookData);
+    computeHealthScore(eventData || [], timeline);
+  };
+
+  const computeHealthScore = (eventData, timeline) => {
+    let score = 100;
+
+    const tempLogs = eventData.filter((e) => e.type === "temp_log");
+
+    // Temperature stability (40 pts)
+    if (tempLogs.length >= 3) {
+      let swings = 0;
+      for (let i = 1; i < tempLogs.length; i++) {
+        const prev = parseInt(tempLogs[i - 1].note || "0");
+        const curr = parseInt(tempLogs[i].note || "0");
+        swings += Math.abs(curr - prev);
+      }
+      const avgSwing = swings / tempLogs.length;
+      if (avgSwing > 15) score -= 20;
+      if (avgSwing > 25) score -= 40;
+    }
+
+    // Timeline accuracy (30 pts)
+    const now = new Date();
+    const end = timeline[timeline.length - 1].time;
+    const remaining = end.getTime() - now.getTime();
+    if (remaining < -30 * 60000) score -= 15; // behind
+    if (remaining > 90 * 60000) score -= 15; // ahead
+
+    // Stall behavior (20 pts)
+    if (stallState.stalled) score -= 10;
+    if (stallState.stalled && tempLogs.length > 5) score -= 20;
+
+    // Event quality (10 pts)
+    const spritzes = eventData.filter((e) => e.type === "spritz");
+    if (spritzes.length > 5) score -= 5;
+    if (spritzes.length === 0) score -= 5;
+
+    setHealth(Math.max(0, Math.min(100, score)));
   };
 
   const computeFireTip = (eventData, cookData) => {
@@ -321,6 +361,21 @@ export default function LiveModePage({ params }) {
           <strong>Estimated Finish:</strong>{" "}
           {progress.finishTime?.toLocaleString()}
         </p>
+      </div>
+
+      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+        Cook Health Score
+      </h2>
+
+      <div
+        style={{
+          background: "var(--color-bg-alt)",
+          padding: "var(--space-3)",
+          borderRadius: "var(--radius-md)",
+          marginBottom: "var(--space-5)",
+        }}
+      >
+        <p><strong>{health}/100</strong></p>
       </div>
 
       <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
