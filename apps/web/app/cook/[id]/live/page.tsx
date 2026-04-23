@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { generateTimeline } from "../timeline/engine";
 import { preacherLine } from "../preacher/voice";
+import { fireTip } from "../preacher/fire";
 import Button from "@/components/Button";
 
 import {
@@ -42,6 +43,8 @@ export default function LiveModePage({ params }) {
     preacher: "",
   });
 
+  const [fire, setFire] = useState("");
+
   const [stallState, setStallState] = useState({
     stalled: false,
     lastTemp: null,
@@ -75,6 +78,20 @@ export default function LiveModePage({ params }) {
     computeProgress(timeline);
     computeNextStep(timeline, cookData);
     detectStall(eventData || [], cookData);
+    computeFireTip(eventData || [], cookData);
+  };
+
+  const computeFireTip = (eventData, cookData) => {
+    const tempLogs = eventData.filter((e) => e.type === "temp_log");
+    const lastTemp = tempLogs.length ? tempLogs[tempLogs.length - 1].note : null;
+
+    const tip = fireTip({
+      pit: cookData.pit,
+      temp: lastTemp,
+      phase: progress.phase,
+    });
+
+    setFire(tip);
   };
 
   const computeNextStep = (timeline, cookData) => {
@@ -304,6 +321,21 @@ export default function LiveModePage({ params }) {
           <strong>Estimated Finish:</strong>{" "}
           {progress.finishTime?.toLocaleString()}
         </p>
+      </div>
+
+      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+        Fire Management
+      </h2>
+
+      <div
+        style={{
+          background: "var(--color-bg-alt)",
+          padding: "var(--space-3)",
+          borderRadius: "var(--radius-md)",
+          marginBottom: "var(--space-5)",
+        }}
+      >
+        <p>{fire}</p>
       </div>
 
       <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
