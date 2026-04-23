@@ -1,60 +1,128 @@
+// apps/web/app/cook/[id]/summary/page.tsx
+"use client";
+
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { isPremium } from "@/lib/premium";
+import Paywall from "@/components/Paywall";
+import Button from "@/components/Button";
+
 import { generateTimeline } from "../timeline/engine";
 import { preacherLine } from "../preacher/voice";
 import { fireTip } from "../preacher/fire";
 import { pitBehavior } from "../preacher/behavior";
-import Button from "@/components/Button";
 
-export default async function SummaryPage({ params }) {
+export default function SummaryPage({ params }) {
   const cookId = params.id;
 
-  const { data: cook } = await supabase
-    .from("cooks")
-    .select("*")
-    .eq("id", cookId)
-    .single();
+  const [premium, setPremium] = useState<boolean | null>(null);
 
-  const { data: events } = await supabase
-    .from("cook_events")
-    .select("*")
-    .eq("cook_id", cookId)
-    .order("created_at", { ascending: true });
+  const [cook, setCook] = useState<any>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [timeline, setTimeline] = useState<any[]>([]);
 
-  const timeline = generateTimeline(cook, events || []);
+  const [finalLine, setFinalLine] = useState("");
+  const [behavior, setBehavior] = useState("");
+  const [fire, setFire] = useState("");
 
-  const finalLine = preacherLine({
-    meat: cook.meat.toLowerCase(),
-    pit: cook.pit.toLowerCase(),
-    event: "summary",
-    stall: false,
-    temp: null,
-    action: "summary",
-  });
+  useEffect(() => {
+    loadAll();
+  }, []);
 
-  const behavior = pitBehavior(events || []);
+  const loadAll = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const tempLogs = events
-    .filter((e) => e.type === "temp_log")
-    .map((e) => parseInt(e.note || "0"));
+    const hasPremium = await isPremium(user?.id, supabase);
+    setPremium(hasPremium);
 
-  const avgTemp =
-    tempLogs.length > 0
-      ? Math.floor(tempLogs.reduce((a, b) => a + b, 0) / tempLogs.length)
-      : null;
+    if (!hasPremium) return;
 
-  const fire = fireTip({
-    pit: cook.pit,
-    temp: avgTemp,
-    phase: "summary",
-  });
+    const { data: cookData } = await supabase
+      .from("cooks")
+      .select("*")
+      .eq("id", cookId)
+      .single();
+
+    const { data: eventData } = await supabase
+      .from("cook_events")
+      .select("*")
+      .eq("cook_id", cookId)
+      .order("created_at", { ascending: true });
+
+    const safeEvents = eventData || [];
+
+    setCook(cookData);
+    setEvents(safeEvents);
+
+    const tl = generateTimeline(cookData, safeEvents);
+    setTimeline(tl);
+
+    const summaryLine = preacherLine({
+      meat: cookData.meat.toLowerCase(),
+      pit: cookData.pit.toLowerCase(),
+      event: "summary",
+      stall: false,
+      temp: null,
+      action: "summary",
+    });
+    setFinalLine(summaryLine);
+
+    const behaviorLine = pitBehavior(safeEvents);
+    setBehavior(behaviorLine);
+
+    const tempLogs = safeEvents.filter((e) => e.type === "temp_log");
+    const temps = tempLogs.map((e) => parseInt(e.note || "0", 10));
+    const avgTemp =
+      temps.length > 0
+        ? Math.floor(temps.reduce((a, b) => a + b, 0) / temps.length)
+        : null;
+
+    const fireLine = fireTip({
+      pit: cookData.pit,
+      temp: avgTemp,
+      phase: "summary",
+    });
+    setFire(fireLine);
+  };
+
+  if (premium === false) {
+    return (
+      <Paywall
+        onClose={() => {
+          window.location.href = `/cook/${cookId}`;
+        }}
+      />
+    );
+  }
+
+  if (!cook) {
+    return (
+      <div style={{ padding: "40px" }}>
+        <h1 style={{ fontFamily: "var(--font-heading)" }}>Loading...</h1>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: "40px" }}>
-      <h1 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-4)" }}>
+      <h1
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-4)",
+        }}
+      >
         Cook Summary
       </h1>
 
-      <p style={{ marginBottom: "var(--space-5)", fontStyle: "italic", opacity: 0.9 }}>
+      <p
+        style={{
+          marginBottom: "var(--space-5)",
+          fontStyle: "italic",
+          opacity: 0.9,
+        }}
+      >
         {finalLine}
       </p>
 
@@ -66,13 +134,29 @@ export default async function SummaryPage({ params }) {
           marginBottom: "var(--space-5)",
         }}
       >
-        <p><strong>Meat:</strong> {cook.meat}</p>
-        <p><strong>Pit:</strong> {cook.pit}</p>
-        <p><strong>Status:</strong> {cook.status}</p>
-        <p><strong>Started:</strong> {new Date(cook.started_at).toLocaleString()}</p>
+        <p>
+          <strong>Meat:</strong> {cook.meat}
+        </p>
+        <p>
+          <strong>Pit:</strong> {cook.pit}
+        </p>
+        <p>
+          <strong>Status:</strong> {cook.status}
+        </p>
+        {cook.started_at && (
+          <p>
+            <strong>Started:</strong>{" "}
+            {new Date(cook.started_at).toLocaleString()}
+          </p>
+        )}
       </div>
 
-      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+      <h2
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-3)",
+        }}
+      >
         Pit Behavior
       </h2>
 
@@ -87,7 +171,12 @@ export default async function SummaryPage({ params }) {
         <p>{behavior}</p>
       </div>
 
-      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+      <h2
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-3)",
+        }}
+      >
         Fire Management
       </h2>
 
@@ -102,7 +191,12 @@ export default async function SummaryPage({ params }) {
         <p>{fire}</p>
       </div>
 
-      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+      <h2
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-3)",
+        }}
+      >
         Timeline Recap
       </h2>
 
@@ -119,13 +213,23 @@ export default async function SummaryPage({ params }) {
         >
           <h3 style={{ fontFamily: "var(--font-ui)" }}>{step.label}</h3>
           <p>{step.detail}</p>
-          <p style={{ fontSize: "14px", color: "var(--color-text-muted)" }}>
+          <p
+            style={{
+              fontSize: "14px",
+              color: "var(--color-text-muted)",
+            }}
+          >
             {step.time.toLocaleString()}
           </p>
         </div>
       ))}
 
-      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+      <h2
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-3)",
+        }}
+      >
         Event Recap
       </h2>
 
@@ -140,9 +244,16 @@ export default async function SummaryPage({ params }) {
             borderLeft: "4px solid var(--color-accent)",
           }}
         >
-          <p><strong>{event.type}</strong></p>
+          <p>
+            <strong>{event.type}</strong>
+          </p>
           {event.note && <p>{event.note}</p>}
-          <p style={{ fontSize: "14px", color: "var(--color-text-muted)" }}>
+          <p
+            style={{
+              fontSize: "14px",
+              color: "var(--color-text-muted)",
+            }}
+          >
             {new Date(event.created_at).toLocaleString()}
           </p>
         </div>
@@ -160,3 +271,4 @@ export default async function SummaryPage({ params }) {
     </div>
   );
 }
+

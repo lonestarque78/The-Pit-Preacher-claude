@@ -1,11 +1,15 @@
+// apps/web/app/cook/[id]/live/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { isPremium } from "@/lib/premium";
+import Paywall from "@/components/Paywall";
+import Button from "@/components/Button";
+
 import { generateTimeline } from "../timeline/engine";
 import { preacherLine } from "../preacher/voice";
 import { fireTip } from "../preacher/fire";
-import Button from "@/components/Button";
 
 import {
   Chart as ChartJS,
@@ -24,32 +28,33 @@ ChartJS.register(LineElement, PointElement, LinearScale, TimeScale, Tooltip, Leg
 export default function LiveModePage({ params }) {
   const cookId = params.id;
 
-  const [cook, setCook] = useState(null);
-  const [events, setEvents] = useState([]);
-  const [steps, setSteps] = useState([]);
+  const [premium, setPremium] = useState<boolean | null>(null);
+
+  const [cook, setCook] = useState<any>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [steps, setSteps] = useState<any[]>([]);
   const [line, setLine] = useState("");
 
   const [progress, setProgress] = useState({
     percent: 0,
     phase: "",
-    finishTime: null,
+    finishTime: null as Date | null,
     remaining: "",
   });
 
   const [nextStep, setNextStep] = useState({
     label: "",
-    time: null,
+    time: null as Date | null,
     minutes: 0,
     preacher: "",
   });
 
   const [fire, setFire] = useState("");
-
   const [health, setHealth] = useState(100);
 
   const [stallState, setStallState] = useState({
     stalled: false,
-    lastTemp: null,
+    lastTemp: null as number | null,
   });
 
   useEffect(() => {
@@ -59,6 +64,15 @@ export default function LiveModePage({ params }) {
   }, []);
 
   const loadAll = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const hasPremium = await isPremium(user?.id, supabase);
+    setPremium(hasPremium);
+
+    if (!hasPremium) return;
+
     const { data: cookData } = await supabase
       .from("cooks")
       .select("*")
@@ -71,30 +85,31 @@ export default function LiveModePage({ params }) {
       .eq("cook_id", cookId)
       .order("created_at", { ascending: true });
 
-    setCook(cookData);
-    setEvents(eventData || []);
+    const safeEvents = eventData || [];
 
-    const timeline = generateTimeline(cookData, eventData || []);
+    setCook(cookData);
+    setEvents(safeEvents);
+
+    const timeline = generateTimeline(cookData, safeEvents);
     setSteps(timeline);
 
     computeProgress(timeline);
     computeNextStep(timeline, cookData);
-    detectStall(eventData || [], cookData);
-    computeFireTip(eventData || [], cookData);
-    computeHealthScore(eventData || [], timeline);
+    detectStall(safeEvents, cookData);
+    computeFireTip(safeEvents, cookData);
+    computeHealthScore(safeEvents, timeline);
   };
 
-  const computeHealthScore = (eventData, timeline) => {
+  const computeHealthScore = (eventData: any[], timeline: any[]) => {
     let score = 100;
 
     const tempLogs = eventData.filter((e) => e.type === "temp_log");
 
-    // Temperature stability (40 pts)
     if (tempLogs.length >= 3) {
       let swings = 0;
       for (let i = 1; i < tempLogs.length; i++) {
-        const prev = parseInt(tempLogs[i - 1].note || "0");
-        const curr = parseInt(tempLogs[i].note || "0");
+        const prev = parseInt(tempLogs[i - 1].note || "0", 10);
+        const curr = parseInt(tempLogs[i].note || "0", 10);
         swings += Math.abs(curr - prev);
       }
       const avgSwing = swings / tempLogs.length;
@@ -102,18 +117,17 @@ export default function LiveModePage({ params }) {
       if (avgSwing > 25) score -= 40;
     }
 
-    // Timeline accuracy (30 pts)
-    const now = new Date();
-    const end = timeline[timeline.length - 1].time;
-    const remaining = end.getTime() - now.getTime();
-    if (remaining < -30 * 60000) score -= 15; // behind
-    if (remaining > 90 * 60000) score -= 15; // ahead
+    if (timeline.length > 0) {
+      const now = new Date();
+      const end = timeline[timeline.length - 1].time as Date;
+      const remaining = end.getTime() - now.getTime();
+      if (remaining < -30 * 60000) score -= 15;
+      if (remaining > 90 * 60000) score -= 15;
+    }
 
-    // Stall behavior (20 pts)
     if (stallState.stalled) score -= 10;
     if (stallState.stalled && tempLogs.length > 5) score -= 20;
 
-    // Event quality (10 pts)
     const spritzes = eventData.filter((e) => e.type === "spritz");
     if (spritzes.length > 5) score -= 5;
     if (spritzes.length === 0) score -= 5;
@@ -121,9 +135,11 @@ export default function LiveModePage({ params }) {
     setHealth(Math.max(0, Math.min(100, score)));
   };
 
-  const computeFireTip = (eventData, cookData) => {
+  const computeFireTip = (eventData: any[], cookData: any) => {
     const tempLogs = eventData.filter((e) => e.type === "temp_log");
-    const lastTemp = tempLogs.length ? tempLogs[tempLogs.length - 1].note : null;
+    const lastTemp = tempLogs.length
+      ? parseInt(tempLogs[tempLogs.length - 1].note || "0", 10)
+      : null;
 
     const tip = fireTip({
       pit: cookData.pit,
@@ -134,13 +150,13 @@ export default function LiveModePage({ params }) {
     setFire(tip);
   };
 
-  const computeNextStep = (timeline, cookData) => {
+  const computeNextStep = (timeline: any[], cookData: any) => {
     const now = new Date();
 
     for (let i = 0; i < timeline.length; i++) {
       if (timeline[i].time > now) {
         const minutes = Math.max(
-          Math.floor((timeline[i].time - now) / 60000),
+          Math.floor((timeline[i].time.getTime() - now.getTime()) / 60000),
           0
         );
 
@@ -179,7 +195,7 @@ export default function LiveModePage({ params }) {
     });
   };
 
-  const detectStall = (eventData, cookData) => {
+  const detectStall = (eventData: any[], cookData: any) => {
     const tempLogs = eventData.filter((e) => e.type === "temp_log");
 
     if (tempLogs.length < 2) {
@@ -199,8 +215,8 @@ export default function LiveModePage({ params }) {
     const first = tempLogs[tempLogs.length - 2];
     const last = tempLogs[tempLogs.length - 1];
 
-    const firstTemp = parseInt(first.note || "0");
-    const lastTemp = parseInt(last.note || "0");
+    const firstTemp = parseInt(first.note || "0", 10);
+    const lastTemp = parseInt(last.note || "0", 10);
 
     const timeDiff =
       (new Date(last.created_at).getTime() -
@@ -210,7 +226,7 @@ export default function LiveModePage({ params }) {
     const tempDiff = lastTemp - firstTemp;
 
     if (timeDiff >= 45 && tempDiff < 5 && !stallState.stalled) {
-      setStallState({ stalled: true, lastTemp: lastTemp });
+      setStallState({ stalled: true, lastTemp });
 
       setLine(
         preacherLine({
@@ -227,7 +243,7 @@ export default function LiveModePage({ params }) {
     }
 
     if (stallState.stalled && tempDiff > 10) {
-      setStallState({ stalled: false, lastTemp: lastTemp });
+      setStallState({ stalled: false, lastTemp });
 
       setLine(
         preacherLine({
@@ -255,12 +271,12 @@ export default function LiveModePage({ params }) {
     );
   };
 
-  const computeProgress = (timeline) => {
+  const computeProgress = (timeline: any[]) => {
     if (!timeline || timeline.length === 0) return;
 
     const now = new Date();
     const start = new Date(timeline[0].time.getTime() - 30 * 60000);
-    const end = timeline[timeline.length - 1].time;
+    const end = timeline[timeline.length - 1].time as Date;
 
     const total = end.getTime() - start.getTime();
     const done = now.getTime() - start.getTime();
@@ -295,7 +311,7 @@ export default function LiveModePage({ params }) {
     .filter((e) => e.type === "temp_log")
     .map((e) => ({
       x: new Date(e.created_at),
-      y: parseInt(e.note || "0"),
+      y: parseInt(e.note || "0", 10),
     }));
 
   const chartData = {
@@ -311,7 +327,7 @@ export default function LiveModePage({ params }) {
     ],
   };
 
-  const chartOptions = {
+  const chartOptions: any = {
     responsive: true,
     scales: {
       x: {
@@ -328,6 +344,10 @@ export default function LiveModePage({ params }) {
     },
   };
 
+  if (premium === false) {
+    return <Paywall onClose={() => setPremium(false)} />;
+  }
+
   if (!cook) {
     return (
       <div style={{ padding: "40px" }}>
@@ -338,11 +358,22 @@ export default function LiveModePage({ params }) {
 
   return (
     <div style={{ padding: "40px" }}>
-      <h1 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-4)" }}>
+      <h1
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-4)",
+        }}
+      >
         Live Mode
       </h1>
 
-      <p style={{ marginBottom: "var(--space-5)", fontStyle: "italic", opacity: 0.9 }}>
+      <p
+        style={{
+          marginBottom: "var(--space-5)",
+          fontStyle: "italic",
+          opacity: 0.9,
+        }}
+      >
         {line}
       </p>
 
@@ -354,16 +385,27 @@ export default function LiveModePage({ params }) {
           marginBottom: "var(--space-5)",
         }}
       >
-        <p><strong>Phase:</strong> {progress.phase}</p>
-        <p><strong>Progress:</strong> {progress.percent}%</p>
-        <p><strong>Time Remaining:</strong> {progress.remaining}</p>
+        <p>
+          <strong>Phase:</strong> {progress.phase}
+        </p>
+        <p>
+          <strong>Progress:</strong> {progress.percent}%
+        </p>
+        <p>
+          <strong>Time Remaining:</strong> {progress.remaining}
+        </p>
         <p>
           <strong>Estimated Finish:</strong>{" "}
           {progress.finishTime?.toLocaleString()}
         </p>
       </div>
 
-      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+      <h2
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-3)",
+        }}
+      >
         Cook Health Score
       </h2>
 
@@ -375,10 +417,17 @@ export default function LiveModePage({ params }) {
           marginBottom: "var(--space-5)",
         }}
       >
-        <p><strong>{health}/100</strong></p>
+        <p>
+          <strong>{health}/100</strong>
+        </p>
       </div>
 
-      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+      <h2
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-3)",
+        }}
+      >
         Fire Management
       </h2>
 
@@ -393,7 +442,12 @@ export default function LiveModePage({ params }) {
         <p>{fire}</p>
       </div>
 
-      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+      <h2
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-3)",
+        }}
+      >
         Next Step
       </h2>
 
@@ -405,12 +459,19 @@ export default function LiveModePage({ params }) {
           marginBottom: "var(--space-5)",
         }}
       >
-        <p><strong>{nextStep.label}</strong></p>
+        <p>
+          <strong>{nextStep.label}</strong>
+        </p>
         <p>In {nextStep.minutes} minutes</p>
         <p style={{ fontStyle: "italic", opacity: 0.9 }}>{nextStep.preacher}</p>
       </div>
 
-      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+      <h2
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-3)",
+        }}
+      >
         Temperature Chart
       </h2>
 
@@ -418,7 +479,12 @@ export default function LiveModePage({ params }) {
         <Line data={chartData} options={chartOptions} />
       </div>
 
-      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+      <h2
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-3)",
+        }}
+      >
         Timeline
       </h2>
 
@@ -435,7 +501,12 @@ export default function LiveModePage({ params }) {
         >
           <h3 style={{ fontFamily: "var(--font-ui)" }}>{step.label}</h3>
           <p>{step.detail}</p>
-          <p style={{ fontSize: "14px", color: "var(--color-text-muted)" }}>
+          <p
+            style={{
+              fontSize: "14px",
+              color: "var(--color-text-muted)",
+            }}
+          >
             {step.time.toLocaleString()}
           </p>
         </div>
@@ -445,10 +516,10 @@ export default function LiveModePage({ params }) {
 
       <Button
         onClick={() => {
-          window.location.href = `/cook/${cookId}/events`;
+          window.location.href = `/cook/${cookId}/summary`;
         }}
       >
-        View Events
+        View Summary
       </Button>
     </div>
   );
