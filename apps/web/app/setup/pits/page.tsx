@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import Button from "@/components/Button";
+import Input from "@/components/Input";
 
 export default function PitSetupPage() {
   const [name, setName] = useState("");
@@ -25,17 +27,16 @@ export default function PitSetupPage() {
   };
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>Add Your Pit</h1>
+    <div style={{ padding: "40px" }}>
+      <h1 style={{ fontFamily: "var(--font-heading)" }}>Add Your Pit</h1>
 
-      <input
-        placeholder="Offset, Pellet, Kamado..."
+      <Input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        style={{ padding: 8, marginRight: 8 }}
+        placeholder="Offset, Pellet, Kamado..."
       />
 
-      <button onClick={addPit}>Save Pit</button>
+      <Button onClick={addPit}>Save Pit</Button>
     </div>
   );
 }

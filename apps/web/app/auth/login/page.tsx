@@ -1,6 +1,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
+import Button from "@/components/Button";
 
 export default function LoginPage() {
   const handleLogin = async () => {
@@ -13,9 +14,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>Login</h1>
-      <button onClick={handleLogin}>Send Magic Link</button>
+    <div style={{ padding: "40px" }}>
+      <h1 style={{ fontFamily: "var(--font-heading)" }}>Login</h1>
+      <Button onClick={handleLogin}>Send Magic Link</Button>
     </div>
   );
 }
