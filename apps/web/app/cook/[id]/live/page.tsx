@@ -21,6 +21,11 @@ export default function LiveModePage({ params }) {
     remaining: "",
   });
 
+  const [stallState, setStallState] = useState({
+    stalled: false,
+    lastTemp: null,
+  });
+
   useEffect(() => {
     loadAll();
     const interval = setInterval(loadAll, 10000);
@@ -47,26 +52,93 @@ export default function LiveModePage({ params }) {
     setSteps(timeline);
 
     computeProgress(timeline);
+    detectStall(eventData || [], cookData);
+  };
 
-    const lastEvent = eventData?.[eventData.length - 1];
+  const detectStall = (eventData, cookData) => {
+    const tempLogs = eventData.filter((e) => e.type === "temp_log");
 
-    const preacher = preacherLine({
-      meat: cookData.meat.toLowerCase(),
-      pit: cookData.pit.toLowerCase(),
-      event: lastEvent ? lastEvent.type : "live",
-      stall: false,
-      temp: lastEvent?.type === "temp_log" ? lastEvent.note : null,
-      action: "live",
-    });
+    if (tempLogs.length < 2) {
+      setLine(
+        preacherLine({
+          meat: cookData.meat.toLowerCase(),
+          pit: cookData.pit.toLowerCase(),
+          event: "live",
+          stall: false,
+          temp: null,
+          action: "live",
+        })
+      );
+      return;
+    }
 
-    setLine(preacher);
+    const first = tempLogs[tempLogs.length - 2];
+    const last = tempLogs[tempLogs.length - 1];
+
+    const firstTemp = parseInt(first.note || "0");
+    const lastTemp = parseInt(last.note || "0");
+
+    const timeDiff =
+      (new Date(last.created_at).getTime() -
+        new Date(first.created_at).getTime()) /
+      60000;
+
+    const tempDiff = lastTemp - firstTemp;
+
+    // Stall detected
+    if (timeDiff >= 45 && tempDiff < 5 && !stallState.stalled) {
+      setStallState({ stalled: true, lastTemp: lastTemp });
+
+      setLine(
+        preacherLine({
+          meat: cookData.meat.toLowerCase(),
+          pit: cookData.pit.toLowerCase(),
+          event: "stall",
+          stall: true,
+          temp: lastTemp,
+          action: "stall",
+        })
+      );
+
+      return;
+    }
+
+    // Stall broken
+    if (stallState.stalled && tempDiff > 10) {
+      setStallState({ stalled: false, lastTemp: lastTemp });
+
+      setLine(
+        preacherLine({
+          meat: cookData.meat.toLowerCase(),
+          pit: cookData.pit.toLowerCase(),
+          event: "stall_break",
+          stall: false,
+          temp: lastTemp,
+          action: "stall_break",
+        })
+      );
+
+      return;
+    }
+
+    // Normal preacher line
+    setLine(
+      preacherLine({
+        meat: cookData.meat.toLowerCase(),
+        pit: cookData.pit.toLowerCase(),
+        event: "live",
+        stall: stallState.stalled,
+        temp: lastTemp,
+        action: "live",
+      })
+    );
   };
 
   const computeProgress = (timeline) => {
     if (!timeline || timeline.length === 0) return;
 
     const now = new Date();
-    const start = new Date(timeline[0].time.getTime() - 30 * 60000); // fire-up offset
+    const start = new Date(timeline[0].time.getTime() - 30 * 60000);
     const end = timeline[timeline.length - 1].time;
 
     const total = end.getTime() - start.getTime();
@@ -74,7 +146,6 @@ export default function LiveModePage({ params }) {
 
     const percent = Math.min(Math.max((done / total) * 100, 0), 100);
 
-    // Determine current phase
     let phase = "Starting";
 
     for (let i = 0; i < timeline.length; i++) {
@@ -87,7 +158,6 @@ export default function LiveModePage({ params }) {
       }
     }
 
-    // Time remaining
     const remainingMs = end.getTime() - now.getTime();
     const remainingMin = Math.max(Math.floor(remainingMs / 60000), 0);
     const remaining = `${remainingMin} minutes`;
@@ -186,4 +256,3 @@ export default function LiveModePage({ params }) {
     </div>
   );
 }
-
