@@ -1,14 +1,39 @@
 export function generateTimeline(cook) {
   const start = new Date(cook.started_at);
 
-  // Basic durations (we will expand later)
-  const durations = {
-    fireUp: 30, // minutes
-    meatOn: 0,
-    spritzInterval: 90,
-    wrap: 300,
-    rest: 60,
-  };
+  // Normalize pit name
+  const pit = cook.pit.toLowerCase();
+
+  // Default durations (minutes)
+  let fireUp = 30;
+  let spritzInterval = 90;
+  let wrapTime = 300;
+  let restTime = 60;
+
+  // Pit-specific adjustments
+  if (pit.includes("offset")) {
+    fireUp = 45;              // takes longer to stabilize
+    spritzInterval = 60;      // dries out faster
+    wrapTime = 360;           // bark sets later
+  }
+
+  if (pit.includes("pellet")) {
+    fireUp = 15;              // fast startup
+    spritzInterval = 120;     // moisture stays better
+    wrapTime = 240;           // bark sets earlier
+  }
+
+  if (pit.includes("kamado")) {
+    fireUp = 40;              // charcoal stabilization
+    spritzInterval = 120;     // very stable moisture
+    wrapTime = 330;           // bark sets slower
+  }
+
+  if (pit.includes("drum")) {
+    fireUp = 20;              // fast ignition
+    spritzInterval = 45;      // runs hot, dries fast
+    wrapTime = 210;           // bark sets early
+  }
 
   const steps = [];
 
@@ -16,23 +41,23 @@ export function generateTimeline(cook) {
   steps.push({
     label: "Fire Up",
     detail: "Light your pit and stabilize temp.",
-    time: addMinutes(start, durations.fireUp),
+    time: addMinutes(start, fireUp),
   });
 
   // 2. Meat on
-  const meatOnTime = addMinutes(start, durations.fireUp + durations.meatOn);
+  const meatOnTime = addMinutes(start, fireUp);
   steps.push({
     label: "Meat On",
     detail: "Place meat on the smoker.",
     time: meatOnTime,
   });
 
-  // 3. Spritz cycles
+  // 3. Spritz cycles (3 rounds)
   for (let i = 1; i <= 3; i++) {
     steps.push({
       label: `Spritz #${i}`,
       detail: "Spritz the meat to keep the bark moist.",
-      time: addMinutes(meatOnTime, durations.spritzInterval * i),
+      time: addMinutes(meatOnTime, spritzInterval * i),
     });
   }
 
@@ -40,14 +65,14 @@ export function generateTimeline(cook) {
   steps.push({
     label: "Wrap",
     detail: "Wrap when bark is set.",
-    time: addMinutes(meatOnTime, durations.wrap),
+    time: addMinutes(meatOnTime, wrapTime),
   });
 
   // 5. Rest
   steps.push({
     label: "Rest",
     detail: "Rest in a cooler or oven.",
-    time: addMinutes(meatOnTime, durations.wrap + durations.rest),
+    time: addMinutes(meatOnTime, wrapTime + restTime),
   });
 
   return steps;
