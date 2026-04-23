@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import Button from "@/components/Button";
+import { preacherLine } from "../preacher/voice";
 
 export default async function CookDashboardPage({ params }) {
   const cookId = params.id;
@@ -20,6 +21,16 @@ export default async function CookDashboardPage({ params }) {
     );
   }
 
+  // Generate a preacher line for the dashboard
+  const line = preacherLine({
+    meat: cook.meat.toLowerCase(),
+    pit: cook.pit.toLowerCase(),
+    event: "dashboard",
+    stall: false,
+    temp: null,
+    action: "dashboard",
+  });
+
   return (
     <div style={{ padding: "40px" }}>
       <h1
@@ -30,6 +41,16 @@ export default async function CookDashboardPage({ params }) {
       >
         Cook Dashboard
       </h1>
+
+      <p
+        style={{
+          marginBottom: "var(--space-5)",
+          fontStyle: "italic",
+          opacity: 0.9,
+        }}
+      >
+        {line}
+      </p>
 
       <div
         style={{
@@ -63,6 +84,16 @@ export default async function CookDashboardPage({ params }) {
         }}
       >
         Open Timeline
+      </Button>
+
+      <div style={{ height: "20px" }}></div>
+
+      <Button
+        onClick={() => {
+          window.location.href = `/cook/${cookId}/events`;
+        }}
+      >
+        View Events
       </Button>
     </div>
   );
