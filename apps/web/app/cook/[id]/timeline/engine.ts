@@ -1,4 +1,4 @@
-export function generateTimeline(cook) {
+export function generateTimeline(cook, events = []) {
   const start = new Date(cook.started_at);
 
   // Normalize names
@@ -45,27 +45,76 @@ export function generateTimeline(cook) {
   // -------------------------
   if (meat.includes("brisket")) {
     spritzRounds = 4;
-    wrapTime += 60; // bark takes longer
+    wrapTime += 60;
     restTime = 120;
   }
 
   if (meat.includes("pork")) {
     spritzRounds = 3;
-    wrapTime -= 30; // wrap earlier
+    wrapTime -= 30;
     restTime = 90;
   }
 
   if (meat.includes("rib")) {
     spritzRounds = 2;
-    wrapTime = 180; // ribs wrap early
+    wrapTime = 180;
     restTime = 20;
   }
 
   if (meat.includes("chicken")) {
-    spritzRounds = 0; // no spritz
-    wrapEnabled = false; // no wrap
+    spritzRounds = 0;
+    wrapEnabled = false;
     wrapTime = 0;
     restTime = 10;
+  }
+
+  // -------------------------
+  // STALL DETECTION
+  // -------------------------
+  const tempLogs = events.filter((e) => e.type === "temp_log");
+
+  if (tempLogs.length >= 2) {
+    const first = tempLogs[0];
+    const last = tempLogs[tempLogs.length - 1];
+
+    const firstTemp = parseInt(first.note || "0");
+    const lastTemp = parseInt(last.note || "0");
+
+    const timeDiff =
+      (new Date(last.created_at).getTime() -
+        new Date(first.created_at).getTime()) /
+      60000;
+
+    const tempDiff = lastTemp - firstTemp;
+
+    // Stall detected: temp hasn't moved in 45+ minutes
+    if (timeDiff >= 45 && tempDiff < 5) {
+      wrapTime -= 30; // wrap earlier
+      restTime += 30; // rest longer
+      spritzInterval += 30; // spritz less often
+    }
+
+    // Cook is running hot: temp rising too fast
+    if (timeDiff <= 30 && tempDiff > 20) {
+      wrapTime += 30; // wrap later
+      restTime -= 20; // rest shorter
+    }
+  }
+
+  // -------------------------
+  // EVENT-DRIVEN ADJUSTMENTS
+  // -------------------------
+
+  // If user already wrapped, remove future spritzes
+  const wrapped = events.find((e) => e.type === "wrap");
+  if (wrapped) {
+    spritzRounds = 0;
+  }
+
+  // If user probed, extend rest
+  const probed = events.find((e) => e.type === "probe");
+  if (probed) {
+    restTime += 30;
   }
 
   const steps = [];
