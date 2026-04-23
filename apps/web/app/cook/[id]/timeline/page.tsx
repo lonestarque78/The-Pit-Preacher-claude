@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { generateTimeline } from "./engine";
 
 export default async function TimelinePage({ params }) {
   const cookId = params.id;
@@ -19,14 +20,7 @@ export default async function TimelinePage({ params }) {
     );
   }
 
-  // Placeholder timeline steps (we will replace this with the real engine)
-  const steps = [
-    { time: "Fire Up", detail: "Light your pit and stabilize temp." },
-    { time: "Meat On", detail: "Place meat on the smoker." },
-    { time: "Spritz", detail: "Spritz every 60–90 minutes." },
-    { time: "Wrap", detail: "Wrap when bark is set." },
-    { time: "Rest", detail: "Rest in a cooler or oven." },
-  ];
+  const steps = generateTimeline(cook);
 
   return (
     <div style={{ padding: "40px" }}>
@@ -87,9 +81,12 @@ export default async function TimelinePage({ params }) {
                 marginBottom: "var(--space-1)",
               }}
             >
-              {step.time}
+              {step.label}
             </h3>
-            <p>{step.detail}</p>
+            <p style={{ marginBottom: "var(--space-1)" }}>{step.detail}</p>
+            <p style={{ fontSize: "14px", color: "var(--color-text-muted)" }}>
+              {step.time.toLocaleString()}
+            </p>
           </div>
         ))}
       </div>
