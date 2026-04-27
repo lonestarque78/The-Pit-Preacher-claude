@@ -1,83 +1,91 @@
 // apps/web/components/Paywall.tsx
 "use client";
 
+import { useEffect, useState, ReactNode } from "react";
+import { createClient } from "@/lib/supabase";
+import { getTier } from "@/lib/premium";
+import Link from "next/link";
+
 type PaywallProps = {
-  onClose?: () => void;
+  requiredTier: "basic" | "pitmaster";
+  children: ReactNode;
 };
 
-export default function Paywall({ onClose }: PaywallProps) {
+const TIER_ORDER = ["free", "basic", "pitmaster"];
+
+export default function Paywall({ requiredTier, children }: PaywallProps) {
+  const [userTier, setUserTier] = useState<string>("free");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) {
+        getTier(data.user.id, supabase).then((tier) => {
+          setUserTier(tier || "free");
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
+    });
+  }, []);
+
+  if (loading) {
+    return null;
+  }
+
+  const userTierLevel = TIER_ORDER.indexOf(userTier);
+  const requiredTierLevel = TIER_ORDER.indexOf(requiredTier);
+
+  if (userTierLevel >= requiredTierLevel) {
+    return <>{children}</>;
+  }
+
   return (
     <div
       style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.6)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 9999,
+        padding: "var(--space-5)",
+        textAlign: "center",
+        background: "var(--color-bg-alt)",
+        borderRadius: "var(--radius-lg)",
+        border: "1px solid var(--color-border)",
       }}
     >
-      <div
+      <h3
         style={{
-          background: "var(--color-bg)",
-          padding: "32px",
-          borderRadius: "var(--radius-lg)",
-          width: "420px",
-          maxWidth: "90vw",
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-2)",
         }}
       >
-        <h2
-          style={{
-            fontFamily: "var(--font-heading)",
-            marginBottom: "16px",
-          }}
-        >
-          Unlock Pit Preacher Premium
-        </h2>
-
-        <p style={{ marginBottom: "16px", lineHeight: 1.6 }}>
-          Premium unlocks live coaching, fire management, cook health score,
-          next step prediction, pit behavior tracking, and the full end‑of‑cook
-          intelligence layer.
-        </p>
-
-        <ul style={{ marginBottom: "20px", lineHeight: 1.6, paddingLeft: "20px" }}>
-          <li>Live Mode intelligence</li>
-          <li>Next step prediction</li>
-          <li>Fire management coaching</li>
-          <li>Cook health score</li>
-          <li>Pit behavior tracking</li>
-          <li>End‑of‑cook summary</li>
-        </ul>
-
-        <button
-          onClick={() => {
-            window.location.href = "/premium";
-          }}
-          style={{
-            width: "100%",
-            padding: "12px",
-            background: "var(--color-accent)",
-            color: "white",
-            borderRadius: "var(--radius-md)",
-            marginBottom: "10px",
-          }}
-        >
-          Upgrade
-        </button>
-
-        <button
-          onClick={onClose}
-          style={{
-            width: "100%",
-            padding: "12px",
-            background: "var(--color-bg-alt)",
-            borderRadius: "var(--radius-md)",
-          }}
-        >
-          Not now
-        </button>
+        🔒 Premium Feature
+      </h3>
+      <p
+        style={{
+          marginBottom: "var(--space-4)",
+          color: "var(--color-text-muted)",
+        }}
+      >
+        This feature requires a {requiredTier} subscription or higher.
+      </p>
+      <Link
+        href="/premium"
+        style={{
+          display: "inline-block",
+          padding: "var(--space-2) var(--space-4)",
+          background: "var(--color-accent)",
+          color: "white",
+          borderRadius: "var(--radius-md)",
+          textDecoration: "none",
+          fontFamily: "var(--font-ui)",
+        }}
+      >
+        Upgrade to Unlock
+      </Link>
+    </div>
+  );
+}
       </div>
     </div>
   );
