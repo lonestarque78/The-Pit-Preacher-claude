@@ -1,83 +1,94 @@
-import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
-
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
-};
-
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
-
-  return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
-};
+import Link from "next/link";
+import Button from "@/components/Button";
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/web/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://turborepo.dev/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "var(--space-5)",
+        background: "var(--color-bg)",
+      }}
+    >
+      <main
+        style={{
+          maxWidth: "600px",
+          textAlign: "center",
+        }}
+      >
+        <h1
+          style={{
+            fontFamily: "var(--font-heading)",
+            fontSize: "clamp(2.5rem, 5vw, 4rem)",
+            fontWeight: 400,
+            color: "var(--color-text)",
+            marginBottom: "var(--space-4)",
+            lineHeight: 1.2,
+          }}
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
+          Pit Preacher
+        </h1>
+
+        <p
+          style={{
+            fontFamily: "var(--font-heading)",
+            fontSize: "clamp(1.25rem, 3vw, 1.75rem)",
+            fontWeight: 400,
+            color: "var(--color-accent)",
+            marginBottom: "var(--space-4)",
+            fontStyle: "italic",
+          }}
+        >
+          25 years of backyard wisdom. One app to carry it all.
+        </p>
+
+        <p
+          style={{
+            fontFamily: "var(--font-body)",
+            fontSize: "1.125rem",
+            color: "var(--color-text-muted)",
+            marginBottom: "var(--space-5)",
+            lineHeight: 1.6,
+          }}
+        >
+          Pit Preacher is your personal BBQ coaching companion. Track your cooks, 
+          manage your pits, and follow proven templates from decades of smoking 
+          experience. No AI fluff — just real barbecue wisdom.
+        </p>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-3)",
+            alignItems: "center",
+          }}
+        >
+          <Link href="/prep">
+            <Button>Start Your Cook</Button>
+          </Link>
+
+          <Link
+            href="/auth/login"
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "0.875rem",
+              color: "var(--color-text-muted)",
+              textDecoration: "underline",
+              textUnderlineOffset: "4px",
+            }}
+          >
+            Log In
+          </Link>
+        </div>
+      </main>
+    </div>
+  );
+}
             height={16}
           />
           Examples

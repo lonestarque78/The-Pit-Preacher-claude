@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Playfair_Display, Libre_Baskerville, Oswald } from "next/font/google";
+import Nav from "@/components/Nav";
 
 const heading = Playfair_Display({
   subsets: ["latin"],
@@ -18,13 +19,16 @@ const ui = Oswald({
 
 export const metadata = {
   title: "Pit Preacher",
-  description: "Your AI BBQ companion",
+  description: "Your BBQ coaching companion",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${heading.variable} ${body.variable} ${ui.variable}`}>
-      <body>{children}</body>
+      <body>
+        <Nav />
+        {children}
+      </body>
     </html>
   );
 }
