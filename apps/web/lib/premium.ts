@@ -1,17 +1,21 @@
 // apps/web/lib/premium.ts
 
-export async function isPremium(userId: string | undefined, supabase: any) {
-  if (!userId) return false;
+export async function getTier(userId: string | undefined, supabase: any) {
+  if (!userId) return "free";
 
   const { data, error } = await supabase
     .from("subscriptions")
     .select("tier")
     .eq("user_id", userId)
     .eq("status", "active")
-    .in("tier", ["premium", "pro"])
     .maybeSingle();
 
-  if (error) return false;
+  if (error || !data) return "free";
 
-  return data?.tier === "premium" || data?.tier === "pro";
+  return data.tier || "free";
+}
+
+export async function isPremium(userId: string | undefined, supabase: any) {
+  const tier = await getTier(userId, supabase);
+  return tier === "premium" || tier === "pro" || tier === "pitmaster";
 }
