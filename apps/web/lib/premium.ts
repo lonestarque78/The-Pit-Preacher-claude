@@ -4,12 +4,14 @@ export async function isPremium(userId: string | undefined, supabase: any) {
   if (!userId) return false;
 
   const { data, error } = await supabase
-    .from("profiles")
-    .select("is_premium")
-    .eq("id", userId)
-    .single();
+    .from("subscriptions")
+    .select("tier")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .in("tier", ["premium", "pro"])
+    .maybeSingle();
 
   if (error) return false;
 
-  return data?.is_premium === true;
+  return data?.tier === "premium" || data?.tier === "pro";
 }

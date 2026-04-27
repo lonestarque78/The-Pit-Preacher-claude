@@ -41,10 +41,12 @@ export default function CreateCookPage() {
       .from("cooks")
       .insert({
         user_id: user.id,
-        meat,
-        pit,
+        label: meat,
+        cooking_style: pit,
+        smoker_type: "",
+        wood_type: "",
         status: "active",
-        started_at: new Date().toISOString(),
+        eat_time: null,
       })
       .select()
       .single();
