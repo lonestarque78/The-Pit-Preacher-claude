@@ -132,11 +132,11 @@ export async function POST(request: Request) {
 
 function getTierFromPriceId(priceId: string): string {
   const priceMap: Record<string, string> = {
-    // Monthly
     [process.env.STRIPE_PRICE_BASIC_MONTHLY!]: "basic",
-    [process.env.STRIPE_PRICE_PITMASTER_MONTHLY!]: "pitmaster",
-    // Annual (add when ready)
     [process.env.STRIPE_PRICE_BASIC_ANNUAL!]: "basic",
+    [process.env.STRIPE_PRICE_BACKYARD_MONTHLY!]: "backyard",
+    [process.env.STRIPE_PRICE_BACKYARD_ANNUAL!]: "backyard",
+    [process.env.STRIPE_PRICE_PITMASTER_MONTHLY!]: "pitmaster",
     [process.env.STRIPE_PRICE_PITMASTER_ANNUAL!]: "pitmaster",
   };
 
