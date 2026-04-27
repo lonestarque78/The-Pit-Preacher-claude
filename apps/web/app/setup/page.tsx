@@ -1,6 +1,9 @@
-import { supabase } from "@/lib/supabase";
+import { redirect } from "next/navigation";
+import { createServerClient } from "@/lib/supabase-server";
 
 export default async function SetupPage() {
+  const supabase = await createServerClient();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -11,22 +14,12 @@ export default async function SetupPage() {
 
   const { data: pits } = await supabase
     .from("pits")
-    .select("*")
+    .select("id")
     .eq("user_id", user.id);
 
   if (!pits || pits.length === 0) {
-    return (
-      <div style={{ padding: 40 }}>
-        <h1>Welcome to Pit Preacher</h1>
-        <a href="/setup/pits">Set up your pits</a>
-      </div>
-    );
+    redirect("/setup/pits");
   }
 
-  return (
-    <div>
-      <h1>Redirecting...</h1>
-      <script dangerouslySetInnerHTML={{ __html: `window.location.href='/dashboard'` }} />
-    </div>
-  );
+  redirect("/dashboard");
 }
