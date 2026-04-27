@@ -2,52 +2,287 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { isPremium } from "@/lib/premium";
-import Paywall from "@/components/Paywall";
+import { createClient } from "@/lib/supabase";
 import Button from "@/components/Button";
-
-import { generateTimeline } from "../timeline/engine";
+import Input from "@/components/Input";
+import Link from "next/link";
 import { preacherLine } from "../preacher/voice";
-import { fireTip } from "../preacher/fire";
 
-import {
-  Chart as ChartJS,
-  LineElement,
-  PointElement,
-  LinearScale,
-  TimeScale,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
-import "chartjs-adapter-date-fns";
+const EVENT_TYPES = [
+  { value: "temp_log", label: "Temp Log" },
+  { value: "spritz", label: "Spritz" },
+  { value: "wrap", label: "Wrap" },
+  { value: "probe", label: "Probe" },
+  { value: "note", label: "Note" },
+];
 
-ChartJS.register(LineElement, PointElement, LinearScale, TimeScale, Tooltip, Legend);
-
-export default function LiveModePage({ params }) {
+export default function LiveModePage({ params }: { params: { id: string } }) {
   const cookId = params.id;
 
-  const [premium, setPremium] = useState<boolean | null>(null);
-
   const [cook, setCook] = useState<any>(null);
+  const [items, setItems] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
-  const [steps, setSteps] = useState<any[]>([]);
-  const [line, setLine] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [progress, setProgress] = useState({
-    percent: 0,
-    phase: "",
-    finishTime: null as Date | null,
-    remaining: "",
-  });
+  const [eventType, setEventType] = useState("");
+  const [message, setMessage] = useState("");
 
-  const [nextStep, setNextStep] = useState({
-    label: "",
-    time: null as Date | null,
-    minutes: 0,
-    preacher: "",
-  });
+  const supabase = createClient();
+
+  useEffect(() => {
+    loadData();
+  }, [cookId]);
+
+  const loadData = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    // Load cook
+    const { data: cookData } = await supabase
+      .from("cooks")
+      .select("*")
+      .eq("id", cookId)
+      .single();
+
+    // Load cook_items
+    const { data: itemsData } = await supabase
+      .from("cook_items")
+      .select("*")
+      .eq("cook_id", cookId);
+
+    // Load cook_events
+    const { data: eventsData } = await supabase
+      .from("cook_events")
+      .select("*")
+      .eq("cook_id", cookId)
+      .order("created_at", { ascending: false });
+
+    setCook(cookData);
+    setItems(itemsData || []);
+    setEvents(eventsData || []);
+    setLoading(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!eventType) {
+      alert("Select an event type");
+      return;
+    }
+
+    setSubmitting(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("You must be logged in");
+      setSubmitting(false);
+      return;
+    }
+
+    const { error } = await supabase.from("cook_events").insert({
+      cook_id: cookId,
+      user_id: user.id,
+      type: eventType,
+      note: message,
+    });
+
+    setSubmitting(false);
+
+    if (error) {
+      console.error(error);
+      alert("Error adding event");
+      return;
+    }
+
+    setEventType("");
+    setMessage("");
+    loadData();
+  };
+
+  // Generate preacher line based on cook context
+  const getPreacherLine = () => {
+    if (!cook) return "";
+    const meatNames = items.map((i) => i.name.toLowerCase()).join(" ");
+    return preacherLine({
+      meat: meatNames,
+      pit: (cook.smoker_type || "").toLowerCase(),
+      event: "live",
+      stall: false,
+      temp: null,
+      action: "live",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div style={{ padding: "40px" }}>
+        <h1 style={{ fontFamily: "var(--font-heading)" }}>Loading...</h1>
+      </div>
+    );
+  }
+
+  if (!cook) {
+    return (
+      <div style={{ padding: "40px" }}>
+        <h1 style={{ fontFamily: "var(--font-heading)" }}>Cook Not Found</h1>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: "40px" }}>
+      <div style={{ marginBottom: "var(--space-4)" }}>
+        <Link href={`/cook/${cookId}`}>
+          <Button>← Back to Cook</Button>
+        </Link>
+      </div>
+
+      <h1
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-2)",
+        }}
+      >
+        Live Mode
+      </h1>
+
+      <p
+        style={{
+          fontFamily: "var(--font-heading)",
+          fontStyle: "italic",
+          color: "var(--color-accent)",
+          marginBottom: "var(--space-4)",
+        }}
+      >
+        {getPreacherLine()}
+      </p>
+
+      <div
+        style={{
+          background: "var(--color-bg-alt)",
+          padding: "var(--space-4)",
+          borderRadius: "var(--radius-lg)",
+          marginBottom: "var(--space-4)",
+        }}
+      >
+        <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-2)" }}>
+          {cook.label}
+        </h2>
+        <p>
+          <strong>Smoker:</strong> {cook.smoker_type || "Not specified"}
+        </p>
+        <p>
+          <strong>Wood:</strong> {cook.wood_type || "Not specified"}
+        </p>
+        <p>
+          <strong>Status:</strong> {cook.status}
+        </p>
+      </div>
+
+      <h2
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-3)",
+        }}
+      >
+        Log Event
+      </h2>
+
+      <div
+        style={{
+          background: "var(--color-bg-alt)",
+          padding: "var(--space-4)",
+          borderRadius: "var(--radius-lg)",
+          marginBottom: "var(--space-4)",
+        }}
+      >
+        <select
+          value={eventType}
+          onChange={(e) => setEventType(e.target.value)}
+          style={{
+            padding: "12px",
+            background: "var(--color-bg)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-md)",
+            color: "var(--color-text)",
+            fontFamily: "var(--font-body)",
+            width: "100%",
+            marginBottom: "var(--space-3)",
+          }}
+        >
+          <option value="">Select event type...</option>
+          {EVENT_TYPES.map((et) => (
+            <option key={et.value} value={et.value}>
+              {et.label}
+            </option>
+          ))}
+        </select>
+
+        <Input
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Message or note..."
+        />
+
+        <Button onClick={handleSubmit} disabled={submitting} style={{ marginTop: "var(--space-3)" }}>
+          {submitting ? "Submitting..." : "Log Event"}
+        </Button>
+      </div>
+
+      <h2
+        style={{
+          fontFamily: "var(--font-heading)",
+          marginBottom: "var(--space-3)",
+        }}
+      >
+        Event Log
+      </h2>
+
+      {events.length === 0 ? (
+        <p style={{ color: "var(--color-text-muted)" }}>No events yet.</p>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-3)",
+          }}
+        >
+          {events.map((event) => (
+            <div
+              key={event.id}
+              style={{
+                background: "var(--color-bg-alt)",
+                padding: "var(--space-3)",
+                borderRadius: "var(--radius-md)",
+                borderLeft: "4px solid var(--color-accent)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-1)" }}>
+                <strong>{event.type}</strong>
+                <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>
+                  {new Date(event.created_at).toLocaleString()}
+                </span>
+              </div>
+              {event.note && (
+                <p style={{ color: "var(--color-text-muted)" }}>{event.note}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
   const [fire, setFire] = useState("");
   const [health, setHealth] = useState(100);
