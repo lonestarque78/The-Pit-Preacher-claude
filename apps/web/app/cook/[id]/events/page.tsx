@@ -1,134 +1,63 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createServerClient } from "@/lib/supabase-server";
+import Link from "next/link";
 import Button from "@/components/Button";
-import Input from "@/components/Input";
-import { preacherLine } from "../../preacher/voice";
 
-export default function CookEventsPage({ params }) {
+export default async function CookEventsPage({ params }) {
+  const supabase = await createServerClient();
   const cookId = params.id;
 
-  const [events, setEvents] = useState([]);
-  const [type, setType] = useState("");
-  const [note, setNote] = useState("");
-  const [cook, setCook] = useState(null);
+  // Load cook
+  const { data: cook, error: cookError } = await supabase
+    .from("cooks")
+    .select("*")
+    .eq("id", cookId)
+    .single();
 
-  useEffect(() => {
-    loadCook();
-    loadEvents();
-  }, []);
-
-  const loadCook = async () => {
-    const { data } = await supabase
-      .from("cooks")
-      .select("*")
-      .eq("id", cookId)
-      .single();
-
-    setCook(data);
-  };
-
-  const loadEvents = async () => {
-    const { data } = await supabase
-      .from("cook_events")
-      .select("*")
-      .eq("cook_id", cookId)
-      .order("created_at", { ascending: false });
-
-    setEvents(data || []);
-  };
-
-  const addEvent = async () => {
-    if (!type) {
-      alert("Choose an event type");
-      return;
-    }
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      alert("You must be logged in");
-      return;
-    }
-
-    // Insert event
-    await supabase.from("cook_events").insert({
-      cook_id: cookId,
-      user_id: user.id,
-      type,
-      note,
-      created_at: new Date().toISOString(),
-    });
-
-    setType("");
-    setNote("");
-
-    // Reload events
-    loadEvents();
-  };
-
-  if (!cook) {
+  if (cookError || !cook) {
     return (
       <div style={{ padding: "40px" }}>
-        <h1 style={{ fontFamily: "var(--font-heading)" }}>Loading...</h1>
+        <h1 style={{ fontFamily: "var(--font-heading)" }}>Cook Not Found</h1>
       </div>
     );
   }
 
+  // Load cook_events ordered by created_at ascending
+  const { data: events } = await supabase
+    .from("cook_events")
+    .select("*")
+    .eq("cook_id", cookId)
+    .order("created_at", { ascending: true });
+
+  const eventList = events || [];
+
   return (
     <div style={{ padding: "40px" }}>
+      <div style={{ marginBottom: "var(--space-4)" }}>
+        <Link href={`/cook/${cookId}`}>
+          <Button>← Back to Cook</Button>
+        </Link>
+      </div>
+
       <h1
         style={{
           fontFamily: "var(--font-heading)",
           marginBottom: "var(--space-4)",
         }}
       >
-        Cook Events
+        Events
       </h1>
 
-      <h2
+      <div
         style={{
-          fontFamily: "var(--font-heading)",
-          marginBottom: "var(--space-3)",
-        }}
-      >
-        Add Event
-      </h2>
-
-      <select
-        value={type}
-        onChange={(e) => setType(e.target.value)}
-        style={{
-          padding: "12px",
           background: "var(--color-bg-alt)",
-          border: "1px solid var(--color-text-muted)",
-          borderRadius: "var(--radius-md)",
-          color: "var(--color-text)",
-          fontFamily: "var(--font-body)",
-          width: "100%",
-          marginBottom: "var(--space-3)",
+          padding: "var(--space-4)",
+          borderRadius: "var(--radius-lg)",
+          marginBottom: "var(--space-5)",
         }}
       >
-        <option value="">Select event type...</option>
-        <option value="spritz">Spritz</option>
-        <option value="wrap">Wrap</option>
-        <option value="probe">Probe</option>
-        <option value="temp_log">Temp Log</option>
-        <option value="note">Note</option>
-      </select>
-
-      <Input
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        placeholder="Optional note..."
-      />
-
-      <Button onClick={addEvent} style={{ marginBottom: "var(--space-5)" }}>
-        Add Event
-      </Button>
+        <p><strong>Cook:</strong> {cook.label}</p>
+        <p><strong>Status:</strong> {cook.status}</p>
+      </div>
 
       <h2
         style={{
@@ -139,26 +68,24 @@ export default function CookEventsPage({ params }) {
         Event History
       </h2>
 
-      {events.length === 0 && <p>No events yet.</p>}
+      {eventList.length === 0 && (
+        <p style={{ color: "var(--color-text-muted)" }}>No events yet.</p>
+      )}
 
-      {events.map((event) => {
-        const line = preacherLine({
-          meat: cook.meat.toLowerCase(),
-          pit: cook.pit.toLowerCase(),
-          event: event.type.toLowerCase(),
-          stall: false,
-          temp: event.type === "temp_log" ? event.note : null,
-          action: event.type.toLowerCase(),
-        });
-
-        return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--space-3)",
+        }}
+      >
+        {eventList.map((event) => (
           <div
             key={event.id}
             style={{
               background: "var(--color-bg-alt)",
               padding: "var(--space-3)",
               borderRadius: "var(--radius-md)",
-              marginBottom: "var(--space-3)",
               borderLeft: "4px solid var(--color-accent)",
             }}
           >
@@ -167,27 +94,17 @@ export default function CookEventsPage({ params }) {
             </p>
 
             {event.note && (
-              <p style={{ marginBottom: "var(--space-1)" }}>
-                <strong>Note:</strong> {event.note}
+              <p style={{ marginBottom: "var(--space-2)", color: "var(--color-text-muted)" }}>
+                {event.note}
               </p>
             )}
-
-            <p
-              style={{
-                marginBottom: "var(--space-2)",
-                fontStyle: "italic",
-                opacity: 0.9,
-              }}
-            >
-              {line}
-            </p>
 
             <p style={{ fontSize: "14px", color: "var(--color-text-muted)" }}>
               {new Date(event.created_at).toLocaleString()}
             </p>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }

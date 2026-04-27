@@ -1,9 +1,10 @@
-export function generateTimeline(cook, events = []) {
-  const start = new Date(cook.started_at);
+export function generateTimeline(cook, items = [], events = []) {
+  const start = new Date(cook.created_at);
 
-  // Normalize names
-  const pit = cook.pit.toLowerCase();
-  const meat = cook.meat.toLowerCase();
+  // Normalize names from cook_items
+  const pit = (cook.smoker_type || "").toLowerCase();
+  const meatNames = items.map((i) => i.name.toLowerCase());
+  const meat = meatNames.join(" ");
 
   // Base durations (minutes)
   let fireUp = 30;
