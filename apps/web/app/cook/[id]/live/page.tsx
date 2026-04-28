@@ -8,6 +8,16 @@ import Input from "@/components/Input";
 import Link from "next/link";
 import { preacherLine } from "../preacher/voice";
 
+type PlanTool = { id: string; name: string; wood: string };
+type PlanItem = {
+  name: string;
+  category: string;
+  quantity: number;
+  weight: string | number | null;
+  notes: string;
+  smokerId: string | null;
+};
+
 const EVENT_TYPES = [
   { value: "temp_log", label: "Temp Log" },
   { value: "spritz", label: "Spritz" },
@@ -15,6 +25,17 @@ const EVENT_TYPES = [
   { value: "probe", label: "Probe" },
   { value: "note", label: "Note" },
 ];
+
+const selectStyle = {
+  padding: "12px",
+  background: "var(--color-bg)",
+  border: "1px solid var(--color-border)",
+  borderRadius: "var(--radius-md)",
+  color: "var(--color-text)",
+  fontFamily: "var(--font-body)",
+  width: "100%",
+  marginBottom: "var(--space-3)",
+};
 
 export default function LiveModePage({ params }: { params: { id: string } }) {
   const cookId = params.id;
@@ -28,6 +49,7 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
 
   const [eventType, setEventType] = useState("");
   const [message, setMessage] = useState("");
+  const [selectedSmokerId, setSelectedSmokerId] = useState("");
 
   const [askInput, setAskInput] = useState("");
   const [preacherReply, setPreacherReply] = useState<string | null>(null);
@@ -40,9 +62,7 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
   }, [cookId]);
 
   const loadData = async () => {
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
 
     if (!authUser) {
       setLoading(false);
@@ -72,6 +92,13 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
     setItems(itemsData || []);
     setEvents(eventsData || []);
     setLoading(false);
+
+    // Default smoker selector to first named tool
+    const planTools: PlanTool[] = (cookData?.plan as any)?.tools ?? [];
+    const firstNamed = planTools.find(t => t.name?.trim());
+    if (firstNamed && !selectedSmokerId) {
+      setSelectedSmokerId(String(firstNamed.id));
+    }
   };
 
   const handleSubmit = async () => {
@@ -82,9 +109,7 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
 
     setSubmitting(true);
 
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
 
     if (!authUser) {
       alert("You must be logged in");
@@ -92,11 +117,23 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
       return;
     }
 
+    // Build note with smoker prefix if a smoker is selected
+    const planTools: PlanTool[] = (cook?.plan as any)?.tools ?? [];
+    let fullNote = message;
+    if (selectedSmokerId && planTools.length > 0) {
+      const toolIdx = planTools.findIndex(t => String(t.id) === selectedSmokerId);
+      const tool = planTools[toolIdx];
+      if (tool) {
+        const smokerLabel = `[Smoker ${toolIdx + 1}${tool.name ? ` - ${tool.name}` : ""}]`;
+        fullNote = message ? `${smokerLabel} ${message}` : smokerLabel;
+      }
+    }
+
     const { error } = await supabase.from("cook_events").insert({
       cook_id: cookId,
       user_id: authUser.id,
       type: eventType,
-      note: message,
+      note: fullNote,
     });
 
     setSubmitting(false);
@@ -118,13 +155,16 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
     setAskLoading(true);
     setPreacherReply(null);
 
+    const planTools: PlanTool[] = (cook?.plan as any)?.tools ?? [];
+    const planItems: PlanItem[] = (cook?.plan as any)?.items ?? [];
+
     const cookContext = {
       label: cook?.label ?? "",
-      smoker_type: cook?.smoker_type ?? "",
-      wood_type: cook?.wood_type ?? "",
       eat_time: cook?.eat_time ?? "",
-      items: items.map((i) => i.name),
-      recentEvents: events.slice(0, 10).map((e) => ({
+      cooking_style: cook?.cooking_style ?? "",
+      tools: planTools,
+      planItems: planItems,
+      recentEvents: events.slice(0, 10).map(e => ({
         created_at: e.created_at,
         type: e.type,
         note: e.note ?? "",
@@ -145,7 +185,7 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
 
   const getPreacherLine = () => {
     if (!cook) return "";
-    const meatNames = items.map((i) => i.name.toLowerCase()).join(" ");
+    const meatNames = items.map(i => i.name.toLowerCase()).join(" ");
     return preacherLine({
       meat: meatNames,
       pit: (cook.smoker_type || "").toLowerCase(),
@@ -172,6 +212,10 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
     );
   }
 
+  const planTools: PlanTool[] = (cook?.plan as any)?.tools ?? [];
+  const planItems: PlanItem[] = (cook?.plan as any)?.items ?? [];
+  const namedTools = planTools.filter(t => t.name?.trim());
+
   return (
     <div style={{ padding: "40px" }}>
       <div style={{ marginBottom: "var(--space-4)" }}>
@@ -180,95 +224,148 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
         </Link>
       </div>
 
-      <h1
-        style={{
-          fontFamily: "var(--font-heading)",
-          marginBottom: "var(--space-2)",
-        }}
-      >
+      <h1 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-2)" }}>
         Live Mode
       </h1>
 
-      <p
-        style={{
-          fontFamily: "var(--font-heading)",
-          fontStyle: "italic",
-          color: "var(--color-accent)",
-          marginBottom: "var(--space-4)",
-        }}
-      >
+      <p style={{
+        fontFamily: "var(--font-heading)",
+        fontStyle: "italic",
+        color: "var(--color-accent)",
+        marginBottom: "var(--space-4)",
+      }}>
         {getPreacherLine()}
       </p>
 
-      <div
-        style={{
-          background: "var(--color-bg-alt)",
-          padding: "var(--space-4)",
-          borderRadius: "var(--radius-lg)",
-          marginBottom: "var(--space-4)",
-        }}
-      >
-        <h2
-          style={{
-            fontFamily: "var(--font-heading)",
-            marginBottom: "var(--space-2)",
-          }}
-        >
+      {/* Cook info */}
+      <div style={{
+        background: "var(--color-bg-alt)",
+        padding: "var(--space-4)",
+        borderRadius: "var(--radius-lg)",
+        marginBottom: "var(--space-4)",
+      }}>
+        <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-2)" }}>
           {cook.label}
         </h2>
-        <p>
-          <strong>Smoker:</strong> {cook.smoker_type || "Not specified"}
-        </p>
-        <p>
-          <strong>Wood:</strong> {cook.wood_type || "Not specified"}
-        </p>
-        <p>
-          <strong>Status:</strong> {cook.status}
-        </p>
+        <p><strong>Status:</strong> {cook.status}</p>
+        {cook.eat_time && (
+          <p>
+            <strong>Eating at:</strong>{" "}
+            {new Date(cook.eat_time).toLocaleString(undefined, {
+              weekday: "short", month: "short", day: "numeric",
+              hour: "numeric", minute: "2-digit",
+            })}
+          </p>
+        )}
       </div>
 
-      <h2
-        style={{
-          fontFamily: "var(--font-heading)",
-          marginBottom: "var(--space-3)",
-        }}
-      >
+      {/* Pit overview — one card per smoker */}
+      {planTools.length > 0 && (
+        <div style={{ marginBottom: "var(--space-4)" }}>
+          <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
+            Pit Overview
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+            {planTools.map((tool, idx) => {
+              const assigned = planItems.filter(
+                i => i.smokerId !== null && String(i.smokerId) === String(tool.id)
+              );
+              const isActive = selectedSmokerId === String(tool.id);
+              return (
+                <div
+                  key={tool.id}
+                  style={{
+                    background: "var(--color-bg-alt)",
+                    padding: "var(--space-3)",
+                    borderRadius: "var(--radius-md)",
+                    borderLeft: isActive ? "4px solid var(--color-accent)" : "4px solid transparent",
+                  }}
+                >
+                  <div style={{
+                    fontFamily: "var(--font-heading)",
+                    fontSize: "1rem",
+                    marginBottom: "4px",
+                  }}>
+                    Smoker {idx + 1}{tool.name ? ` — ${tool.name}` : ""}
+                    {tool.wood && (
+                      <span style={{
+                        fontFamily: "var(--font-body)",
+                        fontSize: "0.85rem",
+                        color: "var(--color-text-muted)",
+                        marginLeft: "8px",
+                      }}>
+                        | {tool.wood}
+                      </span>
+                    )}
+                  </div>
+                  {assigned.length > 0 && (
+                    <ul style={{
+                      margin: 0,
+                      paddingLeft: "var(--space-4)",
+                      fontFamily: "var(--font-body)",
+                      fontSize: "0.875rem",
+                      lineHeight: 1.7,
+                      color: "var(--color-text-muted)",
+                    }}>
+                      {assigned.map(item => (
+                        <li key={item.name}>
+                          {item.name}
+                          {item.quantity > 1 ? ` ×${item.quantity}` : ""}
+                          {item.weight ? ` (${item.weight} lbs)` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Log Event */}
+      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
         Log Event
       </h2>
 
-      <div
-        style={{
-          background: "var(--color-bg-alt)",
-          padding: "var(--space-4)",
-          borderRadius: "var(--radius-lg)",
-          marginBottom: "var(--space-4)",
-        }}
-      >
+      <div style={{
+        background: "var(--color-bg-alt)",
+        padding: "var(--space-4)",
+        borderRadius: "var(--radius-lg)",
+        marginBottom: "var(--space-4)",
+      }}>
         <select
           value={eventType}
-          onChange={(e) => setEventType(e.target.value)}
-          style={{
-            padding: "12px",
-            background: "var(--color-bg)",
-            border: "1px solid var(--color-border)",
-            borderRadius: "var(--radius-md)",
-            color: "var(--color-text)",
-            fontFamily: "var(--font-body)",
-            width: "100%",
-            marginBottom: "var(--space-3)",
-          }}
+          onChange={e => setEventType(e.target.value)}
+          style={selectStyle}
         >
           <option value="">Select event type...</option>
-          {EVENT_TYPES.map((et) => (
-            <option key={et.value} value={et.value}>
-              {et.label}
-            </option>
+          {EVENT_TYPES.map(et => (
+            <option key={et.value} value={et.value}>{et.label}</option>
           ))}
         </select>
 
+        {namedTools.length > 0 && (
+          <select
+            value={selectedSmokerId}
+            onChange={e => setSelectedSmokerId(e.target.value)}
+            style={selectStyle}
+          >
+            <option value="">Select smoker...</option>
+            {namedTools.map(tool => {
+              const idx = planTools.indexOf(tool);
+              return (
+                <option key={tool.id} value={String(tool.id)}>
+                  Smoker {idx + 1}{tool.name ? ` — ${tool.name}` : ""}
+                </option>
+              );
+            })}
+          </select>
+        )}
+
         <Input
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={e => setMessage(e.target.value)}
           placeholder="Message or note..."
         />
 
@@ -281,26 +378,16 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
         </Button>
       </div>
 
-      <h2
-        style={{
-          fontFamily: "var(--font-heading)",
-          marginBottom: "var(--space-3)",
-        }}
-      >
+      {/* Event Log */}
+      <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
         Event Log
       </h2>
 
       {events.length === 0 ? (
         <p style={{ color: "var(--color-text-muted)" }}>No events yet.</p>
       ) : (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-3)",
-          }}
-        >
-          {events.map((event) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+          {events.map(event => (
             <div
               key={event.id}
               style={{
@@ -310,53 +397,40 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
                 borderLeft: "4px solid var(--color-accent)",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "var(--space-1)",
-                }}
-              >
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "var(--space-1)",
+              }}>
                 <strong>{event.type}</strong>
-                <span
-                  style={{
-                    fontSize: "0.875rem",
-                    color: "var(--color-text-muted)",
-                  }}
-                >
+                <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>
                   {new Date(event.created_at).toLocaleString()}
                 </span>
               </div>
               {event.note && (
-                <p style={{ color: "var(--color-text-muted)" }}>{event.note}</p>
+                <p style={{ color: "var(--color-text-muted)", margin: 0 }}>{event.note}</p>
               )}
             </div>
           ))}
         </div>
       )}
 
+      {/* Ask the Preacher */}
       {user && (
         <div style={{ marginTop: "var(--space-5)" }}>
-          <h2
-            style={{
-              fontFamily: "var(--font-heading)",
-              marginBottom: "var(--space-3)",
-            }}
-          >
+          <h2 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>
             Ask the Preacher
           </h2>
 
-          <div
-            style={{
-              background: "var(--color-bg-alt)",
-              padding: "var(--space-4)",
-              borderRadius: "var(--radius-lg)",
-            }}
-          >
+          <div style={{
+            background: "var(--color-bg-alt)",
+            padding: "var(--space-4)",
+            borderRadius: "var(--radius-lg)",
+          }}>
             <Input
               value={askInput}
-              onChange={(e) => setAskInput(e.target.value)}
-              placeholder="Ask the Preacher anything about your cook..."
+              onChange={e => setAskInput(e.target.value)}
+              placeholder="What's happening at the pit?"
               onKeyDown={(e: React.KeyboardEvent) => {
                 if (e.key === "Enter" && !askLoading) handleAsk();
               }}
@@ -371,25 +445,21 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
             </Button>
 
             {preacherReply && (
-              <div
-                style={{
-                  marginTop: "var(--space-4)",
-                  marginLeft: "var(--space-3)",
-                  padding: "var(--space-4)",
-                  background: "var(--color-bg)",
-                  borderRadius: "var(--radius-md)",
-                  borderLeft: "4px solid var(--color-accent)",
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    fontStyle: "italic",
-                    lineHeight: 1.7,
-                    color: "var(--color-text)",
-                    margin: 0,
-                  }}
-                >
+              <div style={{
+                marginTop: "var(--space-4)",
+                marginLeft: "var(--space-3)",
+                padding: "var(--space-4)",
+                background: "var(--color-bg)",
+                borderRadius: "var(--radius-md)",
+                borderLeft: "4px solid var(--color-accent)",
+              }}>
+                <p style={{
+                  fontFamily: "var(--font-body)",
+                  fontStyle: "italic",
+                  lineHeight: 1.7,
+                  color: "var(--color-text)",
+                  margin: 0,
+                }}>
                   {preacherReply}
                 </p>
               </div>
