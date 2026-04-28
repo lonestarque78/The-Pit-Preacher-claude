@@ -71,6 +71,17 @@ export default function Nav() {
             >
               Dashboard
             </Link>
+            <Link
+              href="/logs"
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "0.875rem",
+                color: "var(--color-text)",
+                textDecoration: "none",
+              }}
+            >
+              History
+            </Link>
             <button
               onClick={handleLogout}
               style={{

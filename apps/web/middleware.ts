@@ -9,7 +9,7 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Protected routes that require authentication
-  const protectedRoutes = ["/dashboard", "/cook/", "/setup/pits"];
+  const protectedRoutes = ["/dashboard", "/cook/", "/setup/pits", "/logs"];
   
   // Public routes that don't require auth
   const publicRoutes = ["/", "/prep", "/auth/login", "/auth/callback"];
