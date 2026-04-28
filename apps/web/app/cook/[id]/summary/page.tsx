@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
+import { getRandomVerse } from "@/lib/verses";
 import Button from "@/components/Button";
 import Link from "next/link";
 
@@ -19,6 +20,9 @@ export default function SummaryPage({ params }: { params: { id: string } }) {
   const [summary, setSummary] = useState("");
   const [lessons, setLessons] = useState("");
   const [rating, setRating] = useState(0);
+
+  const [showVerseOverlay, setShowVerseOverlay] = useState(false);
+  const [completionVerse] = useState(() => getRandomVerse());
 
   const supabase = createClient();
 
@@ -103,7 +107,11 @@ export default function SummaryPage({ params }: { params: { id: string } }) {
     if (cookError) console.error(cookError);
 
     setSubmitting(false);
-    loadData();
+    setShowVerseOverlay(true);
+    setTimeout(() => {
+      setShowVerseOverlay(false);
+      loadData();
+    }, 3000);
   };
 
   if (loading) {
@@ -148,6 +156,45 @@ export default function SummaryPage({ params }: { params: { id: string } }) {
 
   return (
     <div style={{ padding: "40px", maxWidth: "760px" }}>
+
+      {/* ── EARNED VERSE OVERLAY ── */}
+      {showVerseOverlay && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "var(--color-bg)",
+          zIndex: 999,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "var(--space-5)",
+          textAlign: "center",
+        }}>
+          <p style={{
+            fontFamily: "var(--font-heading)",
+            fontStyle: "italic",
+            fontSize: "clamp(1.5rem, 4vw, 2.5rem)",
+            color: "var(--color-text)",
+            maxWidth: "600px",
+            lineHeight: 1.55,
+            marginBottom: "var(--space-4)",
+          }}>
+            &ldquo;{completionVerse.text}&rdquo;
+          </p>
+          <p style={{
+            fontFamily: "var(--font-ui)",
+            color: "var(--color-accent)",
+            textTransform: "uppercase",
+            letterSpacing: "0.2em",
+            fontSize: "0.9rem",
+            margin: 0,
+          }}>
+            ✦ Well done, Pitmaster ✦
+          </p>
+        </div>
+      )}
+
       <div style={{ marginBottom: "var(--space-4)" }}>
         <Link href={`/cook/${cookId}`}>
           <Button>← Back to Cook</Button>

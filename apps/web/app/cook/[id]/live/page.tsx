@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
+import { getRandomVerse } from "@/lib/verses";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Link from "next/link";
@@ -47,6 +48,10 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
   const [submitting, setSubmitting] = useState(false);
   const [user, setUser] = useState<any>(null);
 
+  const [loadingVerse] = useState(() => getRandomVerse());
+  const [showVerse, setShowVerse] = useState(true);
+  const [verseFading, setVerseFading] = useState(false);
+
   const [eventType, setEventType] = useState("");
   const [message, setMessage] = useState("");
   const [selectedSmokerId, setSelectedSmokerId] = useState("");
@@ -60,6 +65,14 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
   useEffect(() => {
     loadData();
   }, [cookId]);
+
+  useEffect(() => {
+    if (!loading && showVerse) {
+      setVerseFading(true);
+      const t = setTimeout(() => setShowVerse(false), 500);
+      return () => clearTimeout(t);
+    }
+  }, [loading, showVerse]);
 
   const loadData = async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -196,10 +209,47 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
     });
   };
 
-  if (loading) {
+  if (showVerse) {
     return (
-      <div style={{ padding: "40px" }}>
-        <h1 style={{ fontFamily: "var(--font-heading)" }}>Loading...</h1>
+      <div style={{
+        minHeight: "60vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        padding: "var(--space-5)",
+        opacity: verseFading ? 0 : 1,
+        transition: "opacity 0.5s ease",
+      }}>
+        <p style={{
+          fontFamily: "var(--font-heading)",
+          fontStyle: "italic",
+          fontSize: "1.5rem",
+          color: "var(--color-text)",
+          maxWidth: "560px",
+          lineHeight: 1.55,
+          marginBottom: "var(--space-3)",
+        }}>
+          &ldquo;{loadingVerse.text}&rdquo;
+        </p>
+        <p style={{
+          fontFamily: "var(--font-ui)",
+          color: "var(--color-accent)",
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          fontSize: "0.75rem",
+          marginBottom: "var(--space-4)",
+        }}>
+          {loadingVerse.chapter}
+        </p>
+        <p style={{
+          fontFamily: "var(--font-body)",
+          color: "var(--color-text-muted)",
+          fontSize: "0.9rem",
+        }}>
+          Preparing your cook...
+        </p>
       </div>
     );
   }
@@ -446,6 +496,7 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
 
             {preacherReply && (
               <div style={{
+                position: "relative",
                 marginTop: "var(--space-4)",
                 marginLeft: "var(--space-3)",
                 padding: "var(--space-4)",
@@ -453,6 +504,15 @@ export default function LiveModePage({ params }: { params: { id: string } }) {
                 borderRadius: "var(--radius-md)",
                 borderLeft: "4px solid var(--color-accent)",
               }}>
+                <span style={{
+                  position: "absolute",
+                  top: "var(--space-2)",
+                  right: "var(--space-3)",
+                  color: "var(--color-accent)",
+                  fontSize: "0.9rem",
+                }}>
+                  ✦
+                </span>
                 <p style={{
                   fontFamily: "var(--font-body)",
                   fontStyle: "italic",

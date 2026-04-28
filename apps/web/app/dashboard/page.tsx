@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase-server";
 import { getTier } from "@/lib/premium";
+import { getRandomVerse } from "@/lib/verses";
 import Button from "@/components/Button";
 import Link from "next/link";
 
@@ -41,9 +42,49 @@ export default async function DashboardPage() {
   const tier = await getTier(user.id, supabase);
 
   const displayName = profile?.display_name || user.email?.split("@")[0] || "Pit Master";
+  const verse = getRandomVerse();
 
   return (
     <div style={{ padding: "40px" }}>
+
+      {/* ── DAILY VERSE ── */}
+      <div style={{
+        background: "var(--color-bg-alt)",
+        border: "1px solid #2a2a2a",
+        borderRadius: "var(--radius-lg)",
+        padding: "var(--space-4)",
+        marginBottom: "var(--space-4)",
+        textAlign: "center",
+      }}>
+        <div style={{
+          color: "var(--color-accent)",
+          fontSize: "1rem",
+          marginBottom: "var(--space-2)",
+        }}>
+          ✦
+        </div>
+        <p style={{
+          fontFamily: "var(--font-body)",
+          fontStyle: "italic",
+          color: "var(--color-text-muted)",
+          fontSize: "0.95rem",
+          lineHeight: 1.65,
+          margin: "0 0 var(--space-2)",
+        }}>
+          &ldquo;{verse.text}&rdquo;
+        </p>
+        <p style={{
+          fontFamily: "var(--font-ui)",
+          fontSize: "0.75rem",
+          color: "var(--color-accent)",
+          textTransform: "uppercase",
+          letterSpacing: "0.15em",
+          margin: 0,
+        }}>
+          {verse.chapter}
+        </p>
+      </div>
+
       <h1 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-4)" }}>
         Welcome, {displayName}
       </h1>

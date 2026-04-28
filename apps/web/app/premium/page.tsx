@@ -10,6 +10,7 @@ import Link from "next/link";
 const TIERS = [
   {
     key: "basic",
+    commandment: "The First Commandment",
     name: "Basic",
     price: "$3.99",
     period: "/mo",
@@ -23,6 +24,7 @@ const TIERS = [
   },
   {
     key: "backyard",
+    commandment: "The Second Commandment",
     name: "Backyard",
     price: "$7.99",
     period: "/mo",
@@ -36,6 +38,7 @@ const TIERS = [
   },
   {
     key: "pitmaster",
+    commandment: "The Third Commandment",
     name: "Pitmaster",
     price: "$11.99",
     period: "/mo",
@@ -182,6 +185,17 @@ export default function PremiumPage() {
                   : "2px solid transparent",
             }}
           >
+            <p style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--color-accent)",
+              fontSize: "0.75rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              margin: "0 0 var(--space-1)",
+            }}>
+              {tier.commandment}
+            </p>
+
             <h2
               style={{
                 fontFamily: "var(--font-heading)",
