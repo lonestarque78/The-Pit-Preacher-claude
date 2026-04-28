@@ -14,12 +14,7 @@ export default function Home() {
         background: "var(--color-bg)",
       }}
     >
-      <main
-        style={{
-          maxWidth: "600px",
-          textAlign: "center",
-        }}
-      >
+      <main style={{ maxWidth: "600px", textAlign: "center" }}>
         <h1
           style={{
             fontFamily: "var(--font-heading)",
@@ -55,8 +50,8 @@ export default function Home() {
             lineHeight: 1.6,
           }}
         >
-          Pit Preacher is your personal BBQ coaching companion. Track your cooks, 
-          manage your pits, and follow proven templates from decades of smoking 
+          Pit Preacher is your personal BBQ coaching companion. Track your cooks,
+          manage your pits, and follow proven templates from decades of smoking
           experience. No AI fluff — just real barbecue wisdom.
         </p>
 
@@ -86,28 +81,6 @@ export default function Home() {
           </Link>
         </div>
       </main>
-    </div>
-  );
-}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://turborepo.dev?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to turborepo.dev →
-        </a>
-      </footer>
     </div>
   );
 }

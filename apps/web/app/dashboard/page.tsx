@@ -58,6 +58,7 @@ export default async function DashboardPage() {
             marginBottom: "var(--space-4)",
             fontFamily: "var(--font-ui)",
             fontSize: "0.875rem",
+            color: "var(--color-bg)",
             textTransform: "uppercase",
             letterSpacing: "0.05em",
           }}
