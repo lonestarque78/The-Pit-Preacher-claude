@@ -104,7 +104,7 @@ Pitmaster says: ${message}`;
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 500,
+      max_tokens: 1500,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     }),
