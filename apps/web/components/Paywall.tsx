@@ -3,15 +3,13 @@
 
 import { useEffect, useState, ReactNode } from "react";
 import { createClient } from "@/lib/supabase";
-import { getTier } from "@/lib/premium";
+import { getTier, tierMeetsRequirement } from "@/lib/premium";
 import Link from "next/link";
 
 type PaywallProps = {
-  requiredTier: "basic" | "pitmaster";
+  requiredTier: "basic" | "backyard" | "pitmaster";
   children: ReactNode;
 };
-
-const TIER_ORDER = ["free", "basic", "pitmaster"];
 
 export default function Paywall({ requiredTier, children }: PaywallProps) {
   const [userTier, setUserTier] = useState<string>("free");
@@ -36,10 +34,7 @@ export default function Paywall({ requiredTier, children }: PaywallProps) {
     return null;
   }
 
-  const userTierLevel = TIER_ORDER.indexOf(userTier);
-  const requiredTierLevel = TIER_ORDER.indexOf(requiredTier);
-
-  if (userTierLevel >= requiredTierLevel) {
+  if (tierMeetsRequirement(userTier, requiredTier)) {
     return <>{children}</>;
   }
 
@@ -83,10 +78,6 @@ export default function Paywall({ requiredTier, children }: PaywallProps) {
       >
         Upgrade to Unlock
       </Link>
-    </div>
-  );
-}
-      </div>
     </div>
   );
 }

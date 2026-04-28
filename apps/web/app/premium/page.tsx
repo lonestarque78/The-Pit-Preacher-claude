@@ -7,34 +7,50 @@ import { getTier } from "@/lib/premium";
 import Button from "@/components/Button";
 import Link from "next/link";
 
-const TIERS = {
-  basic: {
+const TIERS = [
+  {
+    key: "basic",
     name: "Basic",
-    price: "$7.99",
+    price: "$3.99",
     period: "/mo",
     features: [
+      "Meal Prep",
       "Cook Plan",
-      "Timeline",
+      "Cook Timeline",
       "Fire Management",
       "Seasoning & Rubs",
     ],
   },
-  pitmaster: {
-    name: "Pitmaster",
-    price: "$11.99",
+  {
+    key: "backyard",
+    name: "Backyard",
+    price: "$7.99",
     period: "/mo",
     features: [
       "Everything in Basic",
       "Cook Logs",
       "Flavor Memory",
-      "Fix My Cook",
       "Wood Flavor Lab",
-      "All Premium Features",
+      "Fix My Cook Button",
     ],
   },
-};
+  {
+    key: "pitmaster",
+    name: "Pitmaster",
+    price: "$11.99",
+    period: "/mo",
+    features: [
+      "Everything in Backyard",
+      "Secret Finishing Moves",
+      "Pit Preacher Challenges",
+      "Smoke Color Interpreter",
+      "Perfect Pairings Library",
+      "The Pitmaster's Table",
+    ],
+  },
+];
 
-const TIER_ORDER = ["free", "basic", "pitmaster"];
+const TIER_ORDER = ["free", "basic", "backyard", "pitmaster"];
 
 export default function PremiumPage() {
   const [currentTier, setCurrentTier] = useState<string>("free");
@@ -55,13 +71,11 @@ export default function PremiumPage() {
     });
   }, []);
 
-  async function startCheckout(tier: string) {
+  async function startCheckout(tierKey: string) {
     const res = await fetch("/api/checkout", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ tier }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tier: tierKey }),
     });
 
     const data = await res.json();
@@ -87,9 +101,10 @@ export default function PremiumPage() {
             borderRadius: "var(--radius-md)",
             fontFamily: "var(--font-ui)",
             color: "var(--color-text-muted)",
+            border: "1px solid var(--color-border)",
           }}
         >
-          Current Plan
+          ✓ Current Plan
         </span>
       );
     }
@@ -99,9 +114,16 @@ export default function PremiumPage() {
     }
 
     return (
-      <Button onClick={() => startCheckout(tierKey)}>
-        Switch Plan
-      </Button>
+      <span
+        style={{
+          display: "inline-block",
+          padding: "var(--space-2) var(--space-4)",
+          fontFamily: "var(--font-ui)",
+          color: "var(--color-text-muted)",
+        }}
+      >
+        ✓ Included
+      </span>
     );
   }
 
@@ -143,20 +165,21 @@ export default function PremiumPage() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
           gap: "var(--space-4)",
-          maxWidth: "800px",
+          maxWidth: "1100px",
           margin: "0 auto",
         }}
       >
-        {Object.entries(TIERS).map(([tierKey, tier]) => (
+        {TIERS.map((tier) => (
           <div
-            key={tierKey}
+            key={tier.key}
             style={{
               background: "var(--color-bg-alt)",
               padding: "var(--space-4)",
               borderRadius: "var(--radius-lg)",
-              border: currentTier === tierKey 
-                ? "2px solid var(--color-accent)" 
-                : "2px solid transparent",
+              border:
+                currentTier === tier.key
+                  ? "2px solid var(--color-accent)"
+                  : "2px solid transparent",
             }}
           >
             <h2
@@ -201,7 +224,7 @@ export default function PremiumPage() {
               ))}
             </ul>
 
-            <div>{getButton(tierKey)}</div>
+            <div>{getButton(tier.key)}</div>
           </div>
         ))}
       </div>
