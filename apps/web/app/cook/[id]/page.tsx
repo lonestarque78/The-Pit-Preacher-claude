@@ -218,6 +218,9 @@ export default async function CookDashboardPage({ params }: { params: { id: stri
         <Link href={`/cook/${cookId}/timeline`}>
           <Button>Timeline</Button>
         </Link>
+        <Link href={`/cook/${cookId}/fire`}>
+          <Button>Fire</Button>
+        </Link>
         <Link href={`/cook/${cookId}/events`}>
           <Button>Events</Button>
         </Link>
