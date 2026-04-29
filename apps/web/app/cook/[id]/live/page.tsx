@@ -52,8 +52,8 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   const [showVerse, setShowVerse] = useState(true);
   const [verseFading, setVerseFading] = useState(false);
 
-  const [eventType, setEventType] = useState("");
-  const [message, setMessage] = useState("");
+  const [eventType, setEventType] = useState("temp_log");
+  const [noteInput, setNoteInput] = useState("");
   const [selectedSmokerId, setSelectedSmokerId] = useState("");
 
   const [askInput, setAskInput] = useState("");
@@ -135,17 +135,17 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
 
     // Build note with smoker prefix if a smoker is selected
     const planTools: PlanTool[] = (cook?.plan as any)?.tools ?? [];
-    let fullNote = message;
+    let fullNote = noteInput;
     if (selectedSmokerId && planTools.length > 0) {
       const toolIdx = planTools.findIndex(t => String(t.id) === selectedSmokerId);
       const tool = planTools[toolIdx];
       if (tool) {
         const smokerLabel = `[Smoker ${toolIdx + 1}${tool.name ? ` - ${tool.name}` : ""}]`;
-        fullNote = message ? `${smokerLabel} ${message}` : smokerLabel;
+        fullNote = noteInput ? `${smokerLabel} ${noteInput}` : smokerLabel;
       }
     }
 
-    console.log("inserting event:", { cook_id: cook.id, event_type: eventType, message: fullNote?.trim() });
+    console.log("inserting event:", { cook_id: cook.id, event_type: eventType, message: noteInput });
 
     const { error: eventError } = await supabase.from("cook_events").insert({
       cook_id: cook.id,
@@ -160,8 +160,8 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       return;
     }
 
-    setEventType("");
-    setMessage("");
+    setEventType("temp_log");
+    setNoteInput("");
     loadData();
   };
 
@@ -443,8 +443,8 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         )}
 
         <Input
-          value={message}
-          onChange={e => setMessage(e.target.value)}
+          value={noteInput}
+          onChange={e => setNoteInput(e.target.value)}
           placeholder="Message or note..."
         />
 
