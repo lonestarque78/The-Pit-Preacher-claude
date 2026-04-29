@@ -1,14 +1,14 @@
 // apps/web/app/cook/[id]/summary/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { getRandomVerse } from "@/lib/verses";
 import Button from "@/components/Button";
 import Link from "next/link";
 
-export default function SummaryPage({ params }: { params: { id: string } }) {
-  const cookId = params.id;
+export default function SummaryPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: cookId } = use(params);
 
   const [cook, setCook] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);

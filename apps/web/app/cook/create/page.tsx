@@ -85,6 +85,9 @@ export default function CreateCookPage() {
     const smokerType = tools.map(t => t.name).filter(Boolean).join(", ");
     const woodType = tools.map(t => t.wood).filter(Boolean).join(", ");
 
+    const { data: { user: insertUser } } = await supabase.auth.getUser();
+    console.log("Inserting cook for user:", insertUser?.id);
+
     const { data: cook, error: cookError } = await supabase
       .from("cooks")
       .insert({
@@ -100,6 +103,8 @@ export default function CreateCookPage() {
       })
       .select()
       .single();
+
+    console.log("Cook created:", cook);
 
     if (cookError) {
       setError("Failed to create cook: " + cookError.message);

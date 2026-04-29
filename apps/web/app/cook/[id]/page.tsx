@@ -13,15 +13,17 @@ type PlanItem = {
   smokerId: string | null;
 };
 
-export default async function CookDashboardPage({ params }: { params: { id: string } }) {
+export default async function CookDashboardPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: cookId } = await params;
   const supabase = await createServerClient();
-  const cookId = params.id;
 
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/auth/login");
   }
+
+  console.log("Looking for cook:", cookId, "for user:", user.id);
 
   const { data: cook, error: cookError } = await supabase
     .from("cooks")

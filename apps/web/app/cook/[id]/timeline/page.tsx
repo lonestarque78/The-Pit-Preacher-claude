@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { generateTimeline } from "./engine";
 import Link from "next/link";
@@ -70,8 +70,8 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
-export default function TimelinePage({ params }: { params: { id: string } }) {
-  const cookId = params.id;
+export default function TimelinePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: cookId } = use(params);
   const supabase = createClient();
 
   const [cook, setCook] = useState<any>(null);

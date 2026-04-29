@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
@@ -125,8 +125,8 @@ const labelStyle: React.CSSProperties = {
   marginBottom: "var(--space-1)",
 };
 
-export default function FirePage({ params }: { params: { id: string } }) {
-  const cookId = params.id;
+export default function FirePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: cookId } = use(params);
   const supabase = createClient();
 
   const [cook, setCook] = useState<any>(null);

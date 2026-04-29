@@ -164,9 +164,9 @@ function Timeline({ steps }: { steps: TimelineStep[] }) {
 
 const MEAT_CATEGORIES = new Set(["beef", "pork", "poultry", "lamb", "seafood", "other-meat", "meats"]);
 
-export default async function CookPlanPage({ params }: { params: { id: string } }) {
+export default async function CookPlanPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: cookId } = await params;
   const supabase = await createServerClient();
-  const cookId = params.id;
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");

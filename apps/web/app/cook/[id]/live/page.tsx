@@ -1,7 +1,7 @@
 // apps/web/app/cook/[id]/live/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { getRandomVerse } from "@/lib/verses";
 import Button from "@/components/Button";
@@ -38,8 +38,8 @@ const selectStyle = {
   marginBottom: "var(--space-3)",
 };
 
-export default function LiveModePage({ params }: { params: { id: string } }) {
-  const cookId = params.id;
+export default function LiveModePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: cookId } = use(params);
 
   const [cook, setCook] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
