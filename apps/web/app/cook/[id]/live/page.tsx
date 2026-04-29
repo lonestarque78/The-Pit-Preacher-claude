@@ -150,7 +150,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       }
     }
 
-    console.log("inserting event:", { cook_id: cook.id, event_type: eventType, message: noteInput });
+    console.log("inserting event - cook_id:", cook.id, "event_type:", eventType, "message:", noteInput);
 
     const { error: eventError } = await supabase.from("cook_events").insert({
       cook_id: cook.id,
@@ -192,7 +192,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       })),
     };
 
-    console.log("sending to preacher:", { cookId: cook?.id, message: askInput });
+    console.log("sending to preacher - cookId:", cook?.id, "message:", askInput);
 
     const res = await fetch("/api/preacher", {
       method: "POST",
