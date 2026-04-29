@@ -1,4 +1,5 @@
 import "./globals.css";
+import React from "react";
 import { Playfair_Display, Libre_Baskerville, Oswald } from "next/font/google";
 import Nav from "@/components/Nav";
 
@@ -22,7 +23,7 @@ export const metadata = {
   description: "Your BBQ coaching companion",
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${heading.variable} ${body.variable} ${ui.variable}`}>
       <body>

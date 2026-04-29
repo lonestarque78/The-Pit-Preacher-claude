@@ -50,7 +50,8 @@ function detectStepType(text: string): StepType {
 function detectSmokerIdx(text: string, tools: PlanTool[]): number {
   const t = text.toLowerCase();
   for (let i = 0; i < tools.length; i++) {
-    if (tools[i].name && t.includes(tools[i].name.toLowerCase())) return i;
+    const tool = tools[i];
+    if (tool && tool.name && t.includes(tool.name.toLowerCase())) return i;
     if (t.includes(`smoker ${i + 1}`)) return i;
   }
   return 0;
@@ -99,7 +100,7 @@ function parseTimeline(aiText: string, tools: PlanTool[]): TimelineStep[] | null
 
 function extractPreachersWord(aiText: string): string {
   const paragraphs = aiText.split(/\n\n+/).map(p => p.trim()).filter(Boolean);
-  if (paragraphs.length > 1) return paragraphs[paragraphs.length - 1];
+  if (paragraphs.length > 1) return paragraphs[paragraphs.length - 1] ?? "";
   const sentences = aiText.split(/(?<=[.!?])\s+/).filter(Boolean);
   return sentences.slice(-2).join(" ").trim() || aiText.trim();
 }
@@ -204,7 +205,7 @@ export default async function CookPlanPage({ params }: { params: { id: string } 
   const planItems: PlanItem[] = plan?.items ?? [];
 
   // Forward the auth cookie so /api/preacher can verify the session
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join("; ");
 
   let aiReply = "";
@@ -251,6 +252,7 @@ export default async function CookPlanPage({ params }: { params: { id: string } 
   if (planTools.length > 0) {
     for (let i = 0; i < planTools.length; i++) {
       const tool = planTools[i];
+      if (!tool) continue;
       const assigned = planItems.filter(item => String(item.smokerId) === String(tool.id));
       const meats = assigned.filter(item =>
         !item.category || MEAT_CATEGORIES.has((item.category || "").toLowerCase())

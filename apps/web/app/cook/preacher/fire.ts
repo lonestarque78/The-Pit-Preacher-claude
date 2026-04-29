@@ -1,4 +1,8 @@
-export function fireTip({ pit, temp, phase }) {
+export function fireTip({ pit, temp, phase }: {
+  pit: string;
+  temp: number | string | null;
+  phase: string;
+}) {
   pit = pit.toLowerCase();
 
   const offset = [
@@ -58,7 +62,7 @@ export function fireTip({ pit, temp, phase }) {
 
   // Temp-aware additions
   if (temp !== null) {
-    const t = parseInt(temp);
+    const t = parseInt(String(temp));
 
     if (t < 150) pool.push("Let the heat climb slow and honest");
     if (t >= 150 && t < 170) pool.push("Hold steady through the climb");
@@ -66,5 +70,5 @@ export function fireTip({ pit, temp, phase }) {
     if (t >= 200) pool.push("Ease off the fire, you're close");
   }
 
-  return pool[Math.floor(Math.random() * pool.length)];
+  return pool[Math.floor(Math.random() * pool.length)] ?? "Stay steady";
 }

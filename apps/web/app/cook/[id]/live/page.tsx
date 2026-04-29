@@ -7,7 +7,7 @@ import { getRandomVerse } from "@/lib/verses";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Link from "next/link";
-import { preacherLine } from "../preacher/voice";
+import { preacherLine } from "../../preacher/voice";
 
 type PlanTool = { id: string; name: string; wood: string };
 type PlanItem = {

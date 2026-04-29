@@ -2,7 +2,7 @@ import { createServerClient } from "@/lib/supabase-server";
 import Link from "next/link";
 import Button from "@/components/Button";
 
-export default async function CookEventsPage({ params }) {
+export default async function CookEventsPage({ params }: { params: { id: string } }) {
   const supabase = await createServerClient();
   const cookId = params.id;
 

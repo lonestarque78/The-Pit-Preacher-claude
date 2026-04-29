@@ -67,5 +67,5 @@ export const VERSES: Verse[] = [
 ];
 
 export function getRandomVerse(): Verse {
-  return VERSES[Math.floor(Math.random() * VERSES.length)];
+  return VERSES[Math.floor(Math.random() * VERSES.length)] ?? VERSES[0]!;
 }

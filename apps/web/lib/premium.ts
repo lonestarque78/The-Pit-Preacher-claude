@@ -24,7 +24,7 @@ export async function getTier(userId: string | undefined, supabase: any): Promis
 
 export async function isPremium(userId: string | undefined, supabase: any): Promise<boolean> {
   const tier = await getTier(userId, supabase);
-  return (TIER_RANK[tier] ?? 0) >= TIER_RANK.basic;
+  return (TIER_RANK[tier] ?? 0) >= (TIER_RANK["basic"] ?? 1);
 }
 
 export function tierMeetsRequirement(userTier: string, requiredTier: string): boolean {

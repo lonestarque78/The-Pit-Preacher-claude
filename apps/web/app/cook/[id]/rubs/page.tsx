@@ -329,10 +329,10 @@ export default function RubsPage({ params }: { params: { id: string } }) {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
             {displayItems.map(item => {
-              const profile    = RUB_PROFILES[selectedStyle]?.[item.category] ?? RUB_PROFILES.texas.other;
-              const binder     = BINDERS[item.category];
-              const ratio      = SALT_RATIOS[item.category];
-              const ratioLabel = SALT_RATIO_LABEL[item.category];
+              const profile    = RUB_PROFILES[selectedStyle]?.[item.category] ?? RUB_PROFILES["texas"]?.["other"] ?? "";
+              const binder     = BINDERS[item.category] ?? "";
+              const ratio      = SALT_RATIOS[item.category] ?? 0.005;
+              const ratioLabel = SALT_RATIO_LABEL[item.category] ?? "";
 
               const rawWeight  = weightInputs[item.key] ?? item.defaultWeight;
               const weightNum  = parseFloat(rawWeight);

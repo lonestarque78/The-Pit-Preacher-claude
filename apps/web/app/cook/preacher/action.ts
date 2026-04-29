@@ -1,4 +1,10 @@
-export function actionTip({ phase, pit, stall, nextStep, temp }) {
+export function actionTip({ phase, pit, stall, nextStep, temp }: {
+  phase: string;
+  pit: string;
+  stall: boolean;
+  nextStep?: string;
+  temp: number | null;
+}) {
   pit = pit.toLowerCase();
   phase = phase.toLowerCase();
 

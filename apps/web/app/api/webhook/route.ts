@@ -31,15 +31,17 @@ export async function POST(request: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object as Stripe.CheckoutSession;
+        const session = event.data.object as Stripe.Checkout.Session;
         const customerId = session.customer as string;
         const subscriptionId = session.subscription as string;
 
         // Get the subscription to find the price/tier
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-        const priceId = subscription.items.data[0].price.id;
+        const priceId = subscription.items.data[0]?.price.id ?? "";
         const tier = getTierFromPriceId(priceId);
-        const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rawPeriodEnd = (subscription as any).current_period_end as number | undefined;
+        const periodEnd = rawPeriodEnd ? new Date(rawPeriodEnd * 1000).toISOString() : null;
 
         // Find user by stripe_customer_id
         const { data: existing } = await supabase
@@ -67,9 +69,11 @@ export async function POST(request: Request) {
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
-        const priceId = subscription.items.data[0].price.id;
+        const priceId = subscription.items.data[0]?.price.id ?? "";
         const tier = getTierFromPriceId(priceId);
-        const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rawEnd = (subscription as any).current_period_end as number | undefined;
+        const periodEnd = rawEnd ? new Date(rawEnd * 1000).toISOString() : null;
         const status = subscription.status === "active" ? "active" : "inactive";
 
         await supabase

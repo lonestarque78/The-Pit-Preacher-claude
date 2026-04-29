@@ -1,5 +1,12 @@
-export function preacherLine(context) {
-  const { meat, pit, event, stall, temp, action } = context;
+export function preacherLine(context: {
+  meat?: string;
+  pit?: string;
+  event?: string;
+  stall?: boolean;
+  temp: number | null;
+  action?: string;
+}) {
+  const { meat, pit, event, stall } = context;
 
   // Core personality
   const base = [
@@ -114,5 +121,5 @@ export function preacherLine(context) {
   if (event === "temp_log") pool.push(...tempLines);
 
   // Pick a line
-  return pool[Math.floor(Math.random() * pool.length)];
+  return pool[Math.floor(Math.random() * pool.length)] ?? "Trust your fire";
 }

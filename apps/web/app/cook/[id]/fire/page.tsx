@@ -148,7 +148,8 @@ export default function FirePage({ params }: { params: { id: string } }) {
       setCook(cookData);
 
       const tools: PlanTool[] = (cookData?.plan as any)?.tools ?? [];
-      if (tools.length > 0) setSelectedToolId(String(tools[0].id));
+      const firstTool = tools[0];
+      if (firstTool) setSelectedToolId(String(firstTool.id));
 
       setLoading(false);
     };
@@ -219,7 +220,7 @@ export default function FirePage({ params }: { params: { id: string } }) {
   const smokerName = activeTool?.name || cook.smoker_type || "Smoker";
   const woodType = activeTool?.wood || cook.wood_type || "";
   const smokerType = inferSmokerType(smokerName, cook.smoker_type || "");
-  const fireSteps = FIRE_STEPS[smokerType] ?? FIRE_STEPS.other;
+  const fireSteps = FIRE_STEPS[smokerType] ?? FIRE_STEPS.other ?? [];
   const woodProfile = woodType ? getWoodProfile(woodType) : "";
 
   return (

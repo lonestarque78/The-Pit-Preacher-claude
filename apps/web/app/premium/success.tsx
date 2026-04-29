@@ -2,11 +2,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 
 export default function PremiumSuccess() {
   useEffect(() => {
     async function updateProfile() {
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();

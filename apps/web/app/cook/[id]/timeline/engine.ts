@@ -1,4 +1,5 @@
-export function generateTimeline(cook, items = [], events = []) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function generateTimeline(cook: any, items: any[] = [], events: any[] = []) {
   const start = new Date(cook.created_at);
 
   // Normalize names from cook_items
@@ -75,8 +76,8 @@ export function generateTimeline(cook, items = [], events = []) {
   const tempLogs = events.filter((e) => e.type === "temp_log");
 
   if (tempLogs.length >= 2) {
-    const first = tempLogs[0];
-    const last = tempLogs[tempLogs.length - 1];
+    const first = tempLogs[0]!;
+    const last = tempLogs[tempLogs.length - 1]!;
 
     const firstTemp = parseInt(first.note || "0");
     const lastTemp = parseInt(last.note || "0");
@@ -163,6 +164,6 @@ export function generateTimeline(cook, items = [], events = []) {
   return steps;
 }
 
-function addMinutes(date, minutes) {
+function addMinutes(date: Date, minutes: number): Date {
   return new Date(date.getTime() + minutes * 60000);
 }
