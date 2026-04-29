@@ -124,22 +124,6 @@ export default function CreateCookPage() {
       }
     }
 
-    // Insert cook_pits — one per smoker with a generated pit_id
-    if (tools.length > 0) {
-      const { error: pitsError } = await supabase
-        .from("cook_pits")
-        .insert(tools.map(() => ({
-          cook_id: cook.id,
-          pit_id: crypto.randomUUID(),
-        })));
-
-      if (pitsError) {
-        setError("Cook created but failed to save pits: " + pitsError.message);
-        setCreating(false);
-        return;
-      }
-    }
-
     window.location.href = `/cook/${cook.id}`;
   };
 
