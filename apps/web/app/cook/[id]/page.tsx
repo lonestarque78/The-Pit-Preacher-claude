@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase-server";
 import Button from "@/components/Button";
 import Link from "next/link";
@@ -16,17 +17,29 @@ export default async function CookDashboardPage({ params }: { params: { id: stri
   const supabase = await createServerClient();
   const cookId = params.id;
 
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
   const { data: cook, error: cookError } = await supabase
     .from("cooks")
     .select("*")
     .eq("id", cookId)
+    .eq("user_id", user.id)
     .single();
 
   if (cookError || !cook) {
     return (
       <div style={{ padding: "40px" }}>
-        <h1 style={{ fontFamily: "var(--font-heading)" }}>Cook Not Found</h1>
-        <p>We couldn't find this cook.</p>
+        <h1 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>Cook Not Found</h1>
+        <p style={{ color: "var(--color-text-muted)", marginBottom: "var(--space-4)" }}>
+          We couldn&apos;t find this cook.
+        </p>
+        <Link href="/dashboard">
+          <Button>Back to Dashboard</Button>
+        </Link>
       </div>
     );
   }

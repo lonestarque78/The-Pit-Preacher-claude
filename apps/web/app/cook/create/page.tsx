@@ -107,6 +107,12 @@ export default function CreateCookPage() {
       return;
     }
 
+    if (!cook || !cook.id) {
+      setError("Cook was created but ID was not returned.");
+      setCreating(false);
+      return;
+    }
+
     // Insert cook_items
     if (items.length > 0) {
       const { error: itemsError } = await supabase
