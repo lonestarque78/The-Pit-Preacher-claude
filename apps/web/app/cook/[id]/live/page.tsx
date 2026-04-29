@@ -59,6 +59,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   const [askInput, setAskInput] = useState("");
   const [preacherReply, setPreacherReply] = useState<string | null>(null);
   const [askLoading, setAskLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const supabase = createClient();
 
@@ -115,8 +116,10 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   };
 
   const handleSubmit = async () => {
+    setError("");
+
     if (!eventType) {
-      alert("Select an event type");
+      setError("Select an event type.");
       return;
     }
 
@@ -125,7 +128,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     const { data: { user: authUser } } = await supabase.auth.getUser();
 
     if (!authUser) {
-      alert("You must be logged in");
+      setError("You must be logged in.");
       setSubmitting(false);
       return;
     }
@@ -142,7 +145,9 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       }
     }
 
-    const { error } = await supabase.from("cook_events").insert({
+    console.log("cook id for event:", cook?.id);
+
+    const { error: eventError } = await supabase.from("cook_events").insert({
       cook_id: cookId,
       user_id: authUser.id,
       type: eventType,
@@ -151,9 +156,8 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
 
     setSubmitting(false);
 
-    if (error) {
-      console.error(error);
-      alert("Error adding event");
+    if (eventError) {
+      setError("Failed to log event: " + eventError.message);
       return;
     }
 
@@ -184,11 +188,21 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       })),
     };
 
+    console.log("sending to preacher:", { cookId: cook?.id, message: askInput });
+
     const res = await fetch("/api/preacher", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cookId, message: askInput, cookContext }),
+      body: JSON.stringify({ cookId: cook?.id, message: askInput, cookContext }),
     });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      setPreacherReply("The Preacher could not be reached: " + errText);
+      setAskInput("");
+      setAskLoading(false);
+      return;
+    }
 
     const data = await res.json();
     setPreacherReply(data.reply ?? "The Preacher is silent. Try again.");
@@ -268,6 +282,22 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
 
   return (
     <div style={{ padding: "40px" }}>
+      {error && (
+        <div style={{
+          background: "#2a0a0a",
+          border: "1px solid #c0392b",
+          borderRadius: "var(--radius-md)",
+          padding: "var(--space-3) var(--space-4)",
+          marginBottom: "var(--space-4)",
+          color: "#c0392b",
+          fontFamily: "var(--font-body)",
+          fontSize: "0.9rem",
+          lineHeight: 1.5,
+        }}>
+          {error}
+        </div>
+      )}
+
       <div style={{ marginBottom: "var(--space-4)" }}>
         <Link href={`/cook/${cookId}`}>
           <Button>← Back to Cook</Button>
