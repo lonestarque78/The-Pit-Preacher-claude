@@ -145,13 +145,12 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       }
     }
 
-    console.log("cook id for event:", cook?.id);
+    console.log("inserting event:", { cook_id: cook.id, event_type: eventType, message: fullNote?.trim() });
 
     const { error: eventError } = await supabase.from("cook_events").insert({
-      cook_id: cookId,
-      user_id: authUser.id,
-      type: eventType,
-      note: fullNote,
+      cook_id: cook.id,
+      event_type: eventType,
+      message: fullNote.trim() || null,
     });
 
     setSubmitting(false);
