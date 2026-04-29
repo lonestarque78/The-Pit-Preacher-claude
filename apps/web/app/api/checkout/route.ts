@@ -3,6 +3,9 @@ import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2026-03-25.dahlia",
 });

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 type PlanTool = { id: string; name: string; wood: string };
 type PlanItem = {
   name: string;
