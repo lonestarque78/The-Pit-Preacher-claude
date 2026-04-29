@@ -104,7 +104,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     const { data: eventsData } = await supabase
       .from("cook_events")
       .select("*")
-      .eq("cook_id", cookId)
+      .eq("cook_id", cookData?.id ?? cookId)
       .order("created_at", { ascending: false });
 
     setCook(cookData);
@@ -150,13 +150,14 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       }
     }
 
-    console.log("inserting event - cook_id:", cook.id, "event_type:", eventType, "message:", noteInput);
-
-    const { error: eventError } = await supabase.from("cook_events").insert({
+    const insertPayload = {
       cook_id: cook.id,
       event_type: eventType,
       message: fullNote.trim() || null,
-    });
+    };
+    console.log("payload:", JSON.stringify(insertPayload));
+
+    const { error: eventError } = await supabase.from("cook_events").insert(insertPayload);
 
     setSubmitting(false);
 
@@ -486,13 +487,13 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
                 justifyContent: "space-between",
                 marginBottom: "var(--space-1)",
               }}>
-                <strong>{event.type}</strong>
+                <strong>{event.event_type}</strong>
                 <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>
                   {new Date(event.created_at).toLocaleString()}
                 </span>
               </div>
-              {event.note && (
-                <p style={{ color: "var(--color-text-muted)", margin: 0 }}>{event.note}</p>
+              {event.message && (
+                <p style={{ color: "var(--color-text-muted)", margin: 0 }}>{event.message}</p>
               )}
             </div>
           ))}
