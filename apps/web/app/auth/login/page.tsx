@@ -127,7 +127,7 @@ export default function LoginPage() {
     const { data, error } = await supabase.auth.signUp({
       email: signupEmail.trim(),
       password: signupPassword,
-      options: { data: { display_name: displayName.trim() } },
+      options: { data: { display_name: displayName.trim() }, emailRedirectTo: undefined },
     });
 
     if (error || !data.user) {
@@ -164,8 +164,21 @@ export default function LoginPage() {
 
     await supabase.from("user_preferences").insert({ user_id: userId });
 
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: signupEmail.trim(),
+      password: signupPassword,
+    });
+
     setSignupLoading(false);
-    setSuccessMessage("Welcome to the congregation. Check your email to verify your account.");
+
+    if (signInError) {
+      setMode("login");
+      setLoginEmail(signupEmail.trim());
+      setSignupError("");
+      return;
+    }
+
+    window.location.href = "/dashboard";
   };
 
   // ── Render ───────────────────────────────────────────────────────────────────
