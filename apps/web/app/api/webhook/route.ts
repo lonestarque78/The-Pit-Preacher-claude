@@ -1,20 +1,17 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
-import { createClient } from "@supabase/supabase-js";
+import type Stripe from "stripe";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-
-// Use service role key here — webhook runs outside user session
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(request: Request) {
+  const stripe = new (await import("stripe")).default(process.env.STRIPE_SECRET_KEY!);
+  const supabase = (await import("@supabase/supabase-js")).createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
 
