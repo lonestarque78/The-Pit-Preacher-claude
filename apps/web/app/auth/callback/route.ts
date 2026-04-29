@@ -10,6 +10,6 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  const origin = request.headers.get("origin") || "";
-  return NextResponse.redirect(`${origin}/setup`);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+  return NextResponse.redirect(`${siteUrl}/dashboard`);
 }

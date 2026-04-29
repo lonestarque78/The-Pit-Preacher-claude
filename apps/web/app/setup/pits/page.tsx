@@ -57,7 +57,7 @@ export default function PitSetupPage() {
       return;
     }
 
-    window.location.href = "/setup";
+    window.location.href = "/dashboard";
   };
 
   return (
