@@ -26,6 +26,7 @@ export default function CreateCookPage() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -40,7 +41,7 @@ export default function CreateCookPage() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        alert("You must be logged in");
+        setError("You must be logged in.");
         setLoading(false);
         return;
       }
@@ -53,8 +54,7 @@ export default function CreateCookPage() {
         .single();
 
       if (error || !data) {
-        console.error(error);
-        alert("Session not found");
+        setError(error ? "Failed to load session: " + error.message : "Session not found.");
         setLoading(false);
         return;
       }
@@ -73,7 +73,7 @@ export default function CreateCookPage() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      alert("You must be logged in");
+      setError("You must be logged in.");
       setCreating(false);
       return;
     }
@@ -102,8 +102,7 @@ export default function CreateCookPage() {
       .single();
 
     if (cookError) {
-      console.error(cookError);
-      alert("Error creating cook");
+      setError("Failed to create cook: " + cookError.message);
       setCreating(false);
       return;
     }
@@ -118,7 +117,11 @@ export default function CreateCookPage() {
           notes: item.notes || "",
         })));
 
-      if (itemsError) console.error(itemsError);
+      if (itemsError) {
+        setError("Cook created but failed to save items: " + itemsError.message);
+        setCreating(false);
+        return;
+      }
     }
 
     // Insert cook_pits — one per smoker with a generated pit_id
@@ -130,7 +133,11 @@ export default function CreateCookPage() {
           pit_id: crypto.randomUUID(),
         })));
 
-      if (pitsError) console.error(pitsError);
+      if (pitsError) {
+        setError("Cook created but failed to save pits: " + pitsError.message);
+        setCreating(false);
+        return;
+      }
     }
 
     window.location.href = `/cook/${cook.id}`;
@@ -164,6 +171,22 @@ export default function CreateCookPage() {
 
   return (
     <div style={{ padding: "40px", maxWidth: "760px" }}>
+      {error && (
+        <div style={{
+          background: "#2a0a0a",
+          border: "1px solid #c0392b",
+          borderRadius: "var(--radius-md)",
+          padding: "var(--space-3) var(--space-4)",
+          marginBottom: "var(--space-4)",
+          color: "#c0392b",
+          fontFamily: "var(--font-body)",
+          fontSize: "0.9rem",
+          lineHeight: 1.5,
+        }}>
+          {error}
+        </div>
+      )}
+
       <h1 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-2)" }}>
         Start Your Cook
       </h1>
