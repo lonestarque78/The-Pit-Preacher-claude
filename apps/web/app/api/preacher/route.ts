@@ -114,7 +114,9 @@ Pitmaster says: ${message}`;
   });
 
   if (!anthropicRes.ok) {
-    return NextResponse.json({ error: "AI request failed" }, { status: 500 });
+    const errBody = await anthropicRes.text();
+    console.error("Anthropic error:", anthropicRes.status, errBody);
+    return NextResponse.json({ error: "AI request failed", detail: errBody }, { status: 500 });
   }
 
   const data = await anthropicRes.json();

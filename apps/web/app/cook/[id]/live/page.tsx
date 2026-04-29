@@ -48,9 +48,14 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   const [submitting, setSubmitting] = useState(false);
   const [user, setUser] = useState<any>(null);
 
-  const [loadingVerse] = useState(() => getRandomVerse());
-  const [showVerse, setShowVerse] = useState(true);
+  const [loadingVerse, setLoadingVerse] = useState<{ text: string; chapter: string } | null>(null);
+  const [showVerse, setShowVerse] = useState(false);
   const [verseFading, setVerseFading] = useState(false);
+
+  useEffect(() => {
+    setLoadingVerse(getRandomVerse());
+    setShowVerse(true);
+  }, []);
 
   const [eventType, setEventType] = useState("temp_log");
   const [noteInput, setNoteInput] = useState("");
@@ -244,7 +249,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
           lineHeight: 1.55,
           marginBottom: "var(--space-3)",
         }}>
-          &ldquo;{loadingVerse.text}&rdquo;
+          &ldquo;{loadingVerse?.text}&rdquo;
         </p>
         <p style={{
           fontFamily: "var(--font-ui)",
@@ -254,7 +259,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
           fontSize: "0.75rem",
           marginBottom: "var(--space-4)",
         }}>
-          {loadingVerse.chapter}
+          {loadingVerse?.chapter}
         </p>
         <p style={{
           fontFamily: "var(--font-body)",
