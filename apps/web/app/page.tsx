@@ -278,6 +278,7 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [authError, setAuthError] = useState(false);
+  const [buildError, setBuildError] = useState("");
 
   const eatingTime = (() => {
     const d = new Date(pickerDate);
@@ -366,10 +367,12 @@ export default function Home() {
 
   const handleBuild = async () => {
     setAuthError(false);
+    setBuildError("");
     if (!user) { setAuthError(true); return; }
     setSaving(true);
 
-    const { data, error } = await supabase
+    // Insert meal_prep_session
+    const { data: sessionData, error: sessionError } = await supabase
       .from("meal_prep_sessions")
       .insert({
         user_id: user.id,
@@ -385,15 +388,60 @@ export default function Home() {
       .select()
       .single();
 
-    setSaving(false);
-
-    if (error || !data) {
-      console.error(error);
-      alert("Error saving prep session");
+    if (sessionError || !sessionData) {
+      console.error(sessionError);
+      setBuildError("Failed to save prep session: " + (sessionError?.message ?? "unknown error"));
+      setSaving(false);
       return;
     }
 
-    window.location.href = `/cook/create?session=${data.id}`;
+    // Insert cook
+    const label = selectedItems.map(i => i.name).join(" + ") || "Cook";
+    const smokerType = smokers.map(s => s.name).filter(Boolean).join(", ");
+    const woodType = smokers.map(s => s.wood).filter(Boolean).join(", ");
+
+    const { data: cook, error: cookError } = await supabase
+      .from("cooks")
+      .insert({
+        user_id: user.id,
+        prep_session_id: sessionData.id,
+        label,
+        cooking_style: cookingStyle,
+        smoker_type: smokerType,
+        wood_type: woodType,
+        eat_time: eatingTime,
+        status: "in_progress",
+        plan: { tools: smokers, items: selectedItems },
+      })
+      .select()
+      .single();
+
+    if (cookError || !cook?.id) {
+      console.error(cookError);
+      setBuildError("Failed to create cook: " + (cookError?.message ?? "ID not returned"));
+      setSaving(false);
+      return;
+    }
+
+    // Insert cook_items
+    if (selectedItems.length > 0) {
+      const { error: itemsError } = await supabase
+        .from("cook_items")
+        .insert(selectedItems.map(item => ({
+          cook_id: cook.id,
+          name: item.name,
+          notes: item.notes || "",
+        })));
+
+      if (itemsError) {
+        console.error(itemsError);
+        setBuildError("Cook created but failed to save items: " + itemsError.message);
+        setSaving(false);
+        return;
+      }
+    }
+
+    window.location.href = `/cook/${cook.id}`;
   };
 
   // ── Tile renderer ────────────────────────────────────────────────────────────
@@ -1223,8 +1271,24 @@ export default function Home() {
               transition:   "background 0.15s",
             }}
           >
-            {saving ? "Building..." : "Build My Cook Plan"}
+            {saving ? "Building your cook..." : "Build My Cook Plan"}
           </button>
+
+          {buildError && (
+            <div style={{
+              marginTop: "var(--space-3)",
+              padding: "var(--space-2) var(--space-3)",
+              background: "#2a0a0a",
+              border: "1px solid #c0392b",
+              borderRadius: "var(--radius-sm)",
+              color: "#c0392b",
+              fontFamily: "var(--font-body)",
+              fontSize: "0.875rem",
+              lineHeight: 1.5,
+            }}>
+              {buildError}
+            </div>
+          )}
 
           {authError && (
             <div style={{ textAlign: "center", marginTop: "var(--space-3)", fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
