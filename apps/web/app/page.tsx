@@ -233,11 +233,11 @@ const okBtn: React.CSSProperties = {
 
 const rowLabel: React.CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: "0.75rem",
+  fontSize: "0.7rem",
   color: "#C9973A",
   textTransform: "uppercase",
   letterSpacing: "0.15em",
-  marginBottom: "var(--space-2)",
+  marginBottom: "var(--space-1)",
   marginTop: 0,
 };
 
@@ -278,8 +278,6 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [authError, setAuthError] = useState(false);
-  const [verseIdx, setVerseIdx] = useState(0);
-  const [verseVisible, setVerseVisible] = useState(true);
 
   const eatingTime = (() => {
     const d = new Date(pickerDate);
@@ -290,17 +288,6 @@ export default function Home() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setVerseVisible(false);
-      setTimeout(() => {
-        setVerseIdx(prev => (prev + 1) % VERSES.length);
-        setVerseVisible(true);
-      }, 500);
-    }, 8000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -1033,7 +1020,7 @@ export default function Home() {
           radial-gradient(ellipse at 50% 110%, rgba(232,98,10,0.15) 0%, transparent 55%),
           linear-gradient(180deg, #0c0a08 0%, #1a1008 40%, #0c0a08 100%)
         `,
-        padding: "2.5rem 2rem 1.5rem",
+        padding: "1.5rem 2rem 1rem",
         textAlign: "center",
       }}>
         <p style={{
@@ -1092,11 +1079,26 @@ export default function Home() {
       {/* Gold divider */}
       <div style={{ height: "1px", background: "rgba(201,151,58,0.2)" }} />
 
+      {/* Static verse */}
+      <p style={{
+        fontFamily: "var(--font-body)",
+        fontStyle:  "italic",
+        color:      "var(--color-text-muted)",
+        fontSize:   "0.85rem",
+        textAlign:  "center",
+        margin:     "var(--space-2) auto 0",
+        maxWidth:   "520px",
+        lineHeight: 1.6,
+        padding:    "0 var(--space-3)",
+      }}>
+        &ldquo;{VERSES[0]}&rdquo;
+      </p>
+
       {/* ── MAIN BUILDER ── */}
-      <div style={{ maxWidth: "920px", margin: "0 auto", padding: "var(--space-4) var(--space-4) 80px" }}>
+      <div style={{ maxWidth: "920px", margin: "0 auto", padding: "var(--space-3) var(--space-3) 40px" }}>
 
         {/* ROW 1 — What are you cooking? */}
-        <div style={{ marginBottom: "var(--space-4)" }}>
+        <div style={{ marginBottom: "var(--space-3)" }}>
           <p style={rowLabel}>What are you cooking?</p>
           <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
             {CATEGORIES.map(cat => {
@@ -1112,14 +1114,13 @@ export default function Home() {
                     background: "var(--color-bg-alt)",
                     border: count > 0 ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
                     borderRadius: "var(--radius-lg)",
-                    padding: "var(--space-3)",
+                    padding: "var(--space-2) var(--space-3)",
                     textAlign: "center",
                     cursor: "pointer",
                     transition: "border-color 0.12s",
                   }}
                 >
-                  <div style={{ fontSize: "2rem", marginBottom: "4px" }}>{CATEGORY_EMOJIS[cat.key]}</div>
-                  <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.1rem", marginBottom: count > 0 ? "var(--space-1)" : 0 }}>
+                  <div style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", marginBottom: count > 0 ? "var(--space-1)" : 0 }}>
                     {cat.label}
                   </div>
                   {count > 0 && (
@@ -1159,7 +1160,7 @@ export default function Home() {
         </div>
 
         {/* ROW 2 — Cook Settings */}
-        <div style={{ marginBottom: "var(--space-4)" }}>
+        <div style={{ marginBottom: "var(--space-3)" }}>
           <p style={rowLabel}>Cook Settings</p>
           <div
             onClick={() => setOpenPanel("settings")}
@@ -1167,7 +1168,7 @@ export default function Home() {
               background: "var(--color-bg-alt)",
               border: "1px solid var(--color-border)",
               borderRadius: "var(--radius-lg)",
-              padding: "var(--space-3) var(--space-4)",
+              padding: "var(--space-2) var(--space-3)",
               cursor: "pointer",
               display: "flex",
               justifyContent: "space-between",
@@ -1181,7 +1182,7 @@ export default function Home() {
                 gap: "var(--space-3)",
                 flexWrap: "wrap",
                 fontFamily: "var(--font-body)",
-                fontSize: "0.875rem",
+                fontSize: "0.8rem",
                 color: "var(--color-text-muted)",
                 lineHeight: 1.8,
               }}>
@@ -1205,13 +1206,13 @@ export default function Home() {
         </div>
 
         {/* BUILD BUTTON */}
-        <div style={{ marginBottom: "var(--space-5)" }}>
+        <div style={{ marginBottom: "var(--space-3)" }}>
           <button
             onClick={handleBuild}
             disabled={isBuildDisabled || saving}
             style={{
               width:        "100%",
-              padding:      "var(--space-4)",
+              padding:      "10px 20px",
               background:   isBuildDisabled || saving ? "var(--color-bg-alt)" : "var(--color-accent)",
               color:        isBuildDisabled || saving ? "var(--color-text-muted)" : "white",
               border:       "none",
@@ -1247,23 +1248,6 @@ export default function Home() {
               </p>
             </div>
           )}
-        </div>
-
-        {/* ROTATING VERSE */}
-        <div style={{ textAlign: "center" }}>
-          <p style={{
-            fontFamily: "var(--font-body)",
-            fontStyle:  "italic",
-            color:      "var(--color-text-muted)",
-            fontSize:   "0.9rem",
-            margin:     "0 auto",
-            maxWidth:   "520px",
-            lineHeight: 1.7,
-            opacity:    verseVisible ? 1 : 0,
-            transition: "opacity 0.5s ease",
-          }}>
-            &ldquo;{VERSES[verseIdx]}&rdquo;
-          </p>
         </div>
 
       </div>
