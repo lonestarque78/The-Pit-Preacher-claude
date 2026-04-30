@@ -26,9 +26,9 @@ type Smoker = {
 const BEEF = [
   "Whole Packer Brisket", "Brisket Flat", "Brisket Point",
   "Prime Rib / Standing Rib Roast", "Beef Tenderloin",
-  "Beef Short Ribs (Plate)", "Chuck Short Ribs", "Ribeye",
+  "Beef Short Ribs (Plate)", "Dino Ribs", "Ribeye",
   "Tomahawk Ribeye", "Smoked Hamburgers", "Smoked Meatloaf",
-  "Chuck Roast", "Beef Cheeks", "Tri-Tip",
+  "Chuck Roast", "Tri-Tip",
 ];
 
 const PORK = [
@@ -50,17 +50,18 @@ const SEAFOOD = [
 
 const APPETIZERS = [
   "Jalapeño Poppers", "Armadillo Eggs", "Bacon Wrapped Anything",
-  "Smoked Deviled Eggs", "Burnt Ends (Brisket Point)", "Pork Belly Burnt Ends",
-  "Smoked Queso", "Seekh Kebabs", "Chicken Tikka", "Smoked Paneer Tikka",
+  "Smoked Deviled Eggs", "Smoked Sausage Links", "Boudin Balls",
+  "Jalapeño Cheddar Sausage", "Andouille Sausage", "Smoked Queso",
+  "Seekh Kebabs", "Chicken Tikka", "Smoked Paneer Tikka",
 ];
 
 const SIDES = [
-  "Smoked Mac and Cheese", "Pit Beans with Brisket Drippings",
-  "Smoked Baked Beans", "Smoked Potatoes", "Smoked Twice Baked Potatoes",
-  "Corn on the Cob", "Smoked Cream Corn", "Smoked Jalapeño Cornbread",
-  "Smoked Collard Greens", "Smoked Queso", "Santa Maria Pinquito Beans",
-  "Portobello Mushroom Caps", "Whole Cauliflower", "Stuffed Bell Peppers",
-  "Smoked Peach Cobbler", "Smoked Brownies",
+  "Smoked Mac and Cheese", "Smoked Baked Beans", "Smoked Baked Potatoes",
+  "Smoked Twice Baked Potatoes", "Corn on the Cob", "Smoked Cream Corn",
+  "Smoked Jalapeño Cornbread", "Brussels Sprouts", "Smoked Asparagus",
+  "Smoked Collard Greens", "Santa Maria Pinquito Beans",
+  "Portobello Mushroom Caps", "Stuffed Bell Peppers",
+  "Smoked Peach Cobbler", "Smoked Brownies", "Smoked Deviled Eggs",
 ];
 
 const MEAT_TABS = [
@@ -68,6 +69,12 @@ const MEAT_TABS = [
   { key: "pork",    label: "Pork",    items: PORK },
   { key: "chicken", label: "Chicken", items: CHICKEN },
   { key: "seafood", label: "Seafood", items: SEAFOOD },
+];
+
+const CATEGORIES = [
+  { key: "meats",      label: "Meats" },
+  { key: "sides",      label: "Sides" },
+  { key: "appetizers", label: "Appetizers" },
 ];
 
 const COOKING_STYLES = [
@@ -85,24 +92,40 @@ const VERSES = [
   "If you tend to the pit with pride, the meat will preach on its own.",
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Time slots: 10am–10pm in 30min increments ────────────────────────────────
 
-function defaultEatingTime() {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T18:00`;
+const TIME_SLOTS: string[] = [];
+for (let h = 10; h <= 22; h++) {
+  TIME_SLOTS.push(`${String(h).padStart(2, "0")}:00`);
+  if (h < 22) TIME_SLOTS.push(`${String(h).padStart(2, "0")}:30`);
 }
 
-function formatEatingTime(value: string) {
-  if (!value) return "";
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+}
+
+function formatTimeSlot(time: string): string {
+  const [hStr, mStr] = time.split(":");
+  const h = parseInt(hStr ?? "0", 10);
+  const m = mStr ?? "00";
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${m} ${period}`;
+}
+
+function formatEatingTime(iso: string) {
+  if (!iso) return "";
   try {
-    return new Date(value).toLocaleString(undefined, {
+    return new Date(iso).toLocaleString(undefined, {
       weekday: "short", month: "short", day: "numeric",
       hour: "numeric", minute: "2-digit",
     });
   } catch {
-    return value;
+    return iso;
   }
 }
 
@@ -131,7 +154,7 @@ const sectionSub: React.CSSProperties = {
 
 const tileGrid: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
   gap: "var(--space-2)",
 };
 
@@ -180,14 +203,28 @@ const fieldInput: React.CSSProperties = {
 export default function Home() {
   const supabase = createClient();
 
-  // Prep state
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [openPanel, setOpenPanel] = useState<string | null>(null);
   const [activeMeatTab, setActiveMeatTab] = useState("beef");
   const [otherVisible, setOtherVisible] = useState<Record<string, boolean>>({});
   const [otherText, setOtherText] = useState<Record<string, string>>({});
   const [cookingStyle, setCookingStyle] = useState("");
-  const [eatingTime, setEatingTime] = useState(defaultEatingTime());
+
+  // Date/time picker state
+  const [next14Days] = useState<Date[]>(() =>
+    Array.from({ length: 14 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() + i + 1);
+      return d;
+    })
+  );
+  const [pickerDate, setPickerDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d;
+  });
+  const [pickerTime, setPickerTime] = useState("18:00");
+
   const [flavorSmoke, setFlavorSmoke] = useState(7);
   const [flavorBark, setFlavorBark] = useState(8);
   const [flavorTenderness, setFlavorTenderness] = useState(7);
@@ -195,15 +232,22 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [authError, setAuthError] = useState(false);
-
-  // Verse rotation state
   const [verseIdx, setVerseIdx] = useState(0);
   const [verseVisible, setVerseVisible] = useState(true);
+
+  // Compute eating time ISO string from picker state
+  const eatingTime = (() => {
+    const d = new Date(pickerDate);
+    const [hStr, mStr] = pickerTime.split(":");
+    d.setHours(parseInt(hStr ?? "18", 10), parseInt(mStr ?? "0", 10), 0, 0);
+    return d.toISOString();
+  })();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
   }, []);
 
+  // Verse rotation
   useEffect(() => {
     const interval = setInterval(() => {
       setVerseVisible(false);
@@ -215,6 +259,18 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  // Auto-assign to sole named smoker
+  useEffect(() => {
+    const named = smokers.filter(s => s.name.trim());
+    if (named.length === 1) {
+      const firstId = named[0]!.id;
+      setSelectedItems(prev => {
+        if (prev.every(i => i.smokerId === firstId)) return prev;
+        return prev.map(i => ({ ...i, smokerId: firstId }));
+      });
+    }
+  }, [smokers]);
+
   // ── Item helpers ─────────────────────────────────────────────────────────────
 
   const toggleItem = (name: string, category: string) => {
@@ -222,7 +278,9 @@ export default function Home() {
     if (exists) {
       setSelectedItems(prev => prev.filter(i => !(i.name === name && i.category === category)));
     } else {
-      setSelectedItems(prev => [...prev, { name, category, quantity: 1, weight: "", notes: "", smokerId: null }]);
+      const named = smokers.filter(s => s.name.trim());
+      const autoSmokerId = named.length === 1 ? named[0]!.id : null;
+      setSelectedItems(prev => [...prev, { name, category, quantity: 1, weight: "", notes: "", smokerId: autoSmokerId }]);
     }
   };
 
@@ -247,7 +305,9 @@ export default function Home() {
 
   const addSmoker = () => {
     if (smokers.length >= 3) return;
-    setSmokers(prev => [...prev, { id: `s${prev.length + 1}`, name: "", wood: "" }]);
+    const newId = `s${Date.now()}`;
+    setSmokers(prev => [...prev, { id: newId, name: "", wood: "" }]);
+    setSelectedItems(prev => prev.map(i => ({ ...i, smokerId: null })));
   };
 
   const removeSmoker = (id: string) => {
@@ -259,7 +319,7 @@ export default function Home() {
 
   const namedSmokers = smokers.filter(s => s.name.trim());
   const hasItems = selectedItems.length > 0;
-  const hasUnassigned = namedSmokers.length > 0 && selectedItems.some(i => i.smokerId === null);
+  const hasUnassigned = namedSmokers.length > 1 && selectedItems.some(i => i.smokerId === null);
   const isBuildDisabled = !hasItems || !eatingTime || hasUnassigned;
 
   const handleBuild = async () => {
@@ -305,20 +365,15 @@ export default function Home() {
         key={name}
         onClick={() => toggleItem(name, category)}
         style={{
-          background: sel ? "var(--color-bg)" : "var(--color-bg-alt)",
-          border: sel ? "2px solid var(--color-accent)" : "2px solid transparent",
+          background: sel ? "rgba(255,106,0,0.08)" : "var(--color-bg)",
+          border: sel ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
           borderRadius: "var(--radius-md)",
-          padding: "var(--space-2) var(--space-3)",
+          padding: "var(--space-3)",
           cursor: "pointer",
-          transition: "border-color 0.12s",
+          transition: "border-color 0.12s, background 0.12s",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "6px" }}>
-          <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.88rem", lineHeight: 1.35 }}>{name}</span>
-          {sel && (
-            <span style={{ color: "var(--color-accent)", fontWeight: 700, flexShrink: 0, fontSize: "0.9rem" }}>✓</span>
-          )}
-        </div>
+        <div style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", lineHeight: 1.35 }}>{name}</div>
 
         {sel && (
           <div onClick={e => e.stopPropagation()} style={{ marginTop: "var(--space-2)" }}>
@@ -344,12 +399,6 @@ export default function Home() {
                 style={{ ...miniInput, marginBottom: "5px" }}
               />
             )}
-            <input
-              value={sel.notes}
-              onChange={e => updateItem(name, category, { notes: e.target.value })}
-              placeholder="Notes..."
-              style={miniInput}
-            />
           </div>
         )}
       </div>
@@ -362,10 +411,10 @@ export default function Home() {
       <div
         key="__other__"
         style={{
-          background: "var(--color-bg-alt)",
-          border: "2px dashed var(--color-border)",
+          background: "var(--color-bg)",
+          border: "1px dashed var(--color-border)",
           borderRadius: "var(--radius-md)",
-          padding: "var(--space-2) var(--space-3)",
+          padding: "var(--space-3)",
           cursor: visible ? "default" : "pointer",
           minHeight: "44px",
           display: "flex",
@@ -375,7 +424,7 @@ export default function Home() {
         onClick={() => !visible && setOtherVisible(prev => ({ ...prev, [key]: true }))}
       >
         {!visible ? (
-          <span style={{ fontFamily: "var(--font-ui)", color: "var(--color-text-muted)", fontSize: "0.88rem" }}>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", color: "var(--color-text-muted)" }}>
             + Other
           </span>
         ) : (
@@ -414,163 +463,213 @@ export default function Home() {
     );
   };
 
-  // ── Category accordion ───────────────────────────────────────────────────────
-
-  const renderCategoryCard = (key: string, label: string, count: number, content: React.ReactNode) => {
-    const open = expandedCategory === key;
-    return (
-      <div
-        key={key}
-        style={{
-          background: "var(--color-bg)",
-          border: open ? "2px solid var(--color-accent)" : "2px solid var(--color-border)",
-          borderRadius: "var(--radius-lg)",
-          marginBottom: "var(--space-3)",
-          overflow: "hidden",
-          transition: "border-color 0.12s",
-        }}
-      >
-        <div
-          onClick={() => setExpandedCategory(open ? null : key)}
-          style={{
-            padding: "var(--space-3) var(--space-4)",
-            cursor: "pointer",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <div>
-            <span style={{ fontFamily: "var(--font-heading)", fontSize: "1.15rem" }}>{label}</span>
-            {count > 0 && (
-              <span style={{
-                marginLeft: "var(--space-2)",
-                fontFamily: "var(--font-ui)",
-                fontSize: "0.8rem",
-                color: "var(--color-accent)",
-                background: "var(--color-bg-alt)",
-                padding: "2px 8px",
-                borderRadius: "var(--radius-sm)",
-              }}>
-                {count} selected
-              </span>
-            )}
-          </div>
-          <span style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>
-            {open ? "▲" : "▼"}
-          </span>
-        </div>
-
-        {open && (
-          <div style={{ padding: "0 var(--space-4) var(--space-4)" }}>
-            {content}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const meatsContent = (
-    <>
-      <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-3)", flexWrap: "wrap" }}>
-        {MEAT_TABS.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveMeatTab(tab.key)}
-            style={{
-              padding: "6px 18px",
-              background: activeMeatTab === tab.key ? "var(--color-accent)" : "var(--color-bg-alt)",
-              color: activeMeatTab === tab.key ? "white" : "var(--color-text)",
-              border: activeMeatTab === tab.key ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
-              borderRadius: "var(--radius-md)",
-              cursor: "pointer",
-              fontFamily: "var(--font-ui)",
-              fontSize: "0.9rem",
-              transition: "background 0.12s",
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      <div style={tileGrid}>
-        {MEAT_TABS.find(t => t.key === activeMeatTab)!.items.map(name => renderTile(name, "meats"))}
-        {renderOtherTile(`meats-${activeMeatTab}`, "meats")}
-      </div>
-    </>
-  );
-
-  const sidesContent = (
-    <div style={tileGrid}>
-      {SIDES.map(name => renderTile(name, "sides"))}
-      {renderOtherTile("sides", "sides")}
-    </div>
-  );
-
-  const appetizersContent = (
-    <div style={tileGrid}>
-      {APPETIZERS.map(name => renderTile(name, "appetizers"))}
-      {renderOtherTile("appetizers", "appetizers")}
-    </div>
-  );
+  // ── Panel content ────────────────────────────────────────────────────────────
 
   const meatsCount      = selectedItems.filter(i => i.category === "meats").length;
   const sidesCount      = selectedItems.filter(i => i.category === "sides").length;
   const appetizersCount = selectedItems.filter(i => i.category === "appetizers").length;
+
+  const categoryCount: Record<string, number> = {
+    meats: meatsCount,
+    sides: sidesCount,
+    appetizers: appetizersCount,
+  };
+
+  const categoryLabel: Record<string, string> = {
+    meats: "Meats",
+    sides: "Sides",
+    appetizers: "Appetizers",
+  };
+
+  const renderPanelContent = () => {
+    if (openPanel === "meats") {
+      return (
+        <>
+          <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-3)", flexWrap: "wrap" }}>
+            {MEAT_TABS.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveMeatTab(tab.key)}
+                style={{
+                  padding: "6px 18px",
+                  background: "none",
+                  border: "none",
+                  borderBottom: activeMeatTab === tab.key ? "2px solid var(--color-accent)" : "2px solid transparent",
+                  color: activeMeatTab === tab.key ? "var(--color-accent)" : "var(--color-text-muted)",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  paddingLeft: 0,
+                  paddingRight: "var(--space-3)",
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div style={tileGrid}>
+            {MEAT_TABS.find(t => t.key === activeMeatTab)!.items.map(name => renderTile(name, "meats"))}
+            {renderOtherTile(`meats-${activeMeatTab}`, "meats")}
+          </div>
+        </>
+      );
+    }
+    if (openPanel === "appetizers") {
+      return (
+        <div style={tileGrid}>
+          {APPETIZERS.map(name => renderTile(name, "appetizers"))}
+          {renderOtherTile("appetizers", "appetizers")}
+        </div>
+      );
+    }
+    if (openPanel === "sides") {
+      return (
+        <div style={tileGrid}>
+          {SIDES.map(name => renderTile(name, "sides"))}
+          {renderOtherTile("sides", "sides")}
+        </div>
+      );
+    }
+    return null;
+  };
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <div>
 
+      {/* ── FLOATING PANEL OVERLAY ── */}
+      {openPanel && (
+        <>
+          <div
+            onClick={() => setOpenPanel(null)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.7)",
+              zIndex: 100,
+            }}
+          />
+          <div style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "min(680px, 95vw)",
+            maxHeight: "80vh",
+            overflowY: "auto",
+            background: "var(--color-bg-alt)",
+            borderRadius: "var(--radius-lg)",
+            padding: "var(--space-4)",
+            zIndex: 101,
+          }}>
+            {/* Panel header */}
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "var(--space-3)",
+              paddingBottom: "var(--space-3)",
+              borderBottom: "1px solid var(--color-border)",
+            }}>
+              <div>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: "1.2rem" }}>
+                  {categoryLabel[openPanel]}
+                </span>
+                {(categoryCount[openPanel] ?? 0) > 0 && (
+                  <span style={{
+                    marginLeft: "var(--space-2)",
+                    fontFamily: "var(--font-ui)",
+                    fontSize: "0.8rem",
+                    color: "var(--color-accent)",
+                  }}>
+                    {categoryCount[openPanel]} selected
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setOpenPanel(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--color-text-muted)",
+                  fontSize: "1.5rem",
+                  lineHeight: 1,
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                }}
+              >×</button>
+            </div>
+
+            {renderPanelContent()}
+          </div>
+        </>
+      )}
+
       {/* ── HERO ── */}
       <div style={{
         background: `
-          radial-gradient(ellipse at 50% 110%, rgba(255,106,0,0.12) 0%, transparent 55%),
-          var(--color-bg)
+          radial-gradient(ellipse at 50% 110%, rgba(232,98,10,0.15) 0%, transparent 55%),
+          linear-gradient(180deg, #0c0a08 0%, #1a1008 40%, #0c0a08 100%)
         `,
         padding: "5rem 2rem 3rem",
         textAlign: "center",
       }}>
         <p style={{
           fontFamily:    "var(--font-ui)",
-          color:         "var(--color-accent)",
+          color:         "#C9973A",
           textTransform: "uppercase",
           letterSpacing: "0.2em",
-          fontSize:      "0.82rem",
+          fontSize:      "0.75rem",
           marginTop:     0,
           marginBottom:  "var(--space-3)",
         }}>
           ✦ Lone Star Que ✦
         </p>
 
-        <h1 style={{
-          fontFamily:   "var(--font-heading)",
-          fontSize:     "clamp(3rem, 8vw, 6rem)",
-          fontWeight:   400,
-          lineHeight:   1.1,
-          marginTop:    0,
-          marginBottom: "var(--space-3)",
-          color:        "var(--color-text)",
-        }}>
-          The Pit Preacher
-        </h1>
-
         <p style={{
           fontFamily:   "var(--font-heading)",
           fontStyle:    "italic",
-          color:        "var(--color-accent)",
-          fontSize:     "clamp(1.1rem, 3vw, 1.75rem)",
+          color:        "#C9973A",
+          fontSize:     "clamp(1rem, 2.5vw, 1.4rem)",
           fontWeight:   400,
           marginTop:    0,
-          marginBottom: "var(--space-3)",
+          marginBottom: "var(--space-2)",
         }}>
           The Gospel of Great BBQ
         </p>
 
+        <h1 style={{ margin: "0 0 var(--space-3)", lineHeight: 1.05 }}>
+          <span style={{
+            display:    "block",
+            fontFamily: "var(--font-heading)",
+            color:      "#F5E6C8",
+            fontSize:   "clamp(2rem, 5vw, 3.5rem)",
+            fontWeight: 400,
+          }}>The</span>
+          <span style={{
+            display:    "inline",
+            fontFamily: "var(--font-heading)",
+            color:      "#F5E6C8",
+            fontSize:   "clamp(3rem, 8vw, 7rem)",
+            fontWeight: 900,
+            fontStyle:  "normal",
+          }}>Pit</span>
+          {" "}
+          <span style={{
+            display:              "inline",
+            fontFamily:           "var(--font-heading)",
+            color:                "transparent",
+            WebkitTextStroke:     "2px #C9973A",
+            fontSize:             "clamp(3rem, 8vw, 7rem)",
+            fontWeight:           900,
+            fontStyle:            "italic",
+          }}>Preacher</span>
+        </h1>
+
         <p style={{
           fontFamily:   "var(--font-body)",
-          color:        "var(--color-text-muted)",
+          color:        "#8a7a6a",
           fontSize:     "1rem",
           marginTop:    0,
           marginBottom: 0,
@@ -583,20 +682,17 @@ export default function Home() {
       <div style={{ height: "1px", background: "var(--color-border, #2a2a2a)" }} />
 
       {/* ── ROTATING VERSE ── */}
-      <div style={{
-        textAlign: "center",
-        padding:   "var(--space-5) var(--space-4) 0",
-      }}>
+      <div style={{ textAlign: "center", padding: "var(--space-5) var(--space-4) 0" }}>
         <p style={{
-          fontFamily:  "var(--font-body)",
-          fontStyle:   "italic",
-          color:       "var(--color-text-muted)",
-          fontSize:    "0.9rem",
-          margin:      "0 auto",
-          maxWidth:    "520px",
-          lineHeight:  1.7,
-          opacity:     verseVisible ? 1 : 0,
-          transition:  "opacity 0.5s ease",
+          fontFamily: "var(--font-body)",
+          fontStyle:  "italic",
+          color:      "var(--color-text-muted)",
+          fontSize:   "0.9rem",
+          margin:     "0 auto",
+          maxWidth:   "520px",
+          lineHeight: 1.7,
+          opacity:    verseVisible ? 1 : 0,
+          transition: "opacity 0.5s ease",
         }}>
           &ldquo;{VERSES[verseIdx]}&rdquo;
         </p>
@@ -608,11 +704,57 @@ export default function Home() {
         {/* SECTION 1: ITEM PICKER */}
         <div style={card}>
           <h2 style={sectionHeading}>What are you cooking?</h2>
-          <p style={sectionSub}>Select everything going on the pit. Tap a category to expand.</p>
+          <p style={sectionSub}>Select everything going on the pit. Tap a category to open.</p>
 
-          {renderCategoryCard("meats",      "Meats",      meatsCount,      meatsContent)}
-          {renderCategoryCard("sides",      "Sides",      sidesCount,      sidesContent)}
-          {renderCategoryCard("appetizers", "Appetizers", appetizersCount, appetizersContent)}
+          {/* Category card row */}
+          <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap", marginBottom: "var(--space-2)" }}>
+            {CATEGORIES.map(cat => {
+              const count = categoryCount[cat.key] ?? 0;
+              const catItems = selectedItems.filter(i => i.category === cat.key);
+              return (
+                <div
+                  key={cat.key}
+                  onClick={() => setOpenPanel(cat.key)}
+                  style={{
+                    flex:         "1 1 200px",
+                    background:   "var(--color-bg)",
+                    border:       count > 0 ? "2px solid var(--color-accent)" : "2px solid var(--color-border)",
+                    borderRadius: "var(--radius-lg)",
+                    padding:      "var(--space-3) var(--space-4)",
+                    cursor:       "pointer",
+                    transition:   "border-color 0.12s",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: count > 0 ? "var(--space-2)" : 0 }}>
+                    <span style={{ fontFamily: "var(--font-heading)", fontSize: "1.1rem" }}>{cat.label}</span>
+                    <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
+                      {count > 0 ? `${count} selected` : "Tap to add"}
+                    </span>
+                  </div>
+                  {catItems.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                      {catItems.map(item => (
+                        <span
+                          key={item.name}
+                          style={{
+                            border:       "1px solid var(--color-accent)",
+                            fontFamily:   "var(--font-ui)",
+                            fontSize:     "0.75rem",
+                            padding:      "4px 8px",
+                            borderRadius: "12px",
+                            color:        "var(--color-accent)",
+                            whiteSpace:   "nowrap" as const,
+                          }}
+                        >
+                          {item.name}{item.quantity > 1 ? ` ×${item.quantity}` : ""}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* SECTION 2: COOKING STYLE */}
@@ -630,12 +772,12 @@ export default function Home() {
                 key={style.key}
                 onClick={() => setCookingStyle(cookingStyle === style.key ? "" : style.key)}
                 style={{
-                  padding:    "var(--space-3)",
-                  background: cookingStyle === style.key ? "var(--color-bg)" : "var(--color-bg-alt)",
-                  border:     cookingStyle === style.key ? "2px solid var(--color-accent)" : "2px solid transparent",
+                  padding:      "var(--space-3)",
+                  background:   cookingStyle === style.key ? "var(--color-bg)" : "var(--color-bg-alt)",
+                  border:       cookingStyle === style.key ? "2px solid var(--color-accent)" : "2px solid transparent",
                   borderRadius: "var(--radius-md)",
-                  cursor:     "pointer",
-                  transition: "border-color 0.12s",
+                  cursor:       "pointer",
+                  transition:   "border-color 0.12s",
                 }}
               >
                 <div style={{ fontFamily: "var(--font-heading)", marginBottom: "4px" }}>{style.label}</div>
@@ -651,12 +793,78 @@ export default function Home() {
         <div style={card}>
           <h2 style={sectionHeading}>When are you eating?</h2>
           <p style={sectionSub}>This is the anchor. Everything calculates backward from this moment.</p>
-          <input
-            type="datetime-local"
-            value={eatingTime}
-            onChange={e => setEatingTime(e.target.value)}
-            style={{ ...fieldInput, maxWidth: "340px" }}
-          />
+
+          {/* Day pills */}
+          <div style={{
+            display:        "flex",
+            gap:            "var(--space-2)",
+            overflowX:      "auto",
+            paddingBottom:  "var(--space-2)",
+            marginBottom:   "var(--space-3)",
+            scrollbarWidth: "none" as const,
+          }}>
+            {next14Days.map((day, i) => {
+              const selected = isSameDay(day, pickerDate);
+              return (
+                <button
+                  key={i}
+                  onClick={() => setPickerDate(day)}
+                  style={{
+                    flexShrink:   0,
+                    padding:      "8px 14px",
+                    background:   selected ? "var(--color-accent)" : "var(--color-bg)",
+                    color:        selected ? "white" : "var(--color-text)",
+                    border:       selected ? "none" : "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-md)",
+                    cursor:       "pointer",
+                    textAlign:    "center" as const,
+                    transition:   "background 0.12s",
+                    minWidth:     "64px",
+                  }}
+                >
+                  <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", textTransform: "uppercase" as const, letterSpacing: "0.05em", opacity: 0.8 }}>
+                    {day.toLocaleDateString(undefined, { weekday: "short" })}
+                  </div>
+                  <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.2rem", fontWeight: 700, lineHeight: 1.1 }}>
+                    {day.getDate()}
+                  </div>
+                  <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", opacity: 0.8 }}>
+                    {day.toLocaleDateString(undefined, { month: "short" })}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Time pills */}
+          <div style={{
+            display:        "flex",
+            gap:            "var(--space-1)",
+            flexWrap:       "wrap",
+          }}>
+            {TIME_SLOTS.map(slot => {
+              const selected = pickerTime === slot;
+              return (
+                <button
+                  key={slot}
+                  onClick={() => setPickerTime(slot)}
+                  style={{
+                    padding:      "6px 12px",
+                    background:   selected ? "var(--color-accent)" : "var(--color-bg)",
+                    color:        selected ? "white" : "var(--color-text-muted)",
+                    border:       selected ? "none" : "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-md)",
+                    cursor:       "pointer",
+                    fontFamily:   "var(--font-ui)",
+                    fontSize:     "0.82rem",
+                    transition:   "background 0.12s",
+                  }}
+                >
+                  {formatTimeSlot(slot)}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* SECTION 4: FLAVOR AUTOGRAPH */}
@@ -703,7 +911,7 @@ export default function Home() {
         {/* SECTION 5: PIT SETUP */}
         <div style={card}>
           <h2 style={sectionHeading}>Your Pit Setup</h2>
-          <p style={sectionSub}>Tell the Preacher what you're cooking on.</p>
+          <p style={sectionSub}>Tell the Preacher what you&rsquo;re cooking on.</p>
 
           {smokers.map((smoker, idx) => (
             <div
@@ -763,8 +971,8 @@ export default function Home() {
           )}
         </div>
 
-        {/* SECTION 6: SMOKER ASSIGNMENT */}
-        {hasItems && namedSmokers.length > 0 && (
+        {/* SECTION 6: SMOKER ASSIGNMENT — only when 2+ named smokers */}
+        {hasItems && namedSmokers.length > 1 && (
           <div style={card}>
             <h2 style={sectionHeading}>Assign Items to Smokers</h2>
             <p style={sectionSub}>Tell the Preacher which pit is cooking what.</p>
@@ -831,7 +1039,7 @@ export default function Home() {
             </p>
           ) : (
             <>
-              {namedSmokers.length > 0 ? (
+              {namedSmokers.length > 1 ? (
                 <>
                   {namedSmokers.map(smoker => {
                     const assigned = selectedItems.filter(i => i.smokerId === smoker.id);
@@ -858,7 +1066,6 @@ export default function Home() {
                       </div>
                     );
                   })}
-
                   {selectedItems.some(i => i.smokerId === null) && (
                     <div style={{ marginBottom: "var(--space-3)" }}>
                       <div style={{ fontFamily: "var(--font-heading)", fontSize: "0.95rem", color: "var(--color-accent)", marginBottom: "4px" }}>
@@ -877,6 +1084,7 @@ export default function Home() {
                   {selectedItems.map(i => (
                     <li key={`${i.category}-${i.name}`}>
                       {i.name}{i.quantity > 1 ? ` ×${i.quantity}` : ""}
+                      {i.weight ? ` (${i.weight} lbs)` : ""}
                     </li>
                   ))}
                 </ul>
