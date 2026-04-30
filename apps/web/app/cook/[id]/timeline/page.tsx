@@ -71,6 +71,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
   const [expandedCompletedId, setExpandedCompletedId] = useState<string | null>(null);
   const [expandedScienceId, setExpandedScienceId] = useState<string | null>(null);
   const [tempInputs, setTempInputs] = useState<Record<string, string>>({});
+  const [editCompletedTemps, setEditCompletedTemps] = useState<Record<string, string>>({});
   const [now, setNow] = useState(new Date());
   const [toast, setToast] = useState<string | null>(null);
 
@@ -194,6 +195,37 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
     setShowingFallback(true);
   };
 
+  const handleSaveCompletedTemp = async (phase: Phase) => {
+    const newTemp = editCompletedTemps[phase.id] ?? "";
+
+    const { data: events } = await supabase
+      .from("cook_events")
+      .select("*")
+      .eq("cook_id", cook.id)
+      .eq("event_type", "phase_complete");
+
+    const matchingEvent = (events || []).find(e => {
+      try {
+        return JSON.parse(e.message).phaseId === phase.id;
+      } catch { return false; }
+    });
+
+    if (!matchingEvent) return;
+
+    const parsed = JSON.parse(matchingEvent.message);
+    const updatedMessage = JSON.stringify({ ...parsed, tempEntered: newTemp || null });
+
+    await supabase
+      .from("cook_events")
+      .update({ message: updatedMessage })
+      .eq("id", matchingEvent.id);
+
+    setPhaseCompletionDetails(prev => ({
+      ...prev,
+      [phase.id]: { ...prev[phase.id]!, tempEntered: newTemp || null },
+    }));
+  };
+
   const handleMarkComplete = async (phase: Phase) => {
     const tempVal = tempInputs[phase.id] || null;
 
@@ -208,11 +240,29 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
       }),
     });
 
+    const completedAt = new Date().toISOString();
     setCompletedPhaseIds(prev => [...prev, phase.id]);
     setPhaseCompletionDetails(prev => ({
       ...prev,
-      [phase.id]: { completedAt: new Date().toISOString(), tempEntered: tempVal },
+      [phase.id]: { completedAt, tempEntered: tempVal },
     }));
+
+    const isLastPhase = phases[phases.length - 1]?.id === phase.id;
+
+    if (isLastPhase) {
+      await supabase
+        .from("cooks")
+        .update({ status: "completed", completed_at: completedAt })
+        .eq("id", cook.id);
+      setCook((prev: any) => ({ ...prev, status: "completed", completed_at: completedAt }));
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      setToast("The cook is complete. The congregation has been fed. Head to your Summary to record this cook for history.");
+      toastTimeoutRef.current = setTimeout(() => {
+        setToast(null);
+        window.location.href = `/cook/${cookId}/summary`;
+      }, 2000);
+      return;
+    }
 
     if (phase.completionPrompt) {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -721,6 +771,51 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
                         {phase.preacherNote}
                       </p>
                     </div>
+                    {phase.requiresTempEntry && (
+                      <div style={{ marginTop: "var(--space-3)", display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                        <label style={{
+                          fontFamily: "var(--font-ui)",
+                          fontSize: "0.75rem",
+                          color: "var(--color-text-muted)",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.08em",
+                        }}>
+                          Adjust recorded temp:
+                        </label>
+                        <input
+                          type="number"
+                          value={editCompletedTemps[phase.id] ?? phaseCompletionDetails[phase.id]?.tempEntered ?? ""}
+                          onChange={e => setEditCompletedTemps(prev => ({ ...prev, [phase.id]: e.target.value }))}
+                          placeholder="°F"
+                          style={{
+                            width: 72,
+                            background: "var(--color-bg)",
+                            border: "1px solid rgba(45,106,79,0.3)",
+                            borderRadius: "var(--radius-sm)",
+                            color: "var(--color-text)",
+                            fontFamily: "var(--font-ui)",
+                            fontSize: "0.9rem",
+                            padding: "5px 8px",
+                            textAlign: "center",
+                          }}
+                        />
+                        <button
+                          onClick={() => handleSaveCompletedTemp(phase)}
+                          style={{
+                            background: "transparent",
+                            border: "1px solid rgba(45,106,79,0.4)",
+                            borderRadius: "var(--radius-sm)",
+                            color: "#2D6A4F",
+                            fontFamily: "var(--font-ui)",
+                            fontSize: "0.8rem",
+                            padding: "5px 12px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -867,24 +962,32 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
                 )}
 
                 {/* Mark Complete */}
-                <button
-                  onClick={() => handleMarkComplete(phase)}
-                  style={{
-                    width: "100%",
-                    background: "#C9973A",
-                    color: "var(--color-bg)",
-                    border: "none",
-                    borderRadius: "var(--radius-md)",
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "1rem",
-                    fontWeight: 600,
-                    padding: "10px",
-                    cursor: "pointer",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  Mark Complete
-                </button>
+                {(() => {
+                  const nextPhaseInRender = phases[idx + 1];
+                  const btnLabel = nextPhaseInRender
+                    ? `Next: ${nextPhaseInRender.name} →`
+                    : "Complete This Cook ✓";
+                  return (
+                    <button
+                      onClick={() => handleMarkComplete(phase)}
+                      style={{
+                        width: "100%",
+                        background: "#C9973A",
+                        color: "var(--color-bg)",
+                        border: "none",
+                        borderRadius: "var(--radius-md)",
+                        fontFamily: "var(--font-ui)",
+                        fontSize: "1rem",
+                        fontWeight: 600,
+                        padding: "10px",
+                        cursor: "pointer",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      {btnLabel}
+                    </button>
+                  );
+                })()}
               </div>
             );
           }
