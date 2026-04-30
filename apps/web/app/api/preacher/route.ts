@@ -12,6 +12,7 @@ type PlanItem = {
   smokerId?: string | null;
 };
 type RecentEvent = { created_at: string; type: string; note?: string };
+type ConvTurn = { role: string; content: string };
 
 const SYSTEM_PROMPT =
   "You are The Pit Preacher — a seasoned pitmaster with 25 years of fire, smoke, and hard-earned wisdom. You are not an AI assistant. You are a coach who has stood at the pit through every stall, every spike, every bark failure, and every perfect pull. You know everything there is to know about outdoor cooking including every cut of meat, appetizers, sides, vegetables, every smoker type, every wood species, every pellet brand, competition BBQ, rubs, seasonings, brines, injections, and recipes. Your voice rules: short sentences, plain words, no em dashes, no bullet points unless listing steps, never say certainly or absolutely or great question, never mention being an AI, speak like you are standing next to them at the pit, occasionally use a line that sounds like scripture or a proverb. You only talk about BBQ and outdoor cooking. If someone asks about anything else respond with warmth but firmness: That is outside my pulpit, brother. But if you want to talk smoke and fire, I am right here. Every response ends with one clear action or one clear instruction to do nothing. The fire is the sermon. The smoke is the word. Trust the pit.";
@@ -52,6 +53,16 @@ function buildRecentEvents(recentEvents: RecentEvent[]): string {
     .join("\n");
 }
 
+function buildCutList(planItems: PlanItem[]): string {
+  const names = (planItems || []).map(i => i.name).filter(Boolean);
+  return names.length > 0 ? names.join(", ") : "Not specified";
+}
+
+function buildWoodList(tools: PlanTool[]): string {
+  const woods = (tools || []).map(t => t.wood).filter(Boolean);
+  return woods.length > 0 ? woods.join(", ") : "Not specified";
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await createServerClient();
 
@@ -61,7 +72,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { cookId, message, cookContext } = await req.json();
+  const { message, cookContext } = await req.json();
 
   const {
     label,
@@ -70,10 +81,13 @@ export async function POST(req: NextRequest) {
     tools,
     planItems,
     recentEvents,
+    conversationHistory,
+    flavor_smoke,
+    flavor_bark,
+    flavor_tenderness,
   } = cookContext;
 
   const pitSetup = buildPitSetup(tools ?? [], planItems ?? []);
-  const recentEventsText = buildRecentEvents(recentEvents ?? []);
 
   const eatTimeFormatted = eat_time
     ? new Date(eat_time).toLocaleString(undefined, {
@@ -85,7 +99,86 @@ export async function POST(req: NextRequest) {
       })
     : "Not set";
 
-  const userMessage = `PIT SETUP:
+  const isOpeningMessage = (message as string).startsWith("OPENING_MESSAGE:");
+  const isSuggestPrompts = (message as string).startsWith("SUGGEST_PROMPTS:");
+  const isCookPlan = (message as string).startsWith("Generate a full cook plan");
+
+  let maxTokens: number;
+  let userMessage: string;
+
+  if (isOpeningMessage) {
+    maxTokens = 300;
+    userMessage = `PIT SETUP:
+${pitSetup}
+
+COOK DETAILS:
+Cook: ${label || "Unnamed cook"}
+Style: ${cooking_style || "Not specified"}
+Eating at: ${eatTimeFormatted}
+
+${message}`;
+
+  } else if (isSuggestPrompts) {
+    maxTokens = 150;
+    const historyText = conversationHistory?.length > 0
+      ? (conversationHistory as ConvTurn[]).map(m => `${m.role}: ${m.content}`).join("\n")
+      : "No conversation yet";
+    userMessage = `CONVERSATION SO FAR:
+${historyText}
+
+${message}`;
+
+  } else if (isCookPlan) {
+    maxTokens = 2000;
+    const cutList = buildCutList(planItems ?? []);
+    const woodList = buildWoodList(tools ?? []);
+    const flavorLine = [
+      flavor_smoke != null ? `Smoke ${flavor_smoke}/10` : null,
+      flavor_bark != null ? `Bark ${flavor_bark}/10` : null,
+      flavor_tenderness != null ? `Tenderness ${flavor_tenderness}/10` : null,
+    ].filter(Boolean).join(" · ") || "Not specified";
+
+    userMessage = `Generate a cook plan for this specific cook. Be a real pitmaster — specific, practical, no filler.
+
+PIT SETUP:
+${pitSetup}
+
+COOK DETAILS:
+Cut: ${cutList}
+Style: ${cooking_style || "Not specified"}
+Wood: ${woodList}
+Eating at: ${eatTimeFormatted}
+Flavor target: ${flavorLine}
+
+Your response MUST use these exact section headers in this order, each on its own line in ALL CAPS:
+
+THE NIGHT BEFORE
+FIRE & TIMING
+THE COOK
+THE FINISH
+THE PREACHER'S WORD
+
+THE NIGHT BEFORE: Prep the night before — trim, season, inject, brine, or rest. Be specific to this cut.
+FIRE & TIMING: Exact temps, estimated time to eat, when to light. Work backwards from the eat time.
+THE COOK: What to watch for, when to wrap, when to probe, when to spritz. The stall. The bark window.
+THE FINISH: Pull temp, rest time, how to hold, how to serve.
+THE PREACHER'S WORD: One paragraph. The wisdom. The warning. The encouragement. Make it feel like scripture.`;
+
+  } else {
+    maxTokens = 500;
+    const recentEventsText = buildRecentEvents(recentEvents ?? []);
+
+    let historySection: string;
+    if (conversationHistory && conversationHistory.length > 0) {
+      const historyText = (conversationHistory as ConvTurn[])
+        .map(m => `${m.role}: ${m.content}`)
+        .join("\n");
+      historySection = `CONVERSATION SO FAR:\n${historyText}\n\nNOW THE PITMASTER SAYS: ${message}`;
+    } else {
+      historySection = `Pitmaster says: ${message}`;
+    }
+
+    userMessage = `PIT SETUP:
 ${pitSetup}
 
 RECENT EVENTS:
@@ -96,7 +189,8 @@ Cook: ${label || "Unnamed cook"}
 Style: ${cooking_style || "Not specified"}
 Eating at: ${eatTimeFormatted}
 
-Pitmaster says: ${message}`;
+${historySection}`;
+  }
 
   const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -107,7 +201,7 @@ Pitmaster says: ${message}`;
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 1500,
+      max_tokens: maxTokens,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     }),
