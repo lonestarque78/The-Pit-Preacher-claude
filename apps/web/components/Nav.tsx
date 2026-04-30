@@ -16,9 +16,7 @@ export default function Nav() {
       setLoading(false);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
 
@@ -31,20 +29,24 @@ export default function Nav() {
     window.location.href = "/";
   };
 
+  const linkStyle = {
+    fontFamily: "var(--font-ui)",
+    fontSize: "0.875rem",
+    color: "var(--color-text)" as const,
+    textDecoration: "none" as const,
+  };
+
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "var(--space-3) var(--space-5)",
-        background: "var(--color-bg-alt)",
-        borderBottom: "1px solid var(--color-border)",
-      }}
-    >
-      <Link
-        href="/"
-        style={{
+    <nav style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "var(--space-3) var(--space-5)",
+      background: "var(--color-bg-alt)",
+      borderBottom: "1px solid var(--color-border)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
+        <Link href="/" style={{
           fontFamily: "var(--font-ui)",
           fontSize: "1.25rem",
           fontWeight: 500,
@@ -52,34 +54,24 @@ export default function Nav() {
           textDecoration: "none",
           letterSpacing: "0.05em",
           textTransform: "uppercase",
-        }}
-      >
-        Pit Preacher
-      </Link>
+        }}>
+          Pit Preacher
+        </Link>
 
-      <div style={{ display: "flex", gap: "var(--space-3)" }}>
+        {!loading && user && (
+          <Link href="/" style={linkStyle}>
+            Start a Cook
+          </Link>
+        )}
+      </div>
+
+      <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "center" }}>
         {loading ? null : user ? (
           <>
-            <Link
-              href="/dashboard"
-              style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "0.875rem",
-                color: "var(--color-text)",
-                textDecoration: "none",
-              }}
-            >
+            <Link href="/dashboard" style={linkStyle}>
               Dashboard
             </Link>
-            <Link
-              href="/logs"
-              style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "0.875rem",
-                color: "var(--color-text)",
-                textDecoration: "none",
-              }}
-            >
+            <Link href="/logs" style={linkStyle}>
               History
             </Link>
             <button
@@ -98,15 +90,7 @@ export default function Nav() {
             </button>
           </>
         ) : (
-          <Link
-            href="/auth/login"
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "0.875rem",
-              color: "var(--color-text)",
-              textDecoration: "none",
-            }}
-          >
+          <Link href="/auth/login" style={linkStyle}>
             Log In
           </Link>
         )}
