@@ -371,6 +371,25 @@ export default function Home() {
     if (!user) { setAuthError(true); return; }
     setSaving(true);
 
+    // ── FREE TIER COOK LIMIT ────────────────────────────────────────────────────
+    const { data: subData } = await supabase.from("subscriptions").select("tier, status").eq("user_id", user.id).single();
+    const userTier = subData?.tier ?? "free";
+    const isFreeTier = userTier === "free";
+
+    let freeMonthKey: string | null = null;
+    let freeCookCount = 0;
+
+    if (isFreeTier) {
+      freeMonthKey = new Date().toISOString().slice(0, 7);
+      const { data: usageData } = await supabase.from("usage").select("count").eq("user_id", user.id).eq("stage", 1).eq("month", freeMonthKey).single();
+      freeCookCount = usageData?.count ?? 0;
+      if (freeCookCount >= 2) {
+        setBuildError("You've reached your 2 cook limit for this month on the free plan. Upgrade to keep cooking.");
+        setSaving(false);
+        return;
+      }
+    }
+
     // Insert meal_prep_session
     const { data: sessionData, error: sessionError } = await supabase
       .from("meal_prep_sessions")
@@ -439,6 +458,13 @@ export default function Home() {
         setSaving(false);
         return;
       }
+    }
+
+    if (freeMonthKey !== null) {
+      await supabase.from("usage").upsert(
+        { user_id: user.id, stage: 1, month: freeMonthKey, count: freeCookCount + 1 },
+        { onConflict: "user_id,stage,month" }
+      );
     }
 
     window.location.href = `/cook/${cook.id}`;
@@ -1293,7 +1319,7 @@ export default function Home() {
           {authError && (
             <div style={{ textAlign: "center", marginTop: "var(--space-3)", fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
               <span style={{ color: "var(--color-text-muted)" }}>Sign in to save your cook plan. </span>
-              <Link href="/auth/login" style={{ color: "var(--color-accent)", textDecoration: "underline" }}>
+              <Link href="/auth/login?tab=signup" style={{ color: "var(--color-accent)", textDecoration: "underline" }}>
                 Sign in
               </Link>
             </div>

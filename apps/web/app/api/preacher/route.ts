@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { message, cookContext } = await req.json();
+  const { message, cookId, cookContext } = await req.json();
 
   const {
     label,
@@ -102,6 +102,26 @@ export async function POST(req: NextRequest) {
   const isOpeningMessage = (message as string).startsWith("OPENING_MESSAGE:");
   const isSuggestPrompts = (message as string).startsWith("SUGGEST_PROMPTS:");
   const isCookPlan = (message as string).startsWith("Generate a full cook plan");
+
+  // ── FREE TIER MESSAGE LIMIT ──────────────────────────────────────────────────
+  const isRegularMessage = !isOpeningMessage && !isSuggestPrompts && !isCookPlan;
+  if (isRegularMessage) {
+    const { data: subData } = await supabase.from("subscriptions").select("tier").eq("user_id", user.id).single();
+    const userTier = subData?.tier ?? "free";
+    if (userTier === "free") {
+      const { count } = await supabase
+        .from("cook_events")
+        .select("*", { count: "exact", head: true })
+        .eq("cook_id", cookId)
+        .eq("event_type", "preacher_chat");
+      if ((count ?? 0) >= 5) {
+        return NextResponse.json(
+          { error: "MESSAGE_LIMIT_REACHED", message: "You have reached the 5-message limit for the free plan on this cook. Upgrade to keep the conversation going." },
+          { status: 403 }
+        );
+      }
+    }
+  }
 
   let maxTokens: number;
   let userMessage: string;

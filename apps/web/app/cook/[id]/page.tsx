@@ -77,6 +77,7 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true);
   const [planText, setPlanText] = useState<string | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
+  const [userTier, setUserTier] = useState<string>("free");
   const [loadingVerse, setLoadingVerse] = useState<{ text: string; chapter: string } | null>(null);
 
   useEffect(() => {
@@ -93,6 +94,9 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
       window.location.href = "/auth/login";
       return;
     }
+
+    const { data: subData } = await supabase.from("subscriptions").select("tier").eq("user_id", user.id).single();
+    setUserTier(subData?.tier ?? "free");
 
     const { data: cookData } = await supabase
       .from("cooks")
@@ -548,7 +552,7 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Regenerate */}
-          {planText && !planLoading && (
+          {planText && !planLoading && userTier !== "free" && (
             <div style={{ borderTop: "1px solid rgba(201,151,58,0.1)", paddingTop: "var(--space-3)" }}>
               <button
                 onClick={regeneratePlan}

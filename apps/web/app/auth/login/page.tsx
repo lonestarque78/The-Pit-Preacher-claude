@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { getRandomVerse } from "@/lib/verses";
 import Button from "@/components/Button";
@@ -66,6 +66,11 @@ export default function LoginPage() {
   const [signupLoading, setSignupLoading]   = useState(false);
   const [signupError, setSignupError]       = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "signup") setMode("signup");
+  }, []);
 
   const switchMode = (m: Mode) => {
     setMode(m);

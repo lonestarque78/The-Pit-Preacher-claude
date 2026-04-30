@@ -85,6 +85,8 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [userTier, setUserTier] = useState<string>("free");
+  const [inputDisabled, setInputDisabled] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -103,6 +105,10 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       window.location.href = "/auth/login";
       return;
     }
+
+    const { data: subData } = await supabase.from("subscriptions").select("tier").eq("user_id", user.id).single();
+    const fetchedTier = subData?.tier ?? "free";
+    setUserTier(fetchedTier);
 
     const { data: cookData } = await supabase
       .from("cooks")
@@ -161,7 +167,15 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     setLoading(false);
 
     if (rebuiltMessages.length === 0) {
-      fetchOpeningMessage(cookData, sessionData);
+      if (fetchedTier === "free") {
+        setMessages([{
+          role: "preacher",
+          content: "The pit is lit. Ask me anything about this cook. Free plan includes 5 messages — upgrade anytime for unlimited coaching.",
+          timestamp: new Date(),
+        }]);
+      } else {
+        fetchOpeningMessage(cookData, sessionData);
+      }
     }
   };
 
@@ -229,6 +243,18 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         body: JSON.stringify({ cookId: cook.id, message: userMessage, cookContext }),
       });
 
+      if (res.status === 403) {
+        const errData = await res.json();
+        if (errData.error === "MESSAGE_LIMIT_REACHED") {
+          setMessages(prev => [...prev, {
+            role: "preacher" as const,
+            content: "You have reached the free plan limit for this cook. Upgrade to keep the conversation going.",
+            timestamp: new Date(),
+          }]);
+          setInputDisabled(true);
+          return;
+        }
+      }
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = await res.json();
       const preacherResponse: string = data.reply ?? "The Preacher is silent. Try again.";
@@ -584,7 +610,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         </div>
 
         {/* Suggested prompts */}
-        {!isThinking && suggestedPrompts.length > 0 && (
+        {!isThinking && suggestedPrompts.length > 0 && userTier !== "free" && (
           <div style={{
             display: "flex",
             gap: "var(--space-2)",
@@ -605,6 +631,17 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
           </div>
         )}
 
+        {inputDisabled && (
+          <div style={{ flexShrink: 0, padding: "var(--space-2) var(--space-4)", textAlign: "center", borderTop: "1px solid rgba(201,151,58,0.1)" }}>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", margin: "0 0 var(--space-1)" }}>
+              Free plan limit reached for this cook.
+            </p>
+            <Link href="/premium" style={{ fontFamily: "var(--font-ui)", fontSize: "0.85rem", color: "#C9973A", textDecoration: "none" }}>
+              Upgrade to keep talking →
+            </Link>
+          </div>
+        )}
+
         {/* Input area */}
         <div style={{
           flexShrink: 0,
@@ -622,7 +659,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
             value={inputValue}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
-            disabled={isThinking}
+            disabled={isThinking || inputDisabled}
             placeholder="What's happening at the pit?"
             style={{
               flex: 1,
@@ -642,10 +679,10 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
           />
           <button
             onClick={() => sendMessage(inputValue)}
-            disabled={isThinking || !inputValue.trim()}
+            disabled={isThinking || inputDisabled || !inputValue.trim()}
             style={{
-              background: isThinking || !inputValue.trim() ? "rgba(201,151,58,0.3)" : "#C9973A",
-              color: isThinking || !inputValue.trim() ? "rgba(201,151,58,0.5)" : "var(--color-bg)",
+              background: isThinking || inputDisabled || !inputValue.trim() ? "rgba(201,151,58,0.3)" : "#C9973A",
+              color: isThinking || inputDisabled || !inputValue.trim() ? "rgba(201,151,58,0.5)" : "var(--color-bg)",
               fontFamily: "var(--font-ui)",
               fontSize: "0.9rem",
               padding: "8px 20px",

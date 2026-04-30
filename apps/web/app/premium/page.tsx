@@ -132,128 +132,54 @@ export default function PremiumPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: "40px" }}>
-        <h1 style={{ fontFamily: "var(--font-heading)" }}>Loading...</h1>
+      <div style={{ padding: "20px" }}>
+        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.4rem" }}>Loading...</h1>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "40px" }}>
-      <h1
-        style={{
-          fontFamily: "var(--font-heading)",
-          marginBottom: "var(--space-4)",
-          textAlign: "center",
-        }}
-      >
+    <div style={{ padding: "20px 24px" }}>
+      <div style={{ marginBottom: "var(--space-3)" }}>
+        <Link href="/dashboard" style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "var(--color-text-muted)", textDecoration: "none" }}>
+          ← Dashboard
+        </Link>
+      </div>
+
+      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.4rem", marginBottom: "var(--space-2)", textAlign: "center" }}>
         Pit Preacher Premium
       </h1>
 
-      <p
-        style={{
-          marginBottom: "var(--space-5)",
-          textAlign: "center",
-          color: "var(--color-text-muted)",
-          maxWidth: "600px",
-          marginLeft: "auto",
-          marginRight: "auto",
-        }}
-      >
+      <p style={{ marginBottom: "var(--space-3)", textAlign: "center", color: "var(--color-text-muted)", fontSize: "0.85rem", maxWidth: "500px", marginLeft: "auto", marginRight: "auto" }}>
         Choose the plan that fits your smoking style. Upgrade anytime to unlock more features.
       </p>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "var(--space-4)",
-          maxWidth: "1100px",
-          margin: "0 auto",
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "var(--space-3)", maxWidth: "1000px", margin: "0 auto" }}>
         {TIERS.map((tier) => (
-          <div
-            key={tier.key}
-            style={{
-              background: "var(--color-bg-alt)",
-              padding: "var(--space-4)",
-              borderRadius: "var(--radius-lg)",
-              border:
-                currentTier === tier.key
-                  ? "2px solid var(--color-accent)"
-                  : "2px solid transparent",
-            }}
-          >
-            <p style={{
-              fontFamily: "var(--font-ui)",
-              color: "var(--color-accent)",
-              fontSize: "0.75rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.12em",
-              margin: "0 0 var(--space-1)",
-            }}>
+          <div key={tier.key} style={{
+            background: "var(--color-bg-alt)",
+            padding: "var(--space-3)",
+            borderRadius: "var(--radius-lg)",
+            border: currentTier === tier.key ? "2px solid var(--color-accent)" : "2px solid transparent",
+          }}>
+            <p style={{ fontFamily: "var(--font-ui)", color: "var(--color-accent)", fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 var(--space-1)" }}>
               {tier.commandment}
             </p>
-
-            <h2
-              style={{
-                fontFamily: "var(--font-heading)",
-                fontSize: "1.5rem",
-                marginBottom: "var(--space-2)",
-              }}
-            >
+            <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.2rem", marginBottom: "var(--space-1)" }}>
               {tier.name}
             </h2>
-
-            <div
-              style={{
-                fontFamily: "var(--font-heading)",
-                fontSize: "2rem",
-                marginBottom: "var(--space-1)",
-              }}
-            >
+            <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", marginBottom: "var(--space-1)" }}>
               {tier.price}
-              <span
-                style={{
-                  fontSize: "1rem",
-                  color: "var(--color-text-muted)",
-                }}
-              >
-                {tier.period}
-              </span>
+              <span style={{ fontSize: "0.9rem", color: "var(--color-text-muted)" }}>{tier.period}</span>
             </div>
-
-            <ul
-              style={{
-                marginBottom: "var(--space-4)",
-                paddingLeft: "var(--space-4)",
-                lineHeight: 1.8,
-              }}
-            >
+            <ul style={{ marginBottom: "var(--space-3)", paddingLeft: "var(--space-3)", lineHeight: 1.6, fontSize: "0.875rem" }}>
               {tier.features.map((feature) => (
-                <li key={feature} style={{ marginBottom: "var(--space-1)" }}>
-                  {feature}
-                </li>
+                <li key={feature} style={{ marginBottom: "2px" }}>{feature}</li>
               ))}
             </ul>
-
             <div>{getButton(tier.key)}</div>
           </div>
         ))}
-      </div>
-
-      <div style={{ textAlign: "center", marginTop: "var(--space-5)" }}>
-        <Link
-          href="/dashboard"
-          style={{
-            fontFamily: "var(--font-ui)",
-            color: "var(--color-text-muted)",
-            textDecoration: "underline",
-          }}
-        >
-          ← Back to Dashboard
-        </Link>
       </div>
     </div>
   );

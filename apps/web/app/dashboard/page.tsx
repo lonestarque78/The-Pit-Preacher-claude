@@ -76,7 +76,7 @@ export default async function DashboardPage() {
             The Pit Preacher is your personal BBQ coach. Built by a pitmaster, powered by 25 years of fire and smoke.
           </p>
           <div style={{ display: "flex", gap: "var(--space-3)", justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/auth/login" style={{ display: "inline-block", background: "#C9973A", color: "var(--color-bg)", fontFamily: "var(--font-ui)", padding: "12px 28px", borderRadius: "var(--radius-lg)", textDecoration: "none" }}>
+            <Link href="/auth/login?tab=signup" style={{ display: "inline-block", background: "#C9973A", color: "var(--color-bg)", fontFamily: "var(--font-ui)", padding: "12px 28px", borderRadius: "var(--radius-lg)", textDecoration: "none" }}>
               Join Free →
             </Link>
             <Link href="/premium" style={{ display: "inline-block", background: "transparent", border: "1px solid rgba(201,151,58,0.4)", color: "#C9973A", fontFamily: "var(--font-ui)", padding: "12px 28px", borderRadius: "var(--radius-lg)", textDecoration: "none" }}>
@@ -99,34 +99,31 @@ export default async function DashboardPage() {
           ))}
         </div>
 
-        <div style={{ textAlign: "center", padding: "var(--space-4)" }}>
-          <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", fontSize: "0.85rem", margin: "0 0 var(--space-3)" }}>
-            Free to start. No credit card required.
-          </p>
-          <Link href="/auth/login" style={{ display: "inline-block", background: "#C9973A", color: "var(--color-bg)", fontFamily: "var(--font-ui)", padding: "12px 28px", borderRadius: "var(--radius-lg)", textDecoration: "none" }}>
-            Join Free →
-          </Link>
-        </div>
       </div>
     );
   }
 
   // ── LOGGED IN — data ───────────────────────────────────────────────────────
 
-  const [profileRes, tier, activeCooksRes, recentCooksRes, pitsRes] = await Promise.all([
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const [profileRes, tier, activeCooksRes, recentCooksRes, pitsRes, totalCompletedRes, thisMonthRes] = await Promise.all([
     supabase.from("profiles").select("display_name, profile_complete").eq("id", user.id).single(),
     getTier(user.id, supabase),
     supabase.from("cooks").select("*").eq("user_id", user.id).eq("status", "in_progress").order("created_at", { ascending: false }).limit(3),
     supabase.from("cooks").select("*").eq("user_id", user.id).eq("status", "completed").order("completed_at", { ascending: false }).limit(5),
     supabase.from("pits").select("*").eq("user_id", user.id),
+    supabase.from("cooks").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "completed"),
+    supabase.from("cooks").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "completed").gte("completed_at", `${thisMonth}-01`),
   ]);
 
-  const profile      = profileRes.data;
-  const activeCooks  = (activeCooksRes.data  ?? []) as any[];
-  const recentCooks  = (recentCooksRes.data  ?? []) as any[];
-  const pits         = (pitsRes.data         ?? []) as any[];
-  const displayName  = profile?.display_name || "Pitmaster";
-  const badge        = tierBadgeStyle(tier);
+  const profile           = profileRes.data;
+  const activeCooks       = (activeCooksRes.data  ?? []) as any[];
+  const recentCooks       = (recentCooksRes.data  ?? []) as any[];
+  const pits              = (pitsRes.data         ?? []) as any[];
+  const displayName       = profile?.display_name || "Pitmaster";
+  const badge             = tierBadgeStyle(tier);
+  const totalCompleted    = totalCompletedRes.count ?? 0;
+  const thisMonthCompleted = thisMonthRes.count ?? 0;
 
   const cookIds = recentCooks.map(c => c.id as string);
   let cookLogMap: Record<string, any> = {};
@@ -143,29 +140,37 @@ export default async function DashboardPage() {
         @media (min-width: 768px) {
           .dashboard-two-col { grid-template-columns: 3fr 2fr !important; }
         }
-        .qa-card:hover { border-color: rgba(201,151,58,0.4) !important; }
       `}</style>
 
-      {heroSection}
-
-      {/* Welcome row */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-3) var(--space-4)", flexWrap: "wrap", gap: "var(--space-2)" }}>
-        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(1.4rem, 3vw, 2rem)", color: "#F5E6C8", margin: 0 }}>
-          Welcome back, {displayName}
-        </h1>
-        <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.78rem", padding: "4px 14px", borderRadius: "100px", background: badge.bg, color: "#C9973A", border: badge.border, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+      {/* Compact header bar */}
+      <div style={{ background: "var(--color-bg-alt)", borderBottom: "1px solid rgba(201,151,58,0.15)", padding: "0 var(--space-4)", height: "72px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <p style={{ fontFamily: "var(--font-ui)", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.65rem", margin: "0 0 2px" }}>✦ The Pit Preacher ✦</p>
+          <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.3rem", color: "#F5E6C8", margin: 0 }}>Welcome back, {displayName}</h1>
+        </div>
+        <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", padding: "4px 14px", borderRadius: "100px", background: badge.bg, color: "#C9973A", border: badge.border, textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
           {badge.label}
         </span>
       </div>
 
-      {/* Gospel verse card */}
-      <div style={{ margin: "0 var(--space-4) var(--space-3)", background: "var(--color-bg-alt)", borderLeft: "3px solid #C9973A", padding: "var(--space-3) var(--space-4)", borderRadius: "var(--radius-md)" }}>
-        <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "#F5E6C8", fontSize: "0.95rem", margin: "0 0 var(--space-1)", lineHeight: 1.6 }}>
-          &ldquo;{verse.text}&rdquo;
-        </p>
-        <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0 }}>
-          {verse.chapter}
-        </p>
+      {/* Verse row */}
+      <div style={{ margin: "var(--space-2) var(--space-4)", background: "var(--color-bg-alt)", borderLeft: "3px solid #C9973A", padding: "var(--space-2) var(--space-3)", borderRadius: "var(--radius-md)", display: "flex", alignItems: "baseline", gap: "var(--space-3)", flexWrap: "wrap" }}>
+        <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "#F5E6C8", fontSize: "0.875rem", margin: 0, lineHeight: 1.5, flex: 1 }}>&ldquo;{verse.text}&rdquo;</p>
+        <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.65rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0, whiteSpace: "nowrap" }}>{verse.chapter}</p>
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--space-2)", padding: "0 var(--space-4) var(--space-3)" }}>
+        {([
+          { label: "Total Cooks",  value: totalCompleted },
+          { label: "This Month",   value: thisMonthCompleted },
+          { label: "Active",       value: activeCooks.length },
+        ] as { label: string; value: number }[]).map(stat => (
+          <div key={stat.label} style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.1)", borderRadius: "var(--radius-md)", padding: "var(--space-2) var(--space-3)", textAlign: "center" }}>
+            <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", color: "#F5E6C8", margin: "0 0 2px" }}>{stat.value}</p>
+            <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.65rem", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{stat.label}</p>
+          </div>
+        ))}
       </div>
 
       {/* Active cooks */}
@@ -284,6 +289,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Tier-aware marketing */}
+      {tier !== "pitmaster" && <div style={{ height: "1px", background: "rgba(201,151,58,0.1)", margin: "0 var(--space-4) var(--space-3)" }} />}
       {tier !== "pitmaster" && (
         <div style={{ padding: "0 var(--space-4) var(--space-4)" }}>
           {tier === "free" && (
@@ -338,19 +344,6 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Quick actions */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "var(--space-3)", padding: "var(--space-4)", maxWidth: "1200px", margin: "0 auto" }}>
-        {[
-          { label: "Start a New Cook",   href: "/"        },
-          { label: "Cook History",        href: "/logs"    },
-          { label: "Premium Features",    href: "/premium" },
-        ].map(action => (
-          <Link key={action.label} href={action.href} className="qa-card" style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.15)", borderRadius: "var(--radius-lg)", padding: "var(--space-3)", textAlign: "center", textDecoration: "none", display: "block", transition: "border-color 0.12s" }}>
-            <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.85rem", color: "var(--color-text)", margin: "0 0 4px" }}>{action.label}</p>
-            <p style={{ color: "#C9973A", margin: 0 }}>→</p>
-          </Link>
-        ))}
-      </div>
     </div>
   );
 }
