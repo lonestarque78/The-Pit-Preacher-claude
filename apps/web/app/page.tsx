@@ -51,7 +51,7 @@ const SEAFOOD = [
 const APPETIZERS = [
   "Jalapeño Poppers", "Armadillo Eggs", "Bacon Wrapped Anything",
   "Smoked Deviled Eggs", "Smoked Sausage Links", "Boudin Balls",
-  "Jalapeño Cheddar Sausage", "Andouille Sausage", "Smoked Queso",
+  "Boudin Links", "Jalapeño Cheddar Sausage", "Andouille Sausage", "Smoked Queso",
   "Seekh Kebabs", "Chicken Tikka", "Smoked Paneer Tikka",
 ];
 
@@ -77,19 +77,39 @@ const CATEGORIES = [
   { key: "appetizers", label: "Appetizers" },
 ];
 
+const CATEGORY_EMOJIS: Record<string, string> = {
+  meats:      "🥩",
+  sides:      "🍽️",
+  appetizers: "🔥",
+};
+
 const COOKING_STYLES = [
-  { key: "texas",       label: "Texas BBQ",         desc: "Beef-forward. Salt and pepper. Post oak smoke. No sauce required." },
-  { key: "kansas_city", label: "Kansas City",        desc: "Everything smokes here. Sweet, thick sauce. Famous for burnt ends." },
-  { key: "memphis",     label: "Memphis",            desc: "Pork rules. Dry rubs or wet — you choose. Complex spice blends." },
-  { key: "carolina",    label: "Carolina",           desc: "Whole hog tradition. Vinegar-based sauces. Regional pride runs deep." },
-  { key: "backyard",    label: "Backyard Classic",   desc: "No rules. Just good fire, good company, and good food." },
-  { key: "competition", label: "Competition Style",  desc: "Every detail matters. Tight bark, clean slice, perfect turn-in box." },
+  { key: "texas",       label: "Texas BBQ",        desc: "Beef-forward. Salt and pepper. Post oak smoke. No sauce required." },
+  { key: "kansas_city", label: "Kansas City",       desc: "Everything smokes here. Sweet, thick sauce. Famous for burnt ends." },
+  { key: "memphis",     label: "Memphis",           desc: "Pork rules. Dry rubs or wet — you choose. Complex spice blends." },
+  { key: "carolina",    label: "Carolina",          desc: "Whole hog tradition. Vinegar-based sauces. Regional pride runs deep." },
+  { key: "backyard",    label: "Backyard Classic",  desc: "No rules. Just good fire, good company, and good food." },
+  { key: "competition", label: "Competition Style", desc: "Every detail matters. Tight bark, clean slice, perfect turn-in box." },
 ];
 
 const VERSES = [
   "The stall is not failure. The stall is patience being tested.",
   "Low and slow is not a temperature. It is a way of life.",
   "If you tend to the pit with pride, the meat will preach on its own.",
+];
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const SETTINGS_TABS = [
+  { key: "style",   label: "Style" },
+  { key: "eating",  label: "Eating Time" },
+  { key: "flavor",  label: "Flavor" },
+  { key: "smokers", label: "Smokers" },
 ];
 
 // ─── Time slots: 10am–10pm in 30min increments ────────────────────────────────
@@ -129,28 +149,28 @@ function formatEatingTime(iso: string) {
   }
 }
 
+function getCalendarGrid(year: number, month: number): Date[] {
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+  const grid: Date[] = [];
+
+  for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+    grid.push(new Date(year, month - 1, daysInPrevMonth - i));
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    grid.push(new Date(year, month, d));
+  }
+  const remaining = (7 - (grid.length % 7)) % 7;
+  for (let d = 1; d <= remaining; d++) {
+    grid.push(new Date(year, month + 1, d));
+  }
+
+  return grid;
+}
+
 // ─── Shared styles ────────────────────────────────────────────────────────────
-
-const card: React.CSSProperties = {
-  background: "var(--color-bg-alt)",
-  borderRadius: "var(--radius-lg)",
-  padding: "var(--space-4)",
-  marginBottom: "var(--space-4)",
-};
-
-const sectionHeading: React.CSSProperties = {
-  fontFamily: "var(--font-heading)",
-  fontSize: "1.35rem",
-  marginBottom: "6px",
-  marginTop: 0,
-};
-
-const sectionSub: React.CSSProperties = {
-  fontFamily: "var(--font-body)",
-  color: "var(--color-text-muted)",
-  fontSize: "0.92rem",
-  marginBottom: "var(--space-3)",
-};
 
 const tileGrid: React.CSSProperties = {
   display: "grid",
@@ -198,6 +218,29 @@ const fieldInput: React.CSSProperties = {
   boxSizing: "border-box" as const,
 };
 
+const okBtn: React.CSSProperties = {
+  width: "100%",
+  padding: "12px",
+  background: "var(--color-accent)",
+  color: "var(--color-bg)",
+  border: "none",
+  borderRadius: "var(--radius-md)",
+  fontFamily: "var(--font-ui)",
+  fontSize: "1rem",
+  cursor: "pointer",
+  marginTop: "var(--space-4)",
+};
+
+const rowLabel: React.CSSProperties = {
+  fontFamily: "var(--font-ui)",
+  fontSize: "0.75rem",
+  color: "#C9973A",
+  textTransform: "uppercase",
+  letterSpacing: "0.15em",
+  marginBottom: "var(--space-2)",
+  marginTop: 0,
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -206,13 +249,13 @@ export default function Home() {
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [openPanel, setOpenPanel] = useState<string | null>(null);
   const [activeMeatTab, setActiveMeatTab] = useState("beef");
+  const [activeSettingsTab, setActiveSettingsTab] = useState("style");
   const [otherVisible, setOtherVisible] = useState<Record<string, boolean>>({});
   const [otherText, setOtherText] = useState<Record<string, string>>({});
   const [cookingStyle, setCookingStyle] = useState("");
 
-  // Date/time picker state
-  const [next14Days] = useState<Date[]>(() =>
-    Array.from({ length: 14 }, (_, i) => {
+  const [next60Days] = useState<Date[]>(() =>
+    Array.from({ length: 60 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() + i + 1);
       return d;
@@ -225,6 +268,9 @@ export default function Home() {
   });
   const [pickerTime, setPickerTime] = useState("18:00");
 
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
+  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
+
   const [flavorSmoke, setFlavorSmoke] = useState(7);
   const [flavorBark, setFlavorBark] = useState(8);
   const [flavorTenderness, setFlavorTenderness] = useState(7);
@@ -235,7 +281,6 @@ export default function Home() {
   const [verseIdx, setVerseIdx] = useState(0);
   const [verseVisible, setVerseVisible] = useState(true);
 
-  // Compute eating time ISO string from picker state
   const eatingTime = (() => {
     const d = new Date(pickerDate);
     const [hStr, mStr] = pickerTime.split(":");
@@ -247,7 +292,6 @@ export default function Home() {
     supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
   }, []);
 
-  // Verse rotation
   useEffect(() => {
     const interval = setInterval(() => {
       setVerseVisible(false);
@@ -259,7 +303,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-assign to sole named smoker
   useEffect(() => {
     const named = smokers.filter(s => s.name.trim());
     if (named.length === 1) {
@@ -313,6 +356,18 @@ export default function Home() {
   const removeSmoker = (id: string) => {
     setSmokers(prev => prev.filter(s => s.id !== id));
     setSelectedItems(prev => prev.map(i => i.smokerId === id ? { ...i, smokerId: null } : i));
+  };
+
+  // ── Calendar helpers ─────────────────────────────────────────────────────────
+
+  const prevCalendarMonth = () => {
+    if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(y => y - 1); }
+    else setCalendarMonth(m => m - 1);
+  };
+
+  const nextCalendarMonth = () => {
+    if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(y => y + 1); }
+    else setCalendarMonth(m => m + 1);
   };
 
   // ── Build ────────────────────────────────────────────────────────────────────
@@ -476,12 +531,15 @@ export default function Home() {
   };
 
   const categoryLabel: Record<string, string> = {
-    meats: "Meats",
-    sides: "Sides",
+    meats:      "Meats",
+    sides:      "Sides",
     appetizers: "Appetizers",
+    settings:   "Cook Settings",
   };
 
   const renderPanelContent = () => {
+
+    // ── Meats ──
     if (openPanel === "meats") {
       return (
         <>
@@ -511,25 +569,388 @@ export default function Home() {
             {MEAT_TABS.find(t => t.key === activeMeatTab)!.items.map(name => renderTile(name, "meats"))}
             {renderOtherTile(`meats-${activeMeatTab}`, "meats")}
           </div>
+          <button onClick={() => setOpenPanel(null)} style={okBtn}>OK</button>
         </>
       );
     }
+
+    // ── Appetizers ──
     if (openPanel === "appetizers") {
       return (
-        <div style={tileGrid}>
-          {APPETIZERS.map(name => renderTile(name, "appetizers"))}
-          {renderOtherTile("appetizers", "appetizers")}
-        </div>
+        <>
+          <div style={tileGrid}>
+            {APPETIZERS.map(name => renderTile(name, "appetizers"))}
+            {renderOtherTile("appetizers", "appetizers")}
+          </div>
+          <button onClick={() => setOpenPanel(null)} style={okBtn}>OK</button>
+        </>
       );
     }
+
+    // ── Sides ──
     if (openPanel === "sides") {
       return (
-        <div style={tileGrid}>
-          {SIDES.map(name => renderTile(name, "sides"))}
-          {renderOtherTile("sides", "sides")}
-        </div>
+        <>
+          <div style={tileGrid}>
+            {SIDES.map(name => renderTile(name, "sides"))}
+            {renderOtherTile("sides", "sides")}
+          </div>
+          <button onClick={() => setOpenPanel(null)} style={okBtn}>OK</button>
+        </>
       );
     }
+
+    // ── Cook Settings ──
+    if (openPanel === "settings") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const maxDate = next60Days[next60Days.length - 1]!;
+      const calGrid = getCalendarGrid(calendarYear, calendarMonth);
+
+      const navBtnStyle: React.CSSProperties = {
+        background: "none",
+        border: "1px solid var(--color-border)",
+        color: "var(--color-text)",
+        borderRadius: "var(--radius-sm)",
+        cursor: "pointer",
+        width: "32px",
+        height: "32px",
+        fontFamily: "var(--font-ui)",
+        fontSize: "1rem",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      };
+
+      return (
+        <>
+          {/* Tab buttons */}
+          <div style={{
+            display: "flex",
+            borderBottom: "1px solid var(--color-border)",
+            marginBottom: "var(--space-4)",
+          }}>
+            {SETTINGS_TABS.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveSettingsTab(tab.key)}
+                style={{
+                  padding: "8px 16px",
+                  background: "none",
+                  border: "none",
+                  borderBottom: activeSettingsTab === tab.key ? "2px solid var(--color-accent)" : "2px solid transparent",
+                  color: activeSettingsTab === tab.key ? "var(--color-accent)" : "var(--color-text-muted)",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  marginBottom: "-1px",
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Style tab */}
+          {activeSettingsTab === "style" && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "var(--space-2)" }}>
+              {COOKING_STYLES.map(style => (
+                <div
+                  key={style.key}
+                  onClick={() => setCookingStyle(cookingStyle === style.key ? "" : style.key)}
+                  style={{
+                    padding: "var(--space-3)",
+                    background: cookingStyle === style.key ? "var(--color-bg)" : "var(--color-bg-alt)",
+                    border: cookingStyle === style.key ? "2px solid var(--color-accent)" : "2px solid transparent",
+                    borderRadius: "var(--radius-md)",
+                    cursor: "pointer",
+                    transition: "border-color 0.12s",
+                  }}
+                >
+                  <div style={{ fontFamily: "var(--font-heading)", fontSize: "0.95rem", marginBottom: "4px" }}>{style.label}</div>
+                  <div style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.45 }}>
+                    {style.desc}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Eating Time tab */}
+          {activeSettingsTab === "eating" && (
+            <div>
+              {/* Month navigation */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-2)" }}>
+                <button onClick={prevCalendarMonth} style={navBtnStyle}>←</button>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem" }}>
+                  {MONTH_NAMES[calendarMonth]} {calendarYear}
+                </span>
+                <button onClick={nextCalendarMonth} style={navBtnStyle}>→</button>
+              </div>
+
+              {/* Day headers */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px", marginBottom: "4px" }}>
+                {DAY_LABELS.map(d => (
+                  <div key={d} style={{
+                    textAlign: "center",
+                    fontFamily: "var(--font-ui)",
+                    fontSize: "0.7rem",
+                    color: "var(--color-text-muted)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    padding: "4px 0",
+                  }}>
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              {/* Day cells */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px", marginBottom: "var(--space-4)" }}>
+                {calGrid.map((day, i) => {
+                  const isCurrentMonth = day.getMonth() === calendarMonth;
+                  const isPast = day < today;
+                  const isAfterMax = day > maxDate;
+                  const isSelected = isSameDay(day, pickerDate);
+                  const isToday = isSameDay(day, today);
+                  const clickable = isCurrentMonth && !isPast && !isAfterMax;
+
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => clickable && setPickerDate(new Date(day))}
+                      style={{
+                        width: "36px",
+                        height: "36px",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: "0 auto",
+                        cursor: clickable ? "pointer" : "default",
+                        background: isSelected ? "var(--color-accent)" : "transparent",
+                        color: isSelected
+                          ? "white"
+                          : !isCurrentMonth || isPast || isAfterMax
+                          ? "var(--color-text-muted)"
+                          : "var(--color-text)",
+                        border: isToday && !isSelected ? "1px solid var(--color-accent)" : "1px solid transparent",
+                        opacity: !isCurrentMonth ? 0.25 : 1,
+                        fontSize: "0.85rem",
+                        fontFamily: "var(--font-ui)",
+                        transition: "background 0.1s",
+                        boxSizing: "border-box" as const,
+                        userSelect: "none" as const,
+                      }}
+                    >
+                      {day.getDate()}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Time grid */}
+              <div style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "0.75rem",
+                color: "var(--color-text-muted)",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: "var(--space-2)",
+              }}>
+                Select a time
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-1)" }}>
+                {TIME_SLOTS.map(slot => {
+                  const selected = pickerTime === slot;
+                  return (
+                    <button
+                      key={slot}
+                      onClick={() => setPickerTime(slot)}
+                      style={{
+                        padding: "8px",
+                        background: selected ? "var(--color-accent)" : "var(--color-bg)",
+                        color: selected ? "white" : "var(--color-text-muted)",
+                        border: selected ? "none" : "1px solid var(--color-border)",
+                        borderRadius: "var(--radius-md)",
+                        cursor: "pointer",
+                        fontFamily: "var(--font-ui)",
+                        fontSize: "0.85rem",
+                        transition: "background 0.1s",
+                      }}
+                    >
+                      {formatTimeSlot(slot)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Flavor tab */}
+          {activeSettingsTab === "flavor" && (
+            <div>
+              {(
+                [
+                  { label: "Smoke Intensity",   value: flavorSmoke,      set: setFlavorSmoke },
+                  { label: "Bark Preference",   value: flavorBark,       set: setFlavorBark },
+                  { label: "Tenderness Target", value: flavorTenderness, set: setFlavorTenderness },
+                ] as { label: string; value: number; set: (n: number) => void }[]
+              ).map(({ label, value, set }) => (
+                <div key={label} style={{ marginBottom: "var(--space-4)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                    <label style={{ fontFamily: "var(--font-ui)", fontSize: "0.95rem" }}>{label}</label>
+                    <span style={{
+                      fontFamily: "var(--font-heading)",
+                      color: "var(--color-accent)",
+                      fontSize: "1.15rem",
+                      minWidth: "24px",
+                      textAlign: "right",
+                    }}>
+                      {value}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1}
+                    max={10}
+                    value={value}
+                    onChange={e => set(Number(e.target.value))}
+                    style={{ width: "100%", accentColor: "var(--color-accent)", cursor: "pointer" }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: "2px" }}>
+                    <span>1</span>
+                    <span>10</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Smokers tab */}
+          {activeSettingsTab === "smokers" && (
+            <div>
+              {smokers.map((smoker, idx) => (
+                <div
+                  key={smoker.id}
+                  style={{
+                    background: "var(--color-bg)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "var(--space-3)",
+                    marginBottom: "var(--space-3)",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-2)" }}>
+                    <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem" }}>Smoker {idx + 1}</span>
+                    {idx > 0 && (
+                      <button
+                        onClick={() => removeSmoker(smoker.id)}
+                        style={{ background: "none", border: "none", color: "var(--color-text-muted)", cursor: "pointer", fontSize: "1.1rem", lineHeight: 1 }}
+                      >×</button>
+                    )}
+                  </div>
+                  <input
+                    value={smoker.name}
+                    onChange={e => updateSmoker(smoker.id, { name: e.target.value })}
+                    placeholder="Weber Smokefire EX6, offset, kamado, kettle..."
+                    style={{ ...fieldInput, marginBottom: "var(--space-2)" }}
+                  />
+                  <input
+                    value={smoker.wood}
+                    onChange={e => updateSmoker(smoker.id, { wood: e.target.value })}
+                    placeholder="Post oak, hickory, cherry, competition blend..."
+                    style={fieldInput}
+                  />
+                </div>
+              ))}
+
+              {smokers.length < 3 && (
+                <button
+                  onClick={addSmoker}
+                  style={{
+                    padding: "10px 20px",
+                    background: "none",
+                    border: "1px solid var(--color-accent)",
+                    color: "var(--color-accent)",
+                    borderRadius: "var(--radius-md)",
+                    cursor: "pointer",
+                    fontFamily: "var(--font-ui)",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  + Add Another Smoker
+                </button>
+              )}
+
+              {/* Assignment section — only when 2+ named smokers and items selected */}
+              {hasItems && namedSmokers.length > 1 && (
+                <div style={{ marginTop: "var(--space-4)" }}>
+                  <div style={{
+                    fontFamily: "var(--font-ui)",
+                    fontSize: "0.75rem",
+                    color: "var(--color-text-muted)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    marginBottom: "var(--space-2)",
+                  }}>
+                    Assign Items to Smokers
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                    {selectedItems.map(item => (
+                      <div
+                        key={`${item.category}-${item.name}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "var(--space-3)",
+                          padding: "var(--space-2) var(--space-3)",
+                          background: "var(--color-bg)",
+                          borderRadius: "var(--radius-md)",
+                          border: item.smokerId ? "1px solid var(--color-border)" : "1px solid var(--color-accent)",
+                          flexWrap: "wrap" as const,
+                        }}
+                      >
+                        <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.9rem" }}>
+                          {item.name}
+                          {item.quantity > 1 && <span style={{ color: "var(--color-text-muted)" }}> ×{item.quantity}</span>}
+                        </span>
+                        <select
+                          value={item.smokerId || ""}
+                          onChange={e => updateItem(item.name, item.category, { smokerId: e.target.value || null })}
+                          style={{
+                            padding: "6px 10px",
+                            background: "var(--color-bg-alt)",
+                            border: "1px solid var(--color-border)",
+                            borderRadius: "var(--radius-sm)",
+                            color: "var(--color-text)",
+                            fontFamily: "var(--font-body)",
+                            fontSize: "0.875rem",
+                            minWidth: "160px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <option value="">Assign to smoker...</option>
+                          {namedSmokers.map(s => (
+                            <option key={s.id} value={s.id}>
+                              Smoker {smokers.indexOf(s) + 1}{s.name ? ` — ${s.name}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <button onClick={() => setOpenPanel(null)} style={okBtn}>OK</button>
+        </>
+      );
+    }
+
     return null;
   };
 
@@ -612,7 +1033,7 @@ export default function Home() {
           radial-gradient(ellipse at 50% 110%, rgba(232,98,10,0.15) 0%, transparent 55%),
           linear-gradient(180deg, #0c0a08 0%, #1a1008 40%, #0c0a08 100%)
         `,
-        padding: "5rem 2rem 3rem",
+        padding: "2.5rem 2rem 1.5rem",
         textAlign: "center",
       }}>
         <p style={{
@@ -639,7 +1060,7 @@ export default function Home() {
           The Gospel of Great BBQ
         </p>
 
-        <h1 style={{ margin: "0 0 var(--space-3)", lineHeight: 1.05 }}>
+        <h1 style={{ margin: 0, lineHeight: 1.05 }}>
           <span style={{
             display:    "block",
             fontFamily: "var(--font-heading)",
@@ -657,57 +1078,27 @@ export default function Home() {
           }}>Pit</span>
           {" "}
           <span style={{
-            display:              "inline",
-            fontFamily:           "var(--font-heading)",
-            color:                "transparent",
-            WebkitTextStroke:     "2px #C9973A",
-            fontSize:             "clamp(3rem, 8vw, 7rem)",
-            fontWeight:           900,
-            fontStyle:            "italic",
+            display:          "inline",
+            fontFamily:       "var(--font-heading)",
+            color:            "transparent",
+            WebkitTextStroke: "2px #C9973A",
+            fontSize:         "clamp(3rem, 8vw, 7rem)",
+            fontWeight:       900,
+            fontStyle:        "italic",
           }}>Preacher</span>
         </h1>
-
-        <p style={{
-          fontFamily:   "var(--font-body)",
-          color:        "#8a7a6a",
-          fontSize:     "1rem",
-          marginTop:    0,
-          marginBottom: 0,
-        }}>
-          Every great cook starts with a plan. Build yours below.
-        </p>
       </div>
 
-      {/* Divider */}
-      <div style={{ height: "1px", background: "var(--color-border, #2a2a2a)" }} />
+      {/* Gold divider */}
+      <div style={{ height: "1px", background: "rgba(201,151,58,0.2)" }} />
 
-      {/* ── ROTATING VERSE ── */}
-      <div style={{ textAlign: "center", padding: "var(--space-5) var(--space-4) 0" }}>
-        <p style={{
-          fontFamily: "var(--font-body)",
-          fontStyle:  "italic",
-          color:      "var(--color-text-muted)",
-          fontSize:   "0.9rem",
-          margin:     "0 auto",
-          maxWidth:   "520px",
-          lineHeight: 1.7,
-          opacity:    verseVisible ? 1 : 0,
-          transition: "opacity 0.5s ease",
-        }}>
-          &ldquo;{VERSES[verseIdx]}&rdquo;
-        </p>
-      </div>
+      {/* ── MAIN BUILDER ── */}
+      <div style={{ maxWidth: "920px", margin: "0 auto", padding: "var(--space-4) var(--space-4) 80px" }}>
 
-      {/* ── MEAL PREP BUILDER ── */}
-      <div style={{ maxWidth: "920px", margin: "0 auto", padding: "var(--space-5) var(--space-4) 80px" }}>
-
-        {/* SECTION 1: ITEM PICKER */}
-        <div style={card}>
-          <h2 style={sectionHeading}>What are you cooking?</h2>
-          <p style={sectionSub}>Select everything going on the pit. Tap a category to open.</p>
-
-          {/* Category card row */}
-          <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap", marginBottom: "var(--space-2)" }}>
+        {/* ROW 1 — What are you cooking? */}
+        <div style={{ marginBottom: "var(--space-4)" }}>
+          <p style={rowLabel}>What are you cooking?</p>
+          <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
             {CATEGORIES.map(cat => {
               const count = categoryCount[cat.key] ?? 0;
               const catItems = selectedItems.filter(i => i.category === cat.key);
@@ -716,34 +1107,44 @@ export default function Home() {
                   key={cat.key}
                   onClick={() => setOpenPanel(cat.key)}
                   style={{
-                    flex:         "1 1 200px",
-                    background:   "var(--color-bg)",
-                    border:       count > 0 ? "2px solid var(--color-accent)" : "2px solid var(--color-border)",
+                    flex: "1",
+                    minWidth: "120px",
+                    background: "var(--color-bg-alt)",
+                    border: count > 0 ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
                     borderRadius: "var(--radius-lg)",
-                    padding:      "var(--space-3) var(--space-4)",
-                    cursor:       "pointer",
-                    transition:   "border-color 0.12s",
+                    padding: "var(--space-3)",
+                    textAlign: "center",
+                    cursor: "pointer",
+                    transition: "border-color 0.12s",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: count > 0 ? "var(--space-2)" : 0 }}>
-                    <span style={{ fontFamily: "var(--font-heading)", fontSize: "1.1rem" }}>{cat.label}</span>
-                    <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
-                      {count > 0 ? `${count} selected` : "Tap to add"}
-                    </span>
+                  <div style={{ fontSize: "2rem", marginBottom: "4px" }}>{CATEGORY_EMOJIS[cat.key]}</div>
+                  <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.1rem", marginBottom: count > 0 ? "var(--space-1)" : 0 }}>
+                    {cat.label}
                   </div>
+                  {count > 0 && (
+                    <div style={{
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "0.75rem",
+                      color: "var(--color-accent)",
+                      marginBottom: catItems.length > 0 ? "var(--space-1)" : 0,
+                    }}>
+                      {count} selected
+                    </div>
+                  )}
                   {catItems.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", justifyContent: "center" }}>
                       {catItems.map(item => (
                         <span
                           key={item.name}
                           style={{
-                            border:       "1px solid var(--color-accent)",
-                            fontFamily:   "var(--font-ui)",
-                            fontSize:     "0.75rem",
-                            padding:      "4px 8px",
-                            borderRadius: "12px",
-                            color:        "var(--color-accent)",
-                            whiteSpace:   "nowrap" as const,
+                            border: "1px solid var(--color-accent)",
+                            fontFamily: "var(--font-ui)",
+                            fontSize: "0.7rem",
+                            padding: "2px 6px",
+                            borderRadius: "10px",
+                            color: "var(--color-accent)",
+                            whiteSpace: "nowrap" as const,
                           }}
                         >
                           {item.name}{item.quantity > 1 ? ` ×${item.quantity}` : ""}
@@ -757,376 +1158,54 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SECTION 2: COOKING STYLE */}
-        <div style={card}>
-          <h2 style={sectionHeading}>Cooking Style</h2>
-          <p style={sectionSub}>Set the tradition. Shape the plan.</p>
-
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-            gap: "var(--space-3)",
-          }}>
-            {COOKING_STYLES.map(style => (
-              <div
-                key={style.key}
-                onClick={() => setCookingStyle(cookingStyle === style.key ? "" : style.key)}
-                style={{
-                  padding:      "var(--space-3)",
-                  background:   cookingStyle === style.key ? "var(--color-bg)" : "var(--color-bg-alt)",
-                  border:       cookingStyle === style.key ? "2px solid var(--color-accent)" : "2px solid transparent",
-                  borderRadius: "var(--radius-md)",
-                  cursor:       "pointer",
-                  transition:   "border-color 0.12s",
-                }}
-              >
-                <div style={{ fontFamily: "var(--font-heading)", marginBottom: "4px" }}>{style.label}</div>
-                <div style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", lineHeight: 1.45 }}>
-                  {style.desc}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* SECTION 3: EATING TIME */}
-        <div style={card}>
-          <h2 style={sectionHeading}>When are you eating?</h2>
-          <p style={sectionSub}>This is the anchor. Everything calculates backward from this moment.</p>
-
-          {/* Day pills */}
-          <div style={{
-            display:        "flex",
-            gap:            "var(--space-2)",
-            overflowX:      "auto",
-            paddingBottom:  "var(--space-2)",
-            marginBottom:   "var(--space-3)",
-            scrollbarWidth: "none" as const,
-          }}>
-            {next14Days.map((day, i) => {
-              const selected = isSameDay(day, pickerDate);
-              return (
-                <button
-                  key={i}
-                  onClick={() => setPickerDate(day)}
-                  style={{
-                    flexShrink:   0,
-                    padding:      "8px 14px",
-                    background:   selected ? "var(--color-accent)" : "var(--color-bg)",
-                    color:        selected ? "white" : "var(--color-text)",
-                    border:       selected ? "none" : "1px solid var(--color-border)",
-                    borderRadius: "var(--radius-md)",
-                    cursor:       "pointer",
-                    textAlign:    "center" as const,
-                    transition:   "background 0.12s",
-                    minWidth:     "64px",
-                  }}
-                >
-                  <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", textTransform: "uppercase" as const, letterSpacing: "0.05em", opacity: 0.8 }}>
-                    {day.toLocaleDateString(undefined, { weekday: "short" })}
-                  </div>
-                  <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.2rem", fontWeight: 700, lineHeight: 1.1 }}>
-                    {day.getDate()}
-                  </div>
-                  <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", opacity: 0.8 }}>
-                    {day.toLocaleDateString(undefined, { month: "short" })}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Time pills */}
-          <div style={{
-            display:        "flex",
-            gap:            "var(--space-1)",
-            flexWrap:       "wrap",
-          }}>
-            {TIME_SLOTS.map(slot => {
-              const selected = pickerTime === slot;
-              return (
-                <button
-                  key={slot}
-                  onClick={() => setPickerTime(slot)}
-                  style={{
-                    padding:      "6px 12px",
-                    background:   selected ? "var(--color-accent)" : "var(--color-bg)",
-                    color:        selected ? "white" : "var(--color-text-muted)",
-                    border:       selected ? "none" : "1px solid var(--color-border)",
-                    borderRadius: "var(--radius-md)",
-                    cursor:       "pointer",
-                    fontFamily:   "var(--font-ui)",
-                    fontSize:     "0.82rem",
-                    transition:   "background 0.12s",
-                  }}
-                >
-                  {formatTimeSlot(slot)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* SECTION 4: FLAVOR AUTOGRAPH */}
-        <div style={card}>
-          <h2 style={sectionHeading}>Your Flavor Autograph</h2>
-          <p style={sectionSub}>These three settings shape your entire cook plan.</p>
-
-          {(
-            [
-              { label: "Smoke Intensity",   value: flavorSmoke,      set: setFlavorSmoke },
-              { label: "Bark Preference",   value: flavorBark,       set: setFlavorBark },
-              { label: "Tenderness Target", value: flavorTenderness, set: setFlavorTenderness },
-            ] as { label: string; value: number; set: (n: number) => void }[]
-          ).map(({ label, value, set }) => (
-            <div key={label} style={{ marginBottom: "var(--space-4)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                <label style={{ fontFamily: "var(--font-ui)", fontSize: "0.95rem" }}>{label}</label>
-                <span style={{
-                  fontFamily: "var(--font-heading)",
-                  color:      "var(--color-accent)",
-                  fontSize:   "1.15rem",
-                  minWidth:   "24px",
-                  textAlign:  "right",
-                }}>
-                  {value}
-                </span>
-              </div>
-              <input
-                type="range"
-                min={1}
-                max={10}
-                value={value}
-                onChange={e => set(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "var(--color-accent)", cursor: "pointer" }}
-              />
-              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: "2px" }}>
-                <span>1</span>
-                <span>10</span>
+        {/* ROW 2 — Cook Settings */}
+        <div style={{ marginBottom: "var(--space-4)" }}>
+          <p style={rowLabel}>Cook Settings</p>
+          <div
+            onClick={() => setOpenPanel("settings")}
+            style={{
+              background: "var(--color-bg-alt)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "var(--radius-lg)",
+              padding: "var(--space-3) var(--space-4)",
+              cursor: "pointer",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              transition: "border-color 0.12s",
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <div style={{
+                display: "flex",
+                gap: "var(--space-3)",
+                flexWrap: "wrap",
+                fontFamily: "var(--font-body)",
+                fontSize: "0.875rem",
+                color: "var(--color-text-muted)",
+                lineHeight: 1.8,
+              }}>
+                <span>{cookingStyle ? COOKING_STYLES.find(s => s.key === cookingStyle)?.label : "No style selected"}</span>
+                <span>·</span>
+                <span>{eatingTime ? formatEatingTime(eatingTime) : "No time set"}</span>
+                <span>·</span>
+                <span>Smoke {flavorSmoke} · Bark {flavorBark} · Tenderness {flavorTenderness}</span>
+                <span>·</span>
+                <span>{smokers.length} smoker{smokers.length !== 1 ? "s" : ""}</span>
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* SECTION 5: PIT SETUP */}
-        <div style={card}>
-          <h2 style={sectionHeading}>Your Pit Setup</h2>
-          <p style={sectionSub}>Tell the Preacher what you&rsquo;re cooking on.</p>
-
-          {smokers.map((smoker, idx) => (
-            <div
-              key={smoker.id}
-              style={{
-                background:   "var(--color-bg)",
-                border:       "1px solid var(--color-border)",
-                borderRadius: "var(--radius-md)",
-                padding:      "var(--space-3)",
-                marginBottom: "var(--space-3)",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-2)" }}>
-                <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem" }}>Smoker {idx + 1}</span>
-                {idx > 0 && (
-                  <button
-                    onClick={() => removeSmoker(smoker.id)}
-                    style={{
-                      background: "none", border: "none",
-                      color: "var(--color-text-muted)", cursor: "pointer",
-                      fontSize: "1.1rem", lineHeight: 1,
-                    }}
-                  >×</button>
-                )}
-              </div>
-              <input
-                value={smoker.name}
-                onChange={e => updateSmoker(smoker.id, { name: e.target.value })}
-                placeholder="Weber Smokefire EX6, offset, kamado, kettle..."
-                style={{ ...fieldInput, marginBottom: "var(--space-2)" }}
-              />
-              <input
-                value={smoker.wood}
-                onChange={e => updateSmoker(smoker.id, { wood: e.target.value })}
-                placeholder="Post oak, hickory, cherry, competition blend..."
-                style={fieldInput}
-              />
-            </div>
-          ))}
-
-          {smokers.length < 3 && (
-            <button
-              onClick={addSmoker}
-              style={{
-                padding:      "10px 20px",
-                background:   "none",
-                border:       "1px solid var(--color-accent)",
-                color:        "var(--color-accent)",
-                borderRadius: "var(--radius-md)",
-                cursor:       "pointer",
-                fontFamily:   "var(--font-ui)",
-                fontSize:     "0.9rem",
-              }}
-            >
-              + Add Another Smoker
-            </button>
-          )}
-        </div>
-
-        {/* SECTION 6: SMOKER ASSIGNMENT — only when 2+ named smokers */}
-        {hasItems && namedSmokers.length > 1 && (
-          <div style={card}>
-            <h2 style={sectionHeading}>Assign Items to Smokers</h2>
-            <p style={sectionSub}>Tell the Preacher which pit is cooking what.</p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-              {selectedItems.map(item => (
-                <div
-                  key={`${item.category}-${item.name}`}
-                  style={{
-                    display:        "flex",
-                    alignItems:     "center",
-                    justifyContent: "space-between",
-                    gap:            "var(--space-3)",
-                    padding:        "var(--space-2) var(--space-3)",
-                    background:     "var(--color-bg)",
-                    borderRadius:   "var(--radius-md)",
-                    border:         item.smokerId
-                      ? "1px solid var(--color-border)"
-                      : "1px solid var(--color-accent)",
-                    flexWrap: "wrap" as const,
-                  }}
-                >
-                  <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.9rem" }}>
-                    {item.name}
-                    {item.quantity > 1 && (
-                      <span style={{ color: "var(--color-text-muted)" }}> ×{item.quantity}</span>
-                    )}
-                  </span>
-                  <select
-                    value={item.smokerId || ""}
-                    onChange={e => updateItem(item.name, item.category, { smokerId: e.target.value || null })}
-                    style={{
-                      padding:      "6px 10px",
-                      background:   "var(--color-bg-alt)",
-                      border:       "1px solid var(--color-border)",
-                      borderRadius: "var(--radius-sm)",
-                      color:        "var(--color-text)",
-                      fontFamily:   "var(--font-body)",
-                      fontSize:     "0.875rem",
-                      minWidth:     "200px",
-                      cursor:       "pointer",
-                    }}
-                  >
-                    <option value="">Assign to smoker...</option>
-                    {namedSmokers.map(s => (
-                      <option key={s.id} value={s.id}>
-                        Smoker {smokers.indexOf(s) + 1}{s.name ? ` — ${s.name}` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-            </div>
+            <span style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--color-text-muted)",
+              fontSize: "1.3rem",
+              marginLeft: "var(--space-3)",
+              flexShrink: 0,
+            }}>›</span>
           </div>
-        )}
-
-        {/* SECTION 7: LIVE PREP SUMMARY */}
-        <div style={card}>
-          <h2 style={sectionHeading}>Your Cook at a Glance</h2>
-
-          {!hasItems ? (
-            <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", fontSize: "0.92rem" }}>
-              No items selected yet. Pick something from the pit above.
-            </p>
-          ) : (
-            <>
-              {namedSmokers.length > 1 ? (
-                <>
-                  {namedSmokers.map(smoker => {
-                    const assigned = selectedItems.filter(i => i.smokerId === smoker.id);
-                    return (
-                      <div key={smoker.id} style={{ marginBottom: "var(--space-3)" }}>
-                        <div style={{ fontFamily: "var(--font-heading)", fontSize: "0.95rem", marginBottom: "4px" }}>
-                          Smoker {smokers.indexOf(smoker) + 1}
-                          {smoker.name ? ` — ${smoker.name}` : ""}
-                        </div>
-                        {assigned.length === 0 ? (
-                          <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", fontSize: "0.875rem", margin: 0 }}>
-                            No items assigned yet
-                          </p>
-                        ) : (
-                          <ul style={{ margin: 0, paddingLeft: "var(--space-4)", fontFamily: "var(--font-body)", fontSize: "0.875rem", lineHeight: 1.7 }}>
-                            {assigned.map(i => (
-                              <li key={i.name}>
-                                {i.name}{i.quantity > 1 ? ` ×${i.quantity}` : ""}
-                                {i.weight ? ` (${i.weight} lbs)` : ""}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {selectedItems.some(i => i.smokerId === null) && (
-                    <div style={{ marginBottom: "var(--space-3)" }}>
-                      <div style={{ fontFamily: "var(--font-heading)", fontSize: "0.95rem", color: "var(--color-accent)", marginBottom: "4px" }}>
-                        Unassigned
-                      </div>
-                      <ul style={{ margin: 0, paddingLeft: "var(--space-4)", fontFamily: "var(--font-body)", fontSize: "0.875rem", lineHeight: 1.7 }}>
-                        {selectedItems.filter(i => i.smokerId === null).map(i => (
-                          <li key={`${i.category}-${i.name}`}>{i.name}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <ul style={{ margin: "0 0 var(--space-3)", paddingLeft: "var(--space-4)", fontFamily: "var(--font-body)", fontSize: "0.875rem", lineHeight: 1.7 }}>
-                  {selectedItems.map(i => (
-                    <li key={`${i.category}-${i.name}`}>
-                      {i.name}{i.quantity > 1 ? ` ×${i.quantity}` : ""}
-                      {i.weight ? ` (${i.weight} lbs)` : ""}
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "var(--space-3)" }}>
-                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", marginBottom: "5px" }}>
-                  <strong>Style:</strong>{" "}
-                  {cookingStyle
-                    ? COOKING_STYLES.find(s => s.key === cookingStyle)?.label
-                    : <span style={{ color: "var(--color-text-muted)" }}>Not selected</span>}
-                </p>
-                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", marginBottom: "5px" }}>
-                  <strong>Eating Time:</strong>{" "}
-                  {eatingTime
-                    ? formatEatingTime(eatingTime)
-                    : <span style={{ color: "var(--color-text-muted)" }}>Not set</span>}
-                </p>
-                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", marginBottom: 0 }}>
-                  <strong>Flavor Autograph:</strong> Smoke {flavorSmoke} · Bark {flavorBark} · Tenderness {flavorTenderness}
-                </p>
-              </div>
-
-              {hasUnassigned && (
-                <div style={{
-                  marginTop:    "var(--space-3)",
-                  padding:      "var(--space-2) var(--space-3)",
-                  background:   "var(--color-bg)",
-                  borderRadius: "var(--radius-sm)",
-                  borderLeft:   "3px solid var(--color-accent)",
-                }}>
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-accent)", margin: 0 }}>
-                    Assign all items to a smoker before building your plan.
-                  </p>
-                </div>
-              )}
-            </>
-          )}
         </div>
 
-        {/* SECTION 8: BUILD BUTTON */}
-        <div>
+        {/* BUILD BUTTON */}
+        <div style={{ marginBottom: "var(--space-5)" }}>
           <button
             onClick={handleBuild}
             disabled={isBuildDisabled || saving}
@@ -1154,6 +1233,37 @@ export default function Home() {
               </Link>
             </div>
           )}
+
+          {hasUnassigned && (
+            <div style={{
+              marginTop: "var(--space-3)",
+              padding: "var(--space-2) var(--space-3)",
+              background: "var(--color-bg-alt)",
+              borderRadius: "var(--radius-sm)",
+              borderLeft: "3px solid var(--color-accent)",
+            }}>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-accent)", margin: 0 }}>
+                Open Cook Settings → Smokers and assign all items before building your plan.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* ROTATING VERSE */}
+        <div style={{ textAlign: "center" }}>
+          <p style={{
+            fontFamily: "var(--font-body)",
+            fontStyle:  "italic",
+            color:      "var(--color-text-muted)",
+            fontSize:   "0.9rem",
+            margin:     "0 auto",
+            maxWidth:   "520px",
+            lineHeight: 1.7,
+            opacity:    verseVisible ? 1 : 0,
+            transition: "opacity 0.5s ease",
+          }}>
+            &ldquo;{VERSES[verseIdx]}&rdquo;
+          </p>
         </div>
 
       </div>
