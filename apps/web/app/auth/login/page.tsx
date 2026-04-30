@@ -50,6 +50,10 @@ export default function LoginPage() {
   const [loginLoading, setLoginLoading]   = useState(false);
   const [loginError, setLoginError]       = useState("");
   const [showForgot, setShowForgot]       = useState(false);
+  const [forgotEmail, setForgotEmail]     = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent]       = useState(false);
+  const [forgotError, setForgotError]     = useState("");
 
   // Signup
   const [step, setStep]                     = useState(1);
@@ -76,6 +80,25 @@ export default function LoginPage() {
         {msg}
       </p>
     ) : null;
+
+  // ── Forgot password handler ──────────────────────────────────────────────────
+
+  const handleForgotPassword = async () => {
+    setForgotError("");
+    if (!forgotEmail.trim()) {
+      setForgotError("Please enter your email.");
+      return;
+    }
+    setForgotLoading(true);
+    const supabase = createClient();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+      redirectTo: `${siteUrl}/auth/reset`,
+    });
+    setForgotLoading(false);
+    if (error) { setForgotError(error.message); return; }
+    setForgotSent(true);
+  };
 
   // ── Login handler ────────────────────────────────────────────────────────────
 
@@ -312,7 +335,11 @@ export default function LoginPage() {
 
               <div style={{ textAlign: "center" }}>
                 <button
-                  onClick={() => setShowForgot(f => !f)}
+                  onClick={() => {
+                    const next = !showForgot;
+                    setShowForgot(next);
+                    if (next && loginEmail) setForgotEmail(loginEmail);
+                  }}
                   style={{
                     background: "none",
                     border: "none",
@@ -327,15 +354,40 @@ export default function LoginPage() {
                   Forgot password?
                 </button>
                 {showForgot && (
-                  <p style={{
-                    fontFamily: "var(--font-body)",
-                    fontSize: "0.85rem",
-                    color: "var(--color-text-muted)",
-                    marginTop: "var(--space-1)",
-                    marginBottom: 0,
-                  }}>
-                    Contact support to reset your password.
-                  </p>
+                  forgotSent ? (
+                    <p style={{
+                      fontFamily: "var(--font-body)",
+                      fontSize: "0.85rem",
+                      color: "var(--color-accent)",
+                      marginTop: "var(--space-2)",
+                      marginBottom: 0,
+                    }}>
+                      Check your email for a reset link.
+                    </p>
+                  ) : (
+                    <div style={{ marginTop: "var(--space-2)" }}>
+                      <Input
+                        type="email"
+                        value={forgotEmail}
+                        onChange={e => setForgotEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        style={{ marginBottom: "var(--space-2)" }}
+                        onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter") handleForgotPassword(); }}
+                      />
+                      {forgotError && (
+                        <p style={{ color: "#c0392b", fontFamily: "var(--font-body)", fontSize: "0.85rem", margin: "0 0 var(--space-2)" }}>
+                          {forgotError}
+                        </p>
+                      )}
+                      <Button
+                        onClick={handleForgotPassword}
+                        disabled={forgotLoading}
+                        style={{ width: "100%" }}
+                      >
+                        {forgotLoading ? "Sending..." : "Send Reset Link"}
+                      </Button>
+                    </div>
+                  )
                 )}
               </div>
             </div>
