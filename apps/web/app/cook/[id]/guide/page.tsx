@@ -422,7 +422,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const smokerName = activeTool?.name || cook.smoker_type || "Smoker";
   const woodType = activeTool?.wood || cook.wood_type || "";
   const smokerType = inferSmokerType(smokerName, cook.smoker_type || "");
-  const fireSteps = FIRE_STEPS[smokerType] ?? FIRE_STEPS.other;
+  const fireSteps = FIRE_STEPS[smokerType] ?? FIRE_STEPS.other ?? [];
   const woodProfile = woodType ? getWoodProfile(woodType) : "";
 
   const styleId = inferStyleId(cook.cooking_style);
