@@ -115,6 +115,45 @@ function buildDisplayItems(planItems: PlanItem[], cookItems: any[]): DisplayItem
   }));
 }
 
+function getTroubleCards(smokerType: string): { title: string; fix: string }[] {
+  if (smokerType === "pellet") return [
+    { title: "Temperature is running too high", fix: "Lower your set temperature on the controller by 10-15 degrees. Do not open the lid. Give the grill 10 minutes to respond. If it keeps spiking, check for a grease fire in the drip pan — clear it out." },
+    { title: "Temperature is running too low", fix: "Check your hopper — you may be running low on pellets. Check that the auger is feeding correctly. If the firepot has gone cold, you may need to run the shutdown cycle and restart." },
+    { title: "Dirty or excessive smoke", fix: "Pellet grills rarely produce bad smoke unless the firepot is dirty. Check for excess ash or old pellets in the firepot. Run a startup cycle and let the smoke clear before loading meat." },
+    { title: "Temperature keeps spiking and dropping", fix: "This usually means a dirty firepot or low-quality pellets. Clean the firepot between cooks. Switch to a premium pellet brand. Do not keep adjusting the controller — let it find its rhythm." },
+  ];
+  if (smokerType === "offset") return [
+    { title: "Fire running too hot", fix: "Close your intake vent slightly. Do not close the exhaust. Add a smaller split next time. Give the fire 15 minutes to respond before adjusting again." },
+    { title: "Fire running too cold", fix: "Open your intake wider. You may need to add a split. Check the exhaust is fully open. If the coal bed is weak, add a fresh split and let it fully catch before closing down." },
+    { title: "White or dirty smoke", fix: "Your wood is not combusting cleanly. Open all vents fully and let the fire build heat. Do not load meat until you see thin blue smoke coming from the stack. Thick white smoke will make your meat bitter." },
+    { title: "Temperature keeps swinging", fix: "Stop chasing it. Pick a vent position and hold it for 20 minutes. Offset pits take time to stabilize. Add splits before the temperature drops — not after." },
+  ];
+  if (smokerType === "kamado") return [
+    { title: "Temperature is running too high", fix: "Close your bottom vent incrementally — even a quarter inch change matters on a kamado. Give it 10-15 minutes before touching it again. Do not open the dome. Heat trapped in the ceramic walls takes time to bleed off." },
+    { title: "Temperature is running too low", fix: "Open your bottom vent slightly. Check that the top vent is open. Make sure you have enough lit charcoal in the basket — a kamado needs a solid coal bed to maintain temperature." },
+    { title: "Thick or acrid smoke", fix: "Let the fire establish longer before loading meat. Open both vents fully until the smoke clears and thins. White smoke from a kamado often means the wood was added before the charcoal was fully lit." },
+    { title: "Temperature will not stabilize", fix: "You may have adjusted the vents too many times. Close both vents fully for 2-3 minutes to choke the fire down, then reopen to your target setting and wait 15 minutes without touching anything." },
+  ];
+  if (smokerType === "drum") return [
+    { title: "Temperature is running too hot", fix: "Close your intake vents down — a UDS runs hot by nature. Quarter inch of intake is often more than enough. Seal any air leaks around the lid. Do not remove the lid to check — that will spike your temps further." },
+    { title: "Temperature is running too low", fix: "Open your intakes slightly. Make sure your lid is seated properly. Check that you have enough lit charcoal in the basket — drum smokers need a good coal bed to hold temperature." },
+    { title: "Smoke coming from the lid or seams", fix: "Your lid seal is letting air in, which disrupts your draft. Press the lid down firmly or add a gasket if it is a persistent problem. Control all airflow through the intake vents." },
+    { title: "Temperature keeps spiking", fix: "You opened the lid. A drum holds and spikes easily when exposed to fresh air. Next time, resist the urge. If you must check, do it fast and seal it back immediately. Small adjustments only — the drum amplifies every change." },
+  ];
+  if (smokerType === "kettle") return [
+    { title: "Snake is burning too fast", fix: "Close your bottom vent down to about 1/4 open. Make sure your top vent is positioned over the meat, not the coals. The snake should burn slowly from one end — if it is burning across the middle you may have placed the charcoal too close together." },
+    { title: "Temperature is dropping too fast", fix: "The snake may have gone out or the briquettes were not fully lit. Check that the end of the snake is actively burning. Add 5-6 pre-lit briquettes from a chimney directly to the burning end to reestablish the fire." },
+    { title: "Dirty or thick smoke", fix: "Make sure the briquettes are fully white before closing the lid. Charcoal that is still lighting produces thick dirty smoke. Wait until the snake end is glowing and producing thin smoke before loading meat." },
+    { title: "Temperature running hot", fix: "Close the bottom vent further. Reposition your top vent fully over the meat side — this pulls the heat and smoke across the meat and out, rather than circulating back over the coals. A kettle at 250°F needs very little intake air." },
+  ];
+  return [
+    { title: "Fire running too hot", fix: "Close your intake vents in small increments. Do not close the exhaust. Give it 10 minutes before adjusting again. If you have a water pan, add cold water. Do not open the lid — you will feed the fire." },
+    { title: "Fire running too cold", fix: "Open your intake vents wider. Check your fuel — you may need to add a split or stoke the coals. Make sure your exhaust is fully open." },
+    { title: "Dirty smoke (thick white or gray)", fix: "Your wood is not combusting cleanly. Open the exhaust fully. Add more heat to get the wood burning properly. Do not load meat until you see thin blue smoke. Thick smoke will make your meat bitter." },
+    { title: "Temperature keeps spiking and dropping", fix: "Stop adjusting. Pick a vent position and hold it for 20 minutes. Every pit needs time to stabilize — chasing temperature is the most common mistake." },
+  ];
+}
+
 const FIRE_STEPS: Record<string, string[]> = {
   pellet: [
     "Fill the hopper completely before starting — check the level",
@@ -165,106 +204,30 @@ const FIRE_STEPS: Record<string, string[]> = {
   ],
 };
 
-const TROUBLE_CARDS = [
-  {
-    title: "Fire is running too hot",
-    fix: "Close your intake vents in small increments. Do not close the exhaust. Give it 10 minutes before adjusting again. If you have a water pan, add cold water. Do not open the lid — you will feed the fire.",
-  },
-  {
-    title: "Fire is running too cold",
-    fix: "Open your intake vents wider. Check your fuel — you may need to add a split or stoke the coals. Make sure your exhaust is fully open. On a pellet grill, check the hopper and auger.",
-  },
-  {
-    title: "Dirty smoke (thick white or gray)",
-    fix: "Your wood is not combusting cleanly. Open the exhaust fully. Add more heat to get the wood burning properly. Do not load meat until you see thin blue smoke. Thick smoke will make your meat bitter.",
-  },
-  {
-    title: "Temperature keeps spiking and dropping",
-    fix: "You are chasing the temperature. Stop adjusting. Pick a vent position and hold it for 20 minutes. Pellet grill spikes usually mean a dirty firepot — check and clean between cooks.",
-  },
-];
-
-const SMOKER_NOTES: Record<string, string> = {
-  pellet:  "The Smokefire and pellet grills like it are forgiving but they will lie to you about smoke. That thin blue wisp you want is there — you just cannot see it the way you can on an offset. Trust the controller, trust the holler, and let the wood do its work. Check your hopper every few hours and do not let it run dry mid-cook.",
-  offset:  "An offset is a conversation between you and the fire. Every split you add is a word. Learn to read the smoke coming out of that stack — thin and blue means you are speaking the right language. White and billowy means start over with a cleaner fire before that meat absorbs anything ugly.",
-  kamado:  "The kamado is the most forgiving pit ever built by human hands. Once it is up to temp it wants to stay there. Small adjustments only — that bottom vent is more powerful than it looks. Give every adjustment 10 minutes to show its effect before you touch it again.",
-  drum:    "The drum runs hot and it will humble you if you are not paying attention. Keep that intake cracked — a quarter inch is more than you think. The beauty of the drum is it runs itself once dialed in. Get it to temp and leave it alone.",
-  kettle:  "The kettle is the most underestimated pit in the backyard. The snake method gives you 6 to 8 hours of consistent heat from a bag of briquettes. Set it and let it work. Keep that top vent positioned over the meat and the bottom vent barely cracked.",
-  other:   "Know your pit before you trust your pit. Every fire burns different and every cooker has its quirks. Take notes on your first few cooks — your own data is worth more than any advice.",
-};
-
-const SMOKER_TEMP_RANGES: Record<string, string> = {
-  pellet: "225–275°F",
-  offset: "225–275°F",
-  kamado: "225–275°F",
-  drum:   "225–260°F",
-  kettle: "225–250°F",
-  other:  "225–275°F",
-};
-
-const TEXAS_RUB_PROFILES: Record<string, Record<string, string>> = {
-  central: {
-    beef:    "Coarse black pepper and kosher salt. Equal parts by weight. Nothing else. This is the law in Central Texas.",
-    pork:    "Salt and pepper. Simple. Let the smoke carry the flavor.",
-    poultry: "Salt, pepper, a touch of garlic. Keep it clean.",
-    other:   "Salt and pepper. Central Texas does not overcomplicate.",
-  },
-  hill_country: {
-    beef:    "Salt, coarse black pepper, garlic powder, onion powder. Four ingredients. That is all you need.",
-    pork:    "Salt, pepper, garlic, onion. A little paprika for color.",
-    poultry: "Salt, pepper, garlic powder, onion powder, light paprika.",
-    other:   "Salt, pepper, garlic, onion. The Hill Country foundation.",
-  },
-  texas_bbq: {
-    beef:    "Salt, coarse black pepper, garlic powder, onion powder, smoked paprika, a pinch of cayenne. Bold but balanced.",
+const RUB_PROFILES: Record<string, Record<string, string>> = {
+  texas: {
+    beef:    "Salt, coarse black pepper, garlic powder, onion powder, smoked paprika, a pinch of cayenne. Bold but balanced. This is Texas BBQ.",
     pork:    "Brown sugar, paprika, salt, pepper, garlic, onion, cayenne. Built for bark and flavor.",
-    poultry: "Paprika, garlic, onion, salt, pepper, a touch of brown sugar for color and heat.",
+    poultry: "Paprika, garlic, onion, salt, pepper, a touch of brown sugar for color.",
     other:   "Salt, pepper, paprika, garlic, onion. The Texas all-purpose foundation.",
   },
-};
-
-const CAROLINA_RUB_PROFILES: Record<string, Record<string, string>> = {
-  eastern: {
-    beef:    "Simple salt and pepper with a touch of red pepper flake.",
-    pork:    "Whole hog tradition. Vinegar and pepper. The sauce is the seasoning.",
-    poultry: "Salt, pepper, garlic, paprika. Keep it light.",
-    other:   "Salt, pepper, red pepper. Let the sauce tell the story.",
-  },
-  western: {
-    beef:    "Simple salt and pepper with a touch of red pepper flake.",
-    pork:    "Pork shoulder with a touch of tomato in the vinegar base.",
-    poultry: "Salt, pepper, garlic, paprika. Keep it light.",
-    other:   "Salt, pepper, red pepper. Let the sauce tell the story.",
-  },
-  south_carolina: {
-    beef:    "Simple salt and pepper with a touch of red pepper flake.",
-    pork:    "Mustard-based tradition. Season light — the gold sauce carries the flavor.",
-    poultry: "Salt, pepper, garlic, paprika. Keep it light.",
-    other:   "Salt, pepper, red pepper. Let the sauce tell the story.",
-  },
-};
-
-const MEMPHIS_RUB_PROFILES: Record<string, Record<string, string>> = {
-  dry: {
-    beef:    "Paprika, salt, pepper, garlic, onion, celery salt, dry mustard.",
-    pork:    "The classic Memphis dry rub is the star. Paprika, salt, pepper, garlic, onion, celery salt, dry mustard, cayenne. No sauce.",
-    poultry: "Paprika, garlic, onion, celery salt, a touch of cayenne.",
-    other:   "Memphis leans on paprika and celery salt. Build from there.",
-  },
-  wet: {
-    beef:    "Paprika, salt, pepper, garlic, onion, celery salt, dry mustard.",
-    pork:    "Same rub base but sauce goes on in the last 30 minutes and again at the table.",
-    poultry: "Paprika, garlic, onion, celery salt, a touch of cayenne.",
-    other:   "Memphis leans on paprika and celery salt. Sauce at the end.",
-  },
-};
-
-const RUB_PROFILES: Record<string, Record<string, string>> = {
   kansas_city: {
     beef:    "Brown sugar, paprika, salt, pepper, garlic, onion, cayenne. Sweet and bold.",
     pork:    "Heavy on the brown sugar and paprika. The sauce will finish the flavor story.",
     poultry: "Brown sugar, paprika, garlic, onion, a pinch of cayenne.",
     other:   "KC style welcomes sweetness. Brown sugar and paprika on almost anything.",
+  },
+  memphis: {
+    beef:    "Paprika, salt, pepper, garlic, onion, celery salt, dry mustard.",
+    pork:    "The classic Memphis dry rub is the star. Paprika, salt, pepper, garlic, onion, celery salt, dry mustard, cayenne. No sauce.",
+    poultry: "Paprika, garlic, onion, celery salt, a touch of cayenne.",
+    other:   "Memphis leans on paprika and celery salt. Build from there.",
+  },
+  carolina: {
+    beef:    "Simple salt and pepper with a touch of red pepper flake.",
+    pork:    "Whole hog tradition. Vinegar and pepper. The sauce is the seasoning.",
+    poultry: "Salt, pepper, garlic, paprika. Keep it light.",
+    other:   "Salt, pepper, red pepper. Let the sauce tell the story.",
   },
   backyard: {
     beef:    "Salt, pepper, garlic powder, onion powder, smoked paprika. The all-purpose beef rub.",
@@ -279,6 +242,10 @@ const RUB_PROFILES: Record<string, Record<string, string>> = {
     other:   "Every detail matters. Season evenly and let it set.",
   },
 };
+
+function getRubProfile(styleId: string, category: string): string {
+  return RUB_PROFILES[styleId]?.[category] ?? RUB_PROFILES["backyard"]?.[category] ?? "";
+}
 
 const BINDERS: Record<string, string> = {
   beef:    "Yellow mustard or olive oil. Mustard burns off clean.",
@@ -326,6 +293,24 @@ const REGIONAL_NOTES: Record<string, string> = {
   competition: "In competition the rub is a weapon. Every gram of salt, every pinch of sugar is a calculated decision. Season evenly — use your hands and feel for dry spots. Let it penetrate overnight if the rules allow. The judges see the box for 30 seconds. Make every detail count.",
 };
 
+const SMOKER_NOTES: Record<string, string> = {
+  pellet:  "The Smokefire and pellet grills like it are forgiving but they will lie to you about smoke. That thin blue wisp you want is there — you just cannot see it the way you can on an offset. Trust the controller, trust the holler, and let the wood do its work. Check your hopper every few hours and do not let it run dry mid-cook.",
+  offset:  "An offset is a conversation between you and the fire. Every split you add is a word. Learn to read the smoke coming out of that stack — thin and blue means you are speaking the right language. White and billowy means start over with a cleaner fire before that meat absorbs anything ugly.",
+  kamado:  "The kamado is the most forgiving pit ever built by human hands. Once it is up to temp it wants to stay there. Small adjustments only — that bottom vent is more powerful than it looks. Give every adjustment 10 minutes to show its effect before you touch it again.",
+  drum:    "The drum runs hot and it will humble you if you are not paying attention. Keep that intake cracked — a quarter inch is more than you think. The beauty of the drum is it runs itself once dialed in. Get it to temp and leave it alone.",
+  kettle:  "The kettle is the most underestimated pit in the backyard. The snake method gives you 6 to 8 hours of consistent heat from a bag of briquettes. Set it and let it work. Keep that top vent positioned over the meat and the bottom vent barely cracked.",
+  other:   "Know your pit before you trust your pit. Every fire burns different and every cooker has its quirks. Take notes on your first few cooks — your own data is worth more than any advice.",
+};
+
+const SMOKER_TEMP_RANGES: Record<string, string> = {
+  pellet: "225–275°F",
+  offset: "225–275°F",
+  kamado: "225–275°F",
+  drum:   "225–260°F",
+  kettle: "225–250°F",
+  other:  "225–275°F",
+};
+
 const cardStyle: React.CSSProperties = {
   background: "var(--color-bg-alt)",
   border: "1px solid rgba(201,151,58,0.15)",
@@ -353,23 +338,6 @@ const itemLabelStyle: React.CSSProperties = {
   marginBottom: "var(--space-1)",
 };
 
-const texasPillOptions: { key: "central" | "hill_country" | "texas_bbq"; label: string }[] = [
-  { key: "central",      label: "Central Texas" },
-  { key: "hill_country", label: "Hill Country" },
-  { key: "texas_bbq",   label: "Texas BBQ" },
-];
-
-const carolinaPillOptions: { key: "eastern" | "western" | "south_carolina"; label: string }[] = [
-  { key: "eastern",        label: "Eastern NC" },
-  { key: "western",        label: "Western NC" },
-  { key: "south_carolina", label: "South Carolina" },
-];
-
-const memphisPillOptions: { key: "dry" | "wet"; label: string }[] = [
-  { key: "dry", label: "Dry" },
-  { key: "wet", label: "Wet" },
-];
-
 export default function GuidePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: cookId } = use(params);
   const supabase = createClient();
@@ -381,9 +349,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const [activeTab, setActiveTab] = useState<"fire" | "seasoning">("fire");
   const [openTroubleCard, setOpenTroubleCard] = useState<number | null>(null);
   const [weightInputs, setWeightInputs] = useState<Record<string, string>>({});
-  const [texasProfile, setTexasProfile] = useState<"central" | "hill_country" | "texas_bbq">("texas_bbq");
-  const [carolinaProfile, setCarolinaProfile] = useState<"eastern" | "western" | "south_carolina">("eastern");
-  const [memphisProfile, setMemphisProfile] = useState<"dry" | "wet">("dry");
 
   useEffect(() => {
     const load = async () => {
@@ -439,6 +404,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const smokerType = detectSmokerType(cook);
   const fireSteps = FIRE_STEPS[smokerType] ?? FIRE_STEPS.other ?? [];
   const woodProfile = woodType ? getWoodProfile(woodType) : "";
+  const troubleCards = getTroubleCards(smokerType);
 
   const styleId = inferStyleId(cook.cooking_style);
   const displayItems = buildDisplayItems(planItems, items);
@@ -454,30 +420,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const flavorTenderness = session?.flavor_tenderness;
   const hasFlavorData = flavorSmoke != null || flavorBark != null || flavorTenderness != null;
   const statusIsCompleted = cook?.status === "completed";
-
-  function getRubProfile(category: string): string {
-    if (styleId === "texas") return TEXAS_RUB_PROFILES[texasProfile]?.[category] ?? "";
-    if (styleId === "carolina") return CAROLINA_RUB_PROFILES[carolinaProfile]?.[category] ?? "";
-    if (styleId === "memphis") return MEMPHIS_RUB_PROFILES[memphisProfile]?.[category] ?? "";
-    return RUB_PROFILES[styleId]?.[category] ?? RUB_PROFILES["backyard"]?.[category] ?? "";
-  }
-
-  const pillBase: React.CSSProperties = {
-    border: "1px solid rgba(201,151,58,0.3)",
-    background: "transparent",
-    color: "var(--color-text-muted)",
-    fontFamily: "var(--font-ui)",
-    fontSize: "0.75rem",
-    padding: "4px 12px",
-    borderRadius: "12px",
-    cursor: "pointer",
-  };
-  const pillActive: React.CSSProperties = {
-    ...pillBase,
-    background: "#C9973A",
-    color: "var(--color-bg)",
-    borderColor: "#C9973A",
-  };
 
   const NAV_LINKS = [
     { label: "Live Mode", href: `/cook/${cookId}/live` },
@@ -703,7 +645,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
               <div style={{ ...sectionLabelStyle }}>When Things Go Wrong</div>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-                {TROUBLE_CARDS.map((card, idx) => {
+                {troubleCards.map((card, idx) => {
                   const isOpen = openTroubleCard === idx;
                   return (
                     <div
@@ -770,38 +712,18 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
             </div>
           ) : (
             <div style={cardStyle}>
-              <div style={{ ...sectionLabelStyle, marginBottom: "var(--space-3)" }}>Seasoning Guide</div>
+              <div style={{ ...sectionLabelStyle, marginBottom: "var(--space-2)" }}>Seasoning Guide</div>
 
-              {/* Regional sub-profile toggles */}
-              {styleId === "texas" && (
-                <div style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
-                  {texasPillOptions.map(({ key, label }) => (
-                    <button key={key} onClick={() => setTexasProfile(key)} style={texasProfile === key ? pillActive : pillBase}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {styleId === "carolina" && (
-                <div style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
-                  {carolinaPillOptions.map(({ key, label }) => (
-                    <button key={key} onClick={() => setCarolinaProfile(key)} style={carolinaProfile === key ? pillActive : pillBase}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {styleId === "memphis" && (
-                <div style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
-                  {memphisPillOptions.map(({ key, label }) => (
-                    <button key={key} onClick={() => setMemphisProfile(key)} style={memphisProfile === key ? pillActive : pillBase}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <p style={{
+                fontFamily: "var(--font-body)",
+                fontSize: "0.85rem",
+                color: "var(--color-text-muted)",
+                fontStyle: "italic",
+                marginTop: 0,
+                marginBottom: "var(--space-3)",
+              }}>
+                Style set during meal prep. Start a new cook to change your regional profile.
+              </p>
 
               {displayItems.length === 0 ? (
                 <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", margin: 0 }}>
@@ -838,7 +760,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                       );
                     }
 
-                    const profile = getRubProfile(item.category);
+                    const profile = getRubProfile(styleId, item.category);
                     const binder = BINDERS[item.category] ?? "";
                     const ratio = SALT_RATIOS[item.category] ?? 0.005;
                     const ratioLabel = SALT_RATIO_LABEL[item.category] ?? "";

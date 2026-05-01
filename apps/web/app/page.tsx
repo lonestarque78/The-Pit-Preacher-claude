@@ -92,6 +92,12 @@ const COOKING_STYLES = [
   { key: "competition", label: "Competition Style", desc: "Every detail matters. Tight bark, clean slice, perfect turn-in box." },
 ];
 
+const STYLE_SUB_OPTIONS: Record<string, { key: string; label: string }[]> = {
+  texas:    [{ key: "central_texas", label: "Central Texas" }, { key: "hill_country", label: "Hill Country" }, { key: "texas_bbq", label: "Texas BBQ" }],
+  carolina: [{ key: "carolina_eastern", label: "Eastern NC" }, { key: "carolina_western", label: "Western NC" }, { key: "carolina_south", label: "South Carolina" }],
+  memphis:  [{ key: "memphis_dry", label: "Dry Rub" }, { key: "memphis_wet", label: "Wet" }],
+};
+
 const VERSES = [
   "The stall is not failure. The stall is patience being tested.",
   "Low and slow is not a temperature. It is a way of life.",
@@ -253,6 +259,7 @@ export default function Home() {
   const [otherVisible, setOtherVisible] = useState<Record<string, boolean>>({});
   const [otherText, setOtherText] = useState<Record<string, string>>({});
   const [cookingStyle, setCookingStyle] = useState("");
+  const [styleSubOption, setStyleSubOption] = useState("");
 
   const [next60Days] = useState<Date[]>(() =>
     Array.from({ length: 60 }, (_, i) => {
@@ -399,7 +406,7 @@ export default function Home() {
       .insert({
         user_id: user.id,
         selected_items: selectedItems,
-        cooking_style: cookingStyle,
+        cooking_style: styleSubOption || cookingStyle,
         eating_time: eatingTime,
         flavor_smoke: flavorSmoke,
         flavor_bark: flavorBark,
@@ -428,7 +435,7 @@ export default function Home() {
         user_id: user.id,
         prep_session_id: sessionData.id,
         label,
-        cooking_style: cookingStyle,
+        cooking_style: styleSubOption || cookingStyle,
         smoker_type: smokerType,
         wood_type: woodType,
         eat_time: eatingTime,
@@ -710,26 +717,61 @@ export default function Home() {
 
           {/* Style tab */}
           {activeSettingsTab === "style" && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "var(--space-2)" }}>
-              {COOKING_STYLES.map(style => (
-                <div
-                  key={style.key}
-                  onClick={() => setCookingStyle(cookingStyle === style.key ? "" : style.key)}
-                  style={{
-                    padding: "var(--space-3)",
-                    background: cookingStyle === style.key ? "var(--color-bg)" : "var(--color-bg-alt)",
-                    border: cookingStyle === style.key ? "2px solid var(--color-accent)" : "2px solid transparent",
-                    borderRadius: "var(--radius-md)",
-                    cursor: "pointer",
-                    transition: "border-color 0.12s",
-                  }}
-                >
-                  <div style={{ fontFamily: "var(--font-heading)", fontSize: "0.95rem", marginBottom: "4px" }}>{style.label}</div>
-                  <div style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.45 }}>
-                    {style.desc}
+            <div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
+                {COOKING_STYLES.map(style => (
+                  <div
+                    key={style.key}
+                    onClick={() => {
+                      const newStyle = cookingStyle === style.key ? "" : style.key;
+                      setCookingStyle(newStyle);
+                      setStyleSubOption("");
+                    }}
+                    style={{
+                      padding: "var(--space-3)",
+                      background: cookingStyle === style.key ? "var(--color-bg)" : "var(--color-bg-alt)",
+                      border: cookingStyle === style.key ? "2px solid var(--color-accent)" : "2px solid transparent",
+                      borderRadius: "var(--radius-md)",
+                      cursor: "pointer",
+                      transition: "border-color 0.12s",
+                    }}
+                  >
+                    <div style={{ fontFamily: "var(--font-heading)", fontSize: "0.95rem", marginBottom: "4px" }}>{style.label}</div>
+                    <div style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.45 }}>
+                      {style.desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {cookingStyle && STYLE_SUB_OPTIONS[cookingStyle] && (
+                <div>
+                  <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "var(--space-2)" }}>
+                    Regional Style
+                  </div>
+                  <div style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap" }}>
+                    {STYLE_SUB_OPTIONS[cookingStyle]!.map(opt => (
+                      <button
+                        key={opt.key}
+                        onClick={() => setStyleSubOption(styleSubOption === opt.key ? "" : opt.key)}
+                        style={{
+                          border: "1px solid rgba(201,151,58,0.3)",
+                          background: styleSubOption === opt.key ? "#C9973A" : "transparent",
+                          color: styleSubOption === opt.key ? "var(--color-bg)" : "var(--color-text-muted)",
+                          fontFamily: "var(--font-ui)",
+                          fontSize: "0.78rem",
+                          padding: "5px 14px",
+                          borderRadius: "12px",
+                          cursor: "pointer",
+                          transition: "background 0.12s, color 0.12s",
+                          ...(styleSubOption === opt.key ? { borderColor: "#C9973A" } : {}),
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           )}
 
@@ -1263,7 +1305,7 @@ export default function Home() {
                 color: "var(--color-text-muted)",
                 lineHeight: 1.8,
               }}>
-                <span>{cookingStyle ? COOKING_STYLES.find(s => s.key === cookingStyle)?.label : "No style selected"}</span>
+                <span>{styleSubOption ? STYLE_SUB_OPTIONS[cookingStyle]?.find(o => o.key === styleSubOption)?.label : cookingStyle ? COOKING_STYLES.find(s => s.key === cookingStyle)?.label : "No style selected"}</span>
                 <span>·</span>
                 <span>{eatingTime ? formatEatingTime(eatingTime) : "No time set"}</span>
                 <span>·</span>
