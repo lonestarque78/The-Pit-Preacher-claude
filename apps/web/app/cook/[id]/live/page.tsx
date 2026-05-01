@@ -20,6 +20,8 @@ type PlanItem = {
   smokerId?: string | null;
 };
 
+type CannedQuestion = string | { label: string; action: () => void };
+
 function capitalize(str: string): string {
   return str.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
@@ -74,46 +76,31 @@ function buildCookContext(
   return ctx;
 }
 
-const TOPIC_PILLS = ["▲ Fire", "⊙ Temps", "◉ Timing", "⊕ Seasoning", "⚠ Troubleshoot", "✦ Finishing"];
+function buildEventMessage(logEvent: { event_type: string; data: any }): string {
+  const { event_type, data } = logEvent;
+  switch (event_type) {
+    case "temp_log": {
+      const parts: string[] = [];
+      if (data.pit_temp) parts.push(`Pit: ${data.pit_temp}°F`);
+      if (data.internal_temp) parts.push(`Internal: ${data.internal_temp}°F`);
+      return parts.join(" · ") || "Temperature logged";
+    }
+    case "wrap":
+      return `Wrapped — ${data.method === "butcher_paper" ? "Butcher paper" : data.method === "foil" ? "Foil" : "Method not specified"}`;
+    case "spritz":
+      return `Spritzed${data.liquid ? ` with ${data.liquid}` : ""}`;
+    case "probe_check":
+      return data.tender ? "Probe tender — slides like butter" : "Probe check — still has resistance";
+    case "pull":
+      return `Pulled from heat${data.internal_temp ? ` at ${data.internal_temp}°F` : ""}`;
+    case "rest_start":
+      return "Into the rest";
+    default:
+      return event_type;
+  }
+}
 
-const CANNED_QUESTIONS: Record<string, string[]> = {
-  "▲ Fire": [
-    "What temp should my pit be running right now?",
-    "My fire is running too hot — what do I do?",
-    "My fire keeps dropping — how do I stabilize it?",
-    "What does good smoke look like right now?",
-  ],
-  "⊙ Temps": [
-    "What internal temp should I be looking for?",
-    "My temp has been stuck for an hour — is this the stall?",
-    "How far am I from being done?",
-    "Should I be probing yet?",
-  ],
-  "◉ Timing": [
-    "How much time do I have left on this cook?",
-    "When should I wrap?",
-    "When should I start my sides?",
-    "What time should I pull this off the pit?",
-  ],
-  "⊕ Seasoning": [
-    "Did I season this right for what I'm cooking?",
-    "Should I spritz right now?",
-    "What sauce or glaze should I finish with?",
-    "Is it too late to add more seasoning?",
-  ],
-  "⚠ Troubleshoot": [
-    "My bark is not setting — what's wrong?",
-    "The outside looks done but the inside is not there yet",
-    "I opened the lid too many times — did I ruin it?",
-    "My temp spiked — what do I do?",
-  ],
-  "✦ Finishing": [
-    "How do I know when this is truly done?",
-    "How long should I rest this?",
-    "Should I wrap for the rest or leave it naked?",
-    "Walk me through the final steps",
-  ],
-};
+const TOPIC_PILLS = ["▲ Fire", "⊙ Temps", "◉ Timing", "⊕ Seasoning", "⚠ Troubleshoot", "✦ Finishing"];
 
 export default function LiveModePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: cookId } = use(params);
@@ -129,6 +116,9 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   const [userTier, setUserTier] = useState<string>("free");
   const [inputDisabled, setInputDisabled] = useState(false);
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
+  const [tempInputMode, setTempInputMode] = useState<"pit" | "internal" | "both" | null>(null);
+  const [pitTempValue, setPitTempValue] = useState("");
+  const [internalTempValue, setInternalTempValue] = useState("");
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -298,8 +288,10 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         }
       }
       if (!res.ok) throw new Error(`API error ${res.status}`);
+
       const data = await res.json();
       const preacherResponse: string = data.reply ?? "The Preacher is silent. Try again.";
+      const logEvent = data.logEvent ?? null;
 
       const preacherMsg: Message = { role: "preacher", content: preacherResponse, timestamp: new Date() };
       setMessages(prev => [...prev, preacherMsg]);
@@ -309,6 +301,15 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         event_type: "preacher_chat",
         message: JSON.stringify({ userMessage, preacherResponse }),
       });
+
+      if (logEvent && logEvent.event_type) {
+        const eventMessage = buildEventMessage(logEvent);
+        await supabase.from("cook_events").insert({
+          cook_id: cook.id,
+          event_type: logEvent.event_type,
+          message: eventMessage,
+        });
+      }
 
       const historyWithBoth = [...historyForContext, userMsg, preacherMsg];
 
@@ -343,6 +344,55 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     } finally {
       setIsThinking(false);
     }
+  };
+
+  const handleDirectLog = async (eventType: string, data: object, displayMessage: string) => {
+    if (!cook) return;
+    await supabase.from("cook_events").insert({
+      cook_id: cook.id,
+      event_type: eventType,
+      message: displayMessage,
+    });
+    await sendMessage(displayMessage);
+  };
+
+  const CANNED_QUESTIONS: Record<string, CannedQuestion[]> = {
+    "▲ Fire": [
+      "What temp should my pit be running right now?",
+      "My fire is running too hot — what do I do?",
+      "My fire keeps dropping — how do I stabilize it?",
+      "What does good smoke look like right now?",
+    ],
+    "⊙ Temps": [
+      "What internal temp should I be looking for?",
+      "My temp has been stuck for an hour — is this the stall?",
+      "How far am I from being done?",
+      "Should I be probing yet?",
+    ],
+    "◉ Timing": [
+      "How much time do I have left on this cook?",
+      { label: "I just wrapped", action: () => handleDirectLog("wrap", { method: "unknown" }, "Just wrapped it") },
+      "When should I start my sides?",
+      "What time should I pull this off the pit?",
+    ],
+    "⊕ Seasoning": [
+      "Did I season this right for what I'm cooking?",
+      "Should I spritz right now?",
+      "What sauce or glaze should I finish with?",
+      "Is it too late to add more seasoning?",
+    ],
+    "⚠ Troubleshoot": [
+      "My bark is not setting — what's wrong?",
+      "The outside looks done but the inside is not there yet",
+      "I opened the lid too many times — did I ruin it?",
+      "My temp spiked — what do I do?",
+    ],
+    "✦ Finishing": [
+      "How do I know when this is truly done?",
+      "How long should I rest this?",
+      { label: "I just pulled it", action: () => handleDirectLog("pull", { internal_temp: null }, "Just pulled it off the pit") },
+      { label: "Going into the rest", action: () => handleDirectLog("rest_start", {}, "Going into the rest now") },
+    ],
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -399,6 +449,12 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     { label: "Guide",     href: `/cook/${cookId}/guide` },
     { label: "Events",    href: `/cook/${cookId}/events` },
     { label: "Summary",   href: `/cook/${cookId}/summary` },
+  ];
+
+  const tempLogModes: { label: string; mode: "pit" | "internal" | "both" }[] = [
+    { label: "Log Pit Temp", mode: "pit" },
+    { label: "Log Internal Temp", mode: "internal" },
+    { label: "Log Both", mode: "both" },
   ];
 
   return (
@@ -565,7 +621,15 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         {TOPIC_PILLS.map(topic => (
           <button
             key={topic}
-            onClick={() => setActiveTopic(activeTopic === topic ? null : topic)}
+            onClick={() => {
+              const newTopic = activeTopic === topic ? null : topic;
+              setActiveTopic(newTopic);
+              if (newTopic !== "⊙ Temps") {
+                setTempInputMode(null);
+                setPitTempValue("");
+                setInternalTempValue("");
+              }
+            }}
             style={{
               border: activeTopic === topic ? "1px solid #C9973A" : "1px solid rgba(201,151,58,0.3)",
               background: activeTopic === topic ? "rgba(201,151,58,0.15)" : "transparent",
@@ -598,15 +662,136 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
             flexShrink: 0,
           }}
         >
-          {(CANNED_QUESTIONS[activeTopic] ?? []).map((q, idx) => (
-            <button
-              key={idx}
-              className="prompt-pill"
-              onClick={() => sendMessage(q)}
-            >
-              {q}
-            </button>
-          ))}
+          {activeTopic === "⊙ Temps" ? (
+            tempLogModes.map(({ label, mode }) => (
+              <button
+                key={label}
+                className="prompt-pill"
+                onClick={() => setTempInputMode(tempInputMode === mode ? null : mode)}
+                style={tempInputMode === mode ? {
+                  background: "rgba(201,151,58,0.15)",
+                  border: "1px solid #C9973A",
+                  color: "#C9973A",
+                  fontFamily: "var(--font-body)",
+                  fontSize: "0.85rem",
+                  padding: "6px 14px",
+                  borderRadius: "20px",
+                  whiteSpace: "nowrap",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                } : undefined}
+              >
+                {label}
+              </button>
+            ))
+          ) : (
+            (CANNED_QUESTIONS[activeTopic] ?? []).map((q, idx) => (
+              <button
+                key={idx}
+                className="prompt-pill"
+                onClick={() => {
+                  if (typeof q === "string") sendMessage(q);
+                  else q.action();
+                }}
+              >
+                {typeof q === "string" ? q : q.label}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* ── TEMP INPUT CARD ── */}
+      {activeTopic === "⊙ Temps" && tempInputMode && (
+        <div
+          style={{
+            flexShrink: 0,
+            background: "var(--color-bg-alt)",
+            border: "1px solid rgba(201,151,58,0.3)",
+            borderRadius: "var(--radius-md)",
+            padding: "var(--space-2) var(--space-3)",
+            margin: "0 var(--space-4)",
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--space-2)",
+            flexWrap: "wrap",
+          }}
+        >
+          {(tempInputMode === "pit" || tempInputMode === "both") && (
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
+              <span style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
+                Pit temp:
+              </span>
+              <input
+                type="number"
+                value={pitTempValue}
+                onChange={e => setPitTempValue(e.target.value)}
+                placeholder="°F"
+                style={{
+                  background: "var(--color-bg)",
+                  border: "1px solid rgba(201,151,58,0.3)",
+                  color: "var(--color-text)",
+                  fontFamily: "var(--font-body)",
+                  padding: "6px 10px",
+                  borderRadius: "var(--radius-md)",
+                  width: "80px",
+                  textAlign: "center",
+                  fontSize: "1rem",
+                }}
+              />
+            </div>
+          )}
+
+          {(tempInputMode === "internal" || tempInputMode === "both") && (
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
+              <span style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
+                Internal temp:
+              </span>
+              <input
+                type="number"
+                value={internalTempValue}
+                onChange={e => setInternalTempValue(e.target.value)}
+                placeholder="°F"
+                style={{
+                  background: "var(--color-bg)",
+                  border: "1px solid rgba(201,151,58,0.3)",
+                  color: "var(--color-text)",
+                  fontFamily: "var(--font-body)",
+                  padding: "6px 10px",
+                  borderRadius: "var(--radius-md)",
+                  width: "80px",
+                  textAlign: "center",
+                  fontSize: "1rem",
+                }}
+              />
+            </div>
+          )}
+
+          <button
+            onClick={() => {
+              const message =
+                tempInputMode === "both"
+                  ? `Pit is at ${pitTempValue}°F, internal is at ${internalTempValue}°F`
+                  : tempInputMode === "pit"
+                  ? `Pit is at ${pitTempValue}°F`
+                  : `Internal temp is ${internalTempValue}°F`;
+              sendMessage(message);
+              setTempInputMode(null);
+              setPitTempValue("");
+              setInternalTempValue("");
+            }}
+            style={{
+              background: "#C9973A",
+              color: "var(--color-bg)",
+              fontFamily: "var(--font-ui)",
+              padding: "6px 16px",
+              borderRadius: "var(--radius-md)",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Log
+          </button>
         </div>
       )}
 
