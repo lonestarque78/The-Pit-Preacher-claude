@@ -208,7 +208,7 @@ export default function CookList({ cooks, logsMap }: Props) {
                       Live Mode →
                     </Link>
                   )}
-                  <Link href={`/cook/${cook.id}`} style={{ display: "block", textAlign: "center", background: "transparent", border: "1px solid rgba(201,151,58,0.5)", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "6px 16px", borderRadius: "var(--radius-md)", textDecoration: "none", whiteSpace: "nowrap" }}>
+                  <Link href={isActive ? `/cook/${cook.id}` : `/cook/${cook.id}/summary`} style={{ display: "block", textAlign: "center", background: "transparent", border: "1px solid rgba(201,151,58,0.5)", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "6px 16px", borderRadius: "var(--radius-md)", textDecoration: "none", whiteSpace: "nowrap" }}>
                     View Cook →
                   </Link>
                 </div>

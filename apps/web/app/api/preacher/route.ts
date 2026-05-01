@@ -161,6 +161,8 @@ export async function POST(req: NextRequest) {
     flavor_smoke,
     flavor_bark,
     flavor_tenderness,
+    smoker_type,
+    wood_type,
   } = cookContext;
 
   const pitSetup = buildPitSetup(tools ?? [], planItems ?? []);
@@ -178,9 +180,10 @@ export async function POST(req: NextRequest) {
   const isOpeningMessage = (message as string).startsWith("OPENING_MESSAGE:");
   const isSuggestPrompts = (message as string).startsWith("SUGGEST_PROMPTS:");
   const isCookPlan = (message as string).startsWith("Generate a full cook plan");
+  const isReflection = (message as string).startsWith("REFLECTION:");
 
   // ── FREE TIER MESSAGE LIMIT ──────────────────────────────────────────────────
-  const isRegularMessage = !isOpeningMessage && !isSuggestPrompts && !isCookPlan;
+  const isRegularMessage = !isOpeningMessage && !isSuggestPrompts && !isCookPlan && !isReflection;
   if (isRegularMessage) {
     const { data: subData } = await supabase.from("subscriptions").select("tier").eq("user_id", user.id).single();
     const userTier = subData?.tier ?? "free";
@@ -259,6 +262,20 @@ FIRE & TIMING: Exact temps, estimated time to eat, when to light. Work backwards
 THE COOK: What to watch for, when to wrap, when to probe, when to spritz. The stall. The bark window.
 THE FINISH: Pull temp, rest time, how to hold, how to serve.
 THE PREACHER'S WORD: One paragraph. The wisdom. The warning. The encouragement. Make it feel like scripture.`;
+
+  } else if (isReflection) {
+    maxTokens = 200;
+    const cutList = buildCutList(planItems ?? []);
+    const recentEventsText = buildRecentEvents(recentEvents ?? []);
+    userMessage = `${message}
+
+COOK:
+Label: ${label || "Unnamed cook"}
+Smoker: ${smoker_type || "Not specified"}
+Wood: ${wood_type || "Not specified"}
+Items: ${cutList}
+Eat time: ${eatTimeFormatted}
+Recent events: ${recentEventsText}`;
 
   } else {
     maxTokens = 500;
