@@ -49,17 +49,17 @@ const SEAFOOD = [
 ];
 
 const APPETIZERS = [
-  "Jalapeño Poppers", "Armadillo Eggs", "Bacon Wrapped Anything",
-  "Smoked Deviled Eggs", "Smoked Sausage Links", "Boudin Balls",
+  "Jalapeño Poppers", "Armadillo Eggs", "Bacon Wrapped Shrimp",
+  "Bacon Wrapped Scallops", "Smoked Deviled Eggs", "Smoked Sausage Links", "Boudin Balls",
   "Boudin Links", "Jalapeño Cheddar Sausage", "Andouille Sausage", "Smoked Queso",
   "Seekh Kebabs", "Chicken Tikka", "Smoked Paneer Tikka",
 ];
 
 const SIDES = [
   "Smoked Mac and Cheese", "Smoked Baked Beans", "Smoked Baked Potatoes",
-  "Smoked Twice Baked Potatoes", "Corn on the Cob", "Smoked Cream Corn",
+  "Smoked Twice Baked Potatoes", "Corn on the Cob", "Jalapeño Cream Corn",
   "Smoked Jalapeño Cornbread", "Brussels Sprouts", "Smoked Asparagus",
-  "Smoked Collard Greens", "Santa Maria Pinquito Beans",
+  "Santa Maria Pinquito Beans",
   "Portobello Mushroom Caps", "Stuffed Bell Peppers",
   "Smoked Peach Cobbler", "Smoked Brownies", "Smoked Deviled Eggs",
 ];
@@ -77,11 +77,6 @@ const CATEGORIES = [
   { key: "appetizers", label: "Appetizers" },
 ];
 
-const CATEGORY_EMOJIS: Record<string, string> = {
-  meats:      "🥩",
-  sides:      "🍽️",
-  appetizers: "🔥",
-};
 
 const COOKING_STYLES = [
   { key: "texas",       label: "Texas BBQ",        desc: "Beef-forward. Salt and pepper. Post oak smoke. No sauce required." },
@@ -104,19 +99,8 @@ const VERSES = [
   "If you tend to the pit with pride, the meat will preach on its own.",
 ];
 
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-const SETTINGS_TABS = [
-  { key: "style",   label: "Style" },
-  { key: "eating",  label: "Eating Time" },
-  { key: "flavor",  label: "Flavor" },
-  { key: "smokers", label: "Smokers" },
-];
+const DAY_ABBRS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_ABBRS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 // ─── Time slots: 10am–10pm in 30min increments ────────────────────────────────
 
@@ -153,27 +137,6 @@ function formatEatingTime(iso: string) {
   } catch {
     return iso;
   }
-}
-
-function getCalendarGrid(year: number, month: number): Date[] {
-  const firstDayOfMonth = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const daysInPrevMonth = new Date(year, month, 0).getDate();
-
-  const grid: Date[] = [];
-
-  for (let i = firstDayOfMonth - 1; i >= 0; i--) {
-    grid.push(new Date(year, month - 1, daysInPrevMonth - i));
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    grid.push(new Date(year, month, d));
-  }
-  const remaining = (7 - (grid.length % 7)) % 7;
-  for (let d = 1; d <= remaining; d++) {
-    grid.push(new Date(year, month + 1, d));
-  }
-
-  return grid;
 }
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
@@ -255,16 +218,16 @@ export default function Home() {
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [openPanel, setOpenPanel] = useState<string | null>(null);
   const [activeMeatTab, setActiveMeatTab] = useState("beef");
-  const [activeSettingsTab, setActiveSettingsTab] = useState("style");
+  const [settingsStep, setSettingsStep] = useState<1 | 2 | 3>(1);
   const [otherVisible, setOtherVisible] = useState<Record<string, boolean>>({});
   const [otherText, setOtherText] = useState<Record<string, string>>({});
   const [cookingStyle, setCookingStyle] = useState("");
   const [styleSubOption, setStyleSubOption] = useState("");
 
-  const [next60Days] = useState<Date[]>(() =>
-    Array.from({ length: 60 }, (_, i) => {
+  const [next7Days] = useState<Date[]>(() =>
+    Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
-      d.setDate(d.getDate() + i + 1);
+      d.setDate(d.getDate() + i);
       return d;
     })
   );
@@ -275,13 +238,11 @@ export default function Home() {
   });
   const [pickerTime, setPickerTime] = useState("18:00");
 
-  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
-  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
-
   const [flavorSmoke, setFlavorSmoke] = useState(7);
   const [flavorBark, setFlavorBark] = useState(8);
   const [flavorTenderness, setFlavorTenderness] = useState(7);
   const [smokers, setSmokers] = useState<Smoker[]>([{ id: "s1", name: "", wood: "" }]);
+  const [savedPits, setSavedPits] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [authError, setAuthError] = useState(false);
@@ -298,6 +259,20 @@ export default function Home() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
   }, []);
+
+  useEffect(() => {
+    if (openPanel === "settings") {
+      setSettingsStep(1);
+      if (user) {
+        supabase
+          .from("pits")
+          .select("id, name, type, default_wood")
+          .eq("user_id", user.id)
+          .order("is_default", { ascending: false })
+          .then(({ data }) => setSavedPits(data ?? []));
+      }
+    }
+  }, [openPanel, user]);
 
   useEffect(() => {
     const named = smokers.filter(s => s.name.trim());
@@ -352,18 +327,6 @@ export default function Home() {
   const removeSmoker = (id: string) => {
     setSmokers(prev => prev.filter(s => s.id !== id));
     setSelectedItems(prev => prev.map(i => i.smokerId === id ? { ...i, smokerId: null } : i));
-  };
-
-  // ── Calendar helpers ─────────────────────────────────────────────────────────
-
-  const prevCalendarMonth = () => {
-    if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(y => y - 1); }
-    else setCalendarMonth(m => m - 1);
-  };
-
-  const nextCalendarMonth = () => {
-    if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(y => y + 1); }
-    else setCalendarMonth(m => m + 1);
   };
 
   // ── Build ────────────────────────────────────────────────────────────────────
@@ -664,62 +627,48 @@ export default function Home() {
       );
     }
 
-    // ── Cook Settings ──
+    // ── Cook Settings wizard ──
     if (openPanel === "settings") {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const maxDate = next60Days[next60Days.length - 1]!;
-      const calGrid = getCalendarGrid(calendarYear, calendarMonth);
-
-      const navBtnStyle: React.CSSProperties = {
-        background: "none",
-        border: "1px solid var(--color-border)",
-        color: "var(--color-text)",
-        borderRadius: "var(--radius-sm)",
-        cursor: "pointer",
-        width: "32px",
-        height: "32px",
-        fontFamily: "var(--font-ui)",
-        fontSize: "1rem",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      };
-
-      return (
-        <>
-          {/* Tab buttons */}
-          <div style={{
-            display: "flex",
-            borderBottom: "1px solid var(--color-border)",
-            marginBottom: "var(--space-4)",
-          }}>
-            {SETTINGS_TABS.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveSettingsTab(tab.key)}
-                style={{
-                  padding: "8px 16px",
-                  background: "none",
-                  border: "none",
-                  borderBottom: activeSettingsTab === tab.key ? "2px solid var(--color-accent)" : "2px solid transparent",
-                  color: activeSettingsTab === tab.key ? "var(--color-accent)" : "var(--color-text-muted)",
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "0.9rem",
-                  cursor: "pointer",
-                  marginBottom: "-1px",
-                }}
-              >
-                {tab.label}
-              </button>
+      const stepIndicator = (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "var(--space-4)" }}>
+          <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+            {([1, 2, 3] as const).map(step => (
+              <div key={step} style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: step < settingsStep ? "#C9973A" : "transparent",
+                border: step <= settingsStep ? "2px solid #C9973A" : "2px solid var(--color-text-muted)",
+              }} />
             ))}
           </div>
+          <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "6px", alignItems: "center" }}>
+            {(["Style", "Eating Time", "Smoker Setup"] as const).map((label, i) => (
+              <React.Fragment key={label}>
+                {i > 0 && <span style={{ color: "var(--color-text-muted)", fontSize: "0.7rem" }}>·</span>}
+                <span style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.7rem",
+                  color: i + 1 === settingsStep ? "#C9973A" : "var(--color-text-muted)",
+                }}>
+                  {label}
+                </span>
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      );
 
-          {/* Style tab */}
-          {activeSettingsTab === "style" && (
-            <div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
-                {COOKING_STYLES.map(style => (
+      // ── Step 1: Style ──
+      if (settingsStep === 1) {
+        return (
+          <>
+            {stepIndicator}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
+              {COOKING_STYLES.map(style => {
+                const isSelected = cookingStyle === style.key;
+                const subOpts = STYLE_SUB_OPTIONS[style.key];
+                return (
                   <div
                     key={style.key}
                     onClick={() => {
@@ -729,8 +678,8 @@ export default function Home() {
                     }}
                     style={{
                       padding: "var(--space-3)",
-                      background: cookingStyle === style.key ? "var(--color-bg)" : "var(--color-bg-alt)",
-                      border: cookingStyle === style.key ? "2px solid var(--color-accent)" : "2px solid transparent",
+                      background: isSelected ? "var(--color-bg)" : "var(--color-bg-alt)",
+                      border: isSelected ? "2px solid var(--color-accent)" : "2px solid transparent",
                       borderRadius: "var(--radius-md)",
                       cursor: "pointer",
                       transition: "border-color 0.12s",
@@ -740,155 +689,332 @@ export default function Home() {
                     <div style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.45 }}>
                       {style.desc}
                     </div>
-                  </div>
-                ))}
-              </div>
-              {cookingStyle && STYLE_SUB_OPTIONS[cookingStyle] && (
-                <div>
-                  <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "var(--space-2)" }}>
-                    Regional Style
-                  </div>
-                  <div style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap" }}>
-                    {STYLE_SUB_OPTIONS[cookingStyle]!.map(opt => (
-                      <button
-                        key={opt.key}
-                        onClick={() => setStyleSubOption(styleSubOption === opt.key ? "" : opt.key)}
-                        style={{
-                          border: "1px solid rgba(201,151,58,0.3)",
-                          background: styleSubOption === opt.key ? "#C9973A" : "transparent",
-                          color: styleSubOption === opt.key ? "var(--color-bg)" : "var(--color-text-muted)",
-                          fontFamily: "var(--font-ui)",
-                          fontSize: "0.78rem",
-                          padding: "5px 14px",
-                          borderRadius: "12px",
-                          cursor: "pointer",
-                          transition: "background 0.12s, color 0.12s",
-                          ...(styleSubOption === opt.key ? { borderColor: "#C9973A" } : {}),
-                        }}
+                    {isSelected && subOpts && (
+                      <div
+                        onClick={e => e.stopPropagation()}
+                        style={{ marginTop: "var(--space-2)", borderTop: "1px solid rgba(201,151,58,0.2)", paddingTop: "var(--space-2)" }}
                       >
-                        {opt.label}
-                      </button>
-                    ))}
+                        <div style={{
+                          fontFamily: "var(--font-ui)",
+                          fontSize: "0.65rem",
+                          color: "var(--color-text-muted)",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.1em",
+                          marginBottom: "var(--space-1)",
+                        }}>
+                          Select your style:
+                        </div>
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          {subOpts.map(opt => (
+                            <button
+                              key={opt.key}
+                              onClick={() => setStyleSubOption(styleSubOption === opt.key ? "" : opt.key)}
+                              style={{
+                                border: styleSubOption === opt.key ? "1px solid #C9973A" : "1px solid rgba(201,151,58,0.3)",
+                                background: styleSubOption === opt.key ? "#C9973A" : "transparent",
+                                color: styleSubOption === opt.key ? "var(--color-bg)" : "var(--color-text-muted)",
+                                fontFamily: "var(--font-ui)",
+                                fontSize: "0.78rem",
+                                padding: "5px 14px",
+                                borderRadius: "12px",
+                                cursor: "pointer",
+                                transition: "background 0.12s, color 0.12s",
+                              }}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })}
             </div>
-          )}
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setSettingsStep(2)}
+                disabled={!cookingStyle}
+                style={{
+                  padding: "10px 24px",
+                  background: cookingStyle ? "#C9973A" : "var(--color-bg-alt)",
+                  color: cookingStyle ? "var(--color-bg)" : "var(--color-text-muted)",
+                  border: "none",
+                  borderRadius: "var(--radius-md)",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.95rem",
+                  cursor: cookingStyle ? "pointer" : "not-allowed",
+                }}
+              >
+                Next →
+              </button>
+            </div>
+          </>
+        );
+      }
 
-          {/* Eating Time tab */}
-          {activeSettingsTab === "eating" && (
-            <div>
-              {/* Month navigation */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-2)" }}>
-                <button onClick={prevCalendarMonth} style={navBtnStyle}>←</button>
-                <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem" }}>
-                  {MONTH_NAMES[calendarMonth]} {calendarYear}
-                </span>
-                <button onClick={nextCalendarMonth} style={navBtnStyle}>→</button>
-              </div>
+      // ── Step 2: Eating Time ──
+      if (settingsStep === 2) {
+        return (
+          <>
+            {stepIndicator}
+            <div style={{ display: "flex", flexWrap: "nowrap", overflow: "hidden", gap: "6px", marginBottom: "var(--space-3)" }}>
+              {next7Days.map((day, i) => {
+                const isSelected = isSameDay(day, pickerDate);
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setPickerDate(new Date(day))}
+                    style={{
+                      minWidth: "48px",
+                      flex: "1",
+                      padding: "6px 8px",
+                      borderRadius: "var(--radius-md)",
+                      border: isSelected ? "none" : "1px solid rgba(201,151,58,0.2)",
+                      background: isSelected ? "#C9973A" : "var(--color-bg)",
+                      color: isSelected ? "var(--color-bg)" : "var(--color-text)",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "2px",
+                    }}
+                  >
+                    <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem" }}>
+                      {DAY_ABBRS[day.getDay()]}
+                    </span>
+                    <span style={{
+                      fontFamily: "var(--font-heading)",
+                      fontSize: "1rem",
+                      fontWeight: 700,
+                      color: isSelected ? "var(--color-bg)" : "#C9973A",
+                    }}>
+                      {day.getDate()}
+                    </span>
+                    <span style={{
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "0.65rem",
+                      color: isSelected ? "var(--color-bg)" : "var(--color-text-muted)",
+                    }}>
+                      {MONTH_ABBRS[day.getMonth()]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
-              {/* Day headers */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px", marginBottom: "4px" }}>
-                {DAY_LABELS.map(d => (
-                  <div key={d} style={{
-                    textAlign: "center",
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "0.7rem",
-                    color: "var(--color-text-muted)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    padding: "4px 0",
-                  }}>
-                    {d}
-                  </div>
-                ))}
-              </div>
+            <select
+              value={pickerTime}
+              onChange={e => setPickerTime(e.target.value)}
+              style={{
+                background: "var(--color-bg)",
+                border: "1px solid rgba(201,151,58,0.3)",
+                color: "var(--color-text)",
+                fontFamily: "var(--font-body)",
+                padding: "8px 12px",
+                borderRadius: "var(--radius-md)",
+                width: "100%",
+                fontSize: "0.95rem",
+                marginTop: "var(--space-2)",
+                cursor: "pointer",
+              }}
+            >
+              {TIME_SLOTS.map(slot => (
+                <option key={slot} value={slot}>{formatTimeSlot(slot)}</option>
+              ))}
+            </select>
 
-              {/* Day cells */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px", marginBottom: "var(--space-4)" }}>
-                {calGrid.map((day, i) => {
-                  const isCurrentMonth = day.getMonth() === calendarMonth;
-                  const isPast = day < today;
-                  const isAfterMax = day > maxDate;
-                  const isSelected = isSameDay(day, pickerDate);
-                  const isToday = isSameDay(day, today);
-                  const clickable = isCurrentMonth && !isPast && !isAfterMax;
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "var(--space-4)" }}>
+              <button
+                onClick={() => setSettingsStep(1)}
+                style={{ background: "none", border: "none", color: "var(--color-text-muted)", fontFamily: "var(--font-ui)", fontSize: "0.9rem", cursor: "pointer", padding: 0 }}
+              >
+                ← Back
+              </button>
+              <button
+                onClick={() => setSettingsStep(3)}
+                style={{
+                  padding: "10px 24px",
+                  background: "#C9973A",
+                  color: "var(--color-bg)",
+                  border: "none",
+                  borderRadius: "var(--radius-md)",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.95rem",
+                  cursor: "pointer",
+                }}
+              >
+                Next →
+              </button>
+            </div>
+          </>
+        );
+      }
 
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => clickable && setPickerDate(new Date(day))}
+      // ── Step 3: Smoker Setup + Flavor ──
+      if (settingsStep === 3) {
+        const smokerReady = smokers.some(s => s.name.trim() && s.wood.trim());
+        return (
+          <>
+            {stepIndicator}
+
+            {/* Pit quick fill */}
+            {user && savedPits.length > 0 && (
+              <div style={{ marginBottom: "var(--space-3)" }}>
+                <div style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.7rem",
+                  color: "var(--color-text-muted)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  marginBottom: "var(--space-1)",
+                }}>
+                  Quick fill from your pits:
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {savedPits.map(pit => (
+                    <button
+                      key={pit.id}
+                      onClick={() => {
+                        const activeSmoker = smokers[0]!;
+                        updateSmoker(activeSmoker.id, { name: pit.name, wood: pit.default_wood ?? "" });
+                      }}
                       style={{
-                        width: "36px",
-                        height: "36px",
-                        borderRadius: "50%",
+                        fontFamily: "var(--font-ui)",
+                        fontSize: "0.8rem",
+                        border: "1px solid rgba(201,151,58,0.3)",
+                        padding: "4px 12px",
+                        borderRadius: "12px",
+                        background: "var(--color-bg)",
+                        cursor: "pointer",
+                        color: "var(--color-text)",
+                      }}
+                    >
+                      {pit.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Smoker inputs */}
+            {smokers.map((smoker, idx) => (
+              <div
+                key={smoker.id}
+                style={{
+                  background: "var(--color-bg)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "var(--space-3)",
+                  marginBottom: "var(--space-3)",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-2)" }}>
+                  <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem" }}>Smoker {idx + 1}</span>
+                  {idx > 0 && (
+                    <button
+                      onClick={() => removeSmoker(smoker.id)}
+                      style={{ background: "none", border: "none", color: "var(--color-text-muted)", cursor: "pointer", fontSize: "1.1rem", lineHeight: 1 }}
+                    >×</button>
+                  )}
+                </div>
+                <input
+                  value={smoker.name}
+                  onChange={e => updateSmoker(smoker.id, { name: e.target.value })}
+                  placeholder="Weber Smokefire EX6, offset, kamado, kettle..."
+                  style={{ ...fieldInput, marginBottom: "var(--space-2)" }}
+                />
+                <input
+                  value={smoker.wood}
+                  onChange={e => updateSmoker(smoker.id, { wood: e.target.value })}
+                  placeholder="Post oak, hickory, cherry, competition blend..."
+                  style={fieldInput}
+                />
+              </div>
+            ))}
+
+            {smokers.length < 3 && (
+              <button
+                onClick={addSmoker}
+                style={{
+                  padding: "10px 20px",
+                  background: "none",
+                  border: "1px solid var(--color-accent)",
+                  color: "var(--color-accent)",
+                  borderRadius: "var(--radius-md)",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.9rem",
+                  marginBottom: "var(--space-4)",
+                }}
+              >
+                + Add Another Smoker
+              </button>
+            )}
+
+            {/* Assignment section — only when 2+ named smokers and items selected */}
+            {hasItems && namedSmokers.length > 1 && (
+              <div style={{ marginBottom: "var(--space-4)" }}>
+                <div style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.75rem",
+                  color: "var(--color-text-muted)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  marginBottom: "var(--space-2)",
+                }}>
+                  Assign Items to Smokers
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                  {selectedItems.map(item => (
+                    <div
+                      key={`${item.category}-${item.name}`}
+                      style={{
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
-                        margin: "0 auto",
-                        cursor: clickable ? "pointer" : "default",
-                        background: isSelected ? "var(--color-accent)" : "transparent",
-                        color: isSelected
-                          ? "white"
-                          : !isCurrentMonth || isPast || isAfterMax
-                          ? "var(--color-text-muted)"
-                          : "var(--color-text)",
-                        border: isToday && !isSelected ? "1px solid var(--color-accent)" : "1px solid transparent",
-                        opacity: !isCurrentMonth ? 0.25 : 1,
-                        fontSize: "0.85rem",
-                        fontFamily: "var(--font-ui)",
-                        transition: "background 0.1s",
-                        boxSizing: "border-box" as const,
-                        userSelect: "none" as const,
-                      }}
-                    >
-                      {day.getDate()}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Time grid */}
-              <div style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "0.75rem",
-                color: "var(--color-text-muted)",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                marginBottom: "var(--space-2)",
-              }}>
-                Select a time
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-1)" }}>
-                {TIME_SLOTS.map(slot => {
-                  const selected = pickerTime === slot;
-                  return (
-                    <button
-                      key={slot}
-                      onClick={() => setPickerTime(slot)}
-                      style={{
-                        padding: "8px",
-                        background: selected ? "var(--color-accent)" : "var(--color-bg)",
-                        color: selected ? "white" : "var(--color-text-muted)",
-                        border: selected ? "none" : "1px solid var(--color-border)",
+                        justifyContent: "space-between",
+                        gap: "var(--space-3)",
+                        padding: "var(--space-2) var(--space-3)",
+                        background: "var(--color-bg)",
                         borderRadius: "var(--radius-md)",
-                        cursor: "pointer",
-                        fontFamily: "var(--font-ui)",
-                        fontSize: "0.85rem",
-                        transition: "background 0.1s",
+                        border: item.smokerId ? "1px solid var(--color-border)" : "1px solid var(--color-accent)",
+                        flexWrap: "wrap" as const,
                       }}
                     >
-                      {formatTimeSlot(slot)}
-                    </button>
-                  );
-                })}
+                      <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.9rem" }}>
+                        {item.name}
+                        {item.quantity > 1 && <span style={{ color: "var(--color-text-muted)" }}> ×{item.quantity}</span>}
+                      </span>
+                      <select
+                        value={item.smokerId || ""}
+                        onChange={e => updateItem(item.name, item.category, { smokerId: e.target.value || null })}
+                        style={{
+                          padding: "6px 10px",
+                          background: "var(--color-bg-alt)",
+                          border: "1px solid var(--color-border)",
+                          borderRadius: "var(--radius-sm)",
+                          color: "var(--color-text)",
+                          fontFamily: "var(--font-body)",
+                          fontSize: "0.875rem",
+                          minWidth: "160px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <option value="">Assign to smoker...</option>
+                        {namedSmokers.map(s => (
+                          <option key={s.id} value={s.id}>
+                            Smoker {smokers.indexOf(s) + 1}{s.name ? ` — ${s.name}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Flavor tab */}
-          {activeSettingsTab === "flavor" && (
-            <div>
+            {/* Flavor sliders */}
+            <div style={{ marginBottom: "var(--space-4)" }}>
               {(
                 [
                   { label: "Smoke Intensity",   value: flavorSmoke,      set: setFlavorSmoke },
@@ -924,130 +1050,34 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          )}
 
-          {/* Smokers tab */}
-          {activeSettingsTab === "smokers" && (
-            <div>
-              {smokers.map((smoker, idx) => (
-                <div
-                  key={smoker.id}
-                  style={{
-                    background: "var(--color-bg)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "var(--radius-md)",
-                    padding: "var(--space-3)",
-                    marginBottom: "var(--space-3)",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-2)" }}>
-                    <span style={{ fontFamily: "var(--font-heading)", fontSize: "1rem" }}>Smoker {idx + 1}</span>
-                    {idx > 0 && (
-                      <button
-                        onClick={() => removeSmoker(smoker.id)}
-                        style={{ background: "none", border: "none", color: "var(--color-text-muted)", cursor: "pointer", fontSize: "1.1rem", lineHeight: 1 }}
-                      >×</button>
-                    )}
-                  </div>
-                  <input
-                    value={smoker.name}
-                    onChange={e => updateSmoker(smoker.id, { name: e.target.value })}
-                    placeholder="Weber Smokefire EX6, offset, kamado, kettle..."
-                    style={{ ...fieldInput, marginBottom: "var(--space-2)" }}
-                  />
-                  <input
-                    value={smoker.wood}
-                    onChange={e => updateSmoker(smoker.id, { wood: e.target.value })}
-                    placeholder="Post oak, hickory, cherry, competition blend..."
-                    style={fieldInput}
-                  />
-                </div>
-              ))}
-
-              {smokers.length < 3 && (
-                <button
-                  onClick={addSmoker}
-                  style={{
-                    padding: "10px 20px",
-                    background: "none",
-                    border: "1px solid var(--color-accent)",
-                    color: "var(--color-accent)",
-                    borderRadius: "var(--radius-md)",
-                    cursor: "pointer",
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  + Add Another Smoker
-                </button>
-              )}
-
-              {/* Assignment section — only when 2+ named smokers and items selected */}
-              {hasItems && namedSmokers.length > 1 && (
-                <div style={{ marginTop: "var(--space-4)" }}>
-                  <div style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "0.75rem",
-                    color: "var(--color-text-muted)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    marginBottom: "var(--space-2)",
-                  }}>
-                    Assign Items to Smokers
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-                    {selectedItems.map(item => (
-                      <div
-                        key={`${item.category}-${item.name}`}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: "var(--space-3)",
-                          padding: "var(--space-2) var(--space-3)",
-                          background: "var(--color-bg)",
-                          borderRadius: "var(--radius-md)",
-                          border: item.smokerId ? "1px solid var(--color-border)" : "1px solid var(--color-accent)",
-                          flexWrap: "wrap" as const,
-                        }}
-                      >
-                        <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.9rem" }}>
-                          {item.name}
-                          {item.quantity > 1 && <span style={{ color: "var(--color-text-muted)" }}> ×{item.quantity}</span>}
-                        </span>
-                        <select
-                          value={item.smokerId || ""}
-                          onChange={e => updateItem(item.name, item.category, { smokerId: e.target.value || null })}
-                          style={{
-                            padding: "6px 10px",
-                            background: "var(--color-bg-alt)",
-                            border: "1px solid var(--color-border)",
-                            borderRadius: "var(--radius-sm)",
-                            color: "var(--color-text)",
-                            fontFamily: "var(--font-body)",
-                            fontSize: "0.875rem",
-                            minWidth: "160px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <option value="">Assign to smoker...</option>
-                          {namedSmokers.map(s => (
-                            <option key={s.id} value={s.id}>
-                              Smoker {smokers.indexOf(s) + 1}{s.name ? ` — ${s.name}` : ""}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <button
+                onClick={() => setSettingsStep(2)}
+                style={{ background: "none", border: "none", color: "var(--color-text-muted)", fontFamily: "var(--font-ui)", fontSize: "0.9rem", cursor: "pointer", padding: 0 }}
+              >
+                ← Back
+              </button>
+              <button
+                onClick={() => setOpenPanel(null)}
+                disabled={!smokerReady}
+                style={{
+                  padding: "10px 24px",
+                  background: smokerReady ? "#C9973A" : "var(--color-bg-alt)",
+                  color: smokerReady ? "var(--color-bg)" : "var(--color-text-muted)",
+                  border: "none",
+                  borderRadius: "var(--radius-md)",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.95rem",
+                  cursor: smokerReady ? "pointer" : "not-allowed",
+                }}
+              >
+                OK — Build My Cook
+              </button>
             </div>
-          )}
-
-          <button onClick={() => setOpenPanel(null)} style={okBtn}>OK</button>
-        </>
-      );
+          </>
+        );
+      }
     }
 
     return null;
@@ -1282,17 +1312,18 @@ export default function Home() {
         <div style={{ marginBottom: "var(--space-3)" }}>
           <p style={rowLabel}>Cook Settings</p>
           <div
-            onClick={() => setOpenPanel("settings")}
+            onClick={() => { if (meatsCount === 0) return; setOpenPanel("settings"); }}
             style={{
               background: "var(--color-bg-alt)",
               border: "1px solid var(--color-border)",
               borderRadius: "var(--radius-lg)",
               padding: "var(--space-2) var(--space-3)",
-              cursor: "pointer",
+              cursor: meatsCount > 0 ? "pointer" : "default",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               transition: "border-color 0.12s",
+              opacity: meatsCount > 0 ? 1 : 0.4,
             }}
           >
             <div style={{ flex: 1 }}>
@@ -1322,6 +1353,18 @@ export default function Home() {
               flexShrink: 0,
             }}>›</span>
           </div>
+          {meatsCount === 0 && (
+            <p style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "0.7rem",
+              color: "var(--color-text-muted)",
+              fontStyle: "italic",
+              marginTop: "var(--space-1)",
+              marginBottom: 0,
+            }}>
+              Select your meats first
+            </p>
+          )}
         </div>
 
         {/* BUILD BUTTON */}
