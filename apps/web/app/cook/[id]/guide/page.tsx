@@ -85,6 +85,17 @@ function inferCategory(name: string, category?: string): "beef" | "pork" | "poul
   return "other";
 }
 
+function shouldShowSeasoningForItem(itemName: string): boolean {
+  const name = itemName.toLowerCase();
+  if (name.includes("cobbler") || name.includes("brownie") || name.includes("peach") ||
+      name.includes("banana") || name.includes("bread pudding") || name.includes("pineapple") ||
+      name.includes("grilled pineapple")) return false;
+  if (name.includes("mac and cheese") || name.includes("baked beans") || name.includes("cream corn") ||
+      name.includes("cornbread") || name.includes("queso") || name.includes("pinquito") ||
+      name.includes("collard") || name.includes("brussels") || name.includes("asparagus")) return false;
+  return true;
+}
+
 function buildDisplayItems(planItems: PlanItem[], cookItems: any[]): DisplayItem[] {
   if (planItems.length > 0) {
     return planItems.map((item, idx) => ({
@@ -727,6 +738,34 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
                   {displayItems.map(item => {
+                    const needsSeasoning = shouldShowSeasoningForItem(item.name);
+
+                    if (!needsSeasoning) {
+                      return (
+                        <div
+                          key={item.key}
+                          style={{
+                            background: "var(--color-bg)",
+                            borderRadius: "var(--radius-md)",
+                            padding: "var(--space-3)",
+                          }}
+                        >
+                          <div style={{ fontFamily: "var(--font-body)", fontWeight: 600, color: "var(--color-text)", marginBottom: "var(--space-1)" }}>
+                            {item.name}
+                          </div>
+                          <p style={{
+                            fontFamily: "var(--font-body)",
+                            fontStyle: "italic",
+                            fontSize: "0.85rem",
+                            color: "var(--color-text-muted)",
+                            margin: 0,
+                          }}>
+                            No rub needed — this item cooks best without additional seasoning.
+                          </p>
+                        </div>
+                      );
+                    }
+
                     const profile = RUB_PROFILES[styleId]?.[item.category] ?? RUB_PROFILES["texas"]?.["other"] ?? "";
                     const binder = BINDERS[item.category] ?? "";
                     const ratio = SALT_RATIOS[item.category] ?? 0.005;
