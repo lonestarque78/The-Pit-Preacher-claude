@@ -1,4 +1,3 @@
-// apps/web/app/cook/[id]/summary/page.tsx
 "use client";
 
 import { use, useEffect, useState } from "react";
@@ -154,8 +153,16 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
     letterSpacing: "0.05em",
   };
 
+  const NAV_LINKS = [
+    { label: "Live Mode", href: `/cook/${cookId}/live` },
+    { label: "Timeline",  href: `/cook/${cookId}/timeline` },
+    { label: "Guide",     href: `/cook/${cookId}/guide` },
+    { label: "Events",    href: `/cook/${cookId}/events` },
+    { label: "Summary",   href: `/cook/${cookId}/summary`, active: true },
+  ];
+
   return (
-    <div style={{ padding: "40px", maxWidth: "760px" }}>
+    <div style={{ padding: "40px", maxWidth: "760px", paddingBottom: "80px" }}>
 
       {/* ── EARNED VERSE OVERLAY ── */}
       {showVerseOverlay && (
@@ -353,6 +360,50 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
       )}
+
+      {/* ── STICKY BOTTOM BAR ── */}
+      <style>{`
+        .cook-nav-btn {
+          background: transparent;
+          border: 1px solid rgba(201,151,58,0.3);
+          color: var(--color-text-muted);
+          font-family: var(--font-ui);
+          font-size: 0.8rem;
+          padding: 6px 14px;
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          text-decoration: none;
+          transition: border-color 0.12s, color 0.12s;
+          display: inline-block;
+          white-space: nowrap;
+        }
+        .cook-nav-btn:hover { border-color: #C9973A; color: #C9973A; }
+        .cook-nav-btn-active { border-color: #C9973A !important; color: #C9973A !important; }
+      `}</style>
+      <div style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        background: "var(--color-bg-alt)",
+        borderTop: "1px solid rgba(201,151,58,0.2)",
+        padding: "var(--space-2) var(--space-4)",
+        display: "flex",
+        justifyContent: "center",
+        gap: "var(--space-3)",
+        flexWrap: "wrap",
+      }}>
+        {NAV_LINKS.map(link => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={`cook-nav-btn${link.active ? " cook-nav-btn-active" : ""}`}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

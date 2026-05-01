@@ -321,8 +321,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
   const NAV_LINKS = [
     { label: "Live Mode", href: `/cook/${cookId}/live` },
     { label: "Timeline",  href: `/cook/${cookId}/timeline`, active: true },
-    { label: "Fire",      href: `/cook/${cookId}/fire` },
-    { label: "Rubs",      href: `/cook/${cookId}/rubs` },
+    { label: "Guide",     href: `/cook/${cookId}/guide` },
     { label: "Events",    href: `/cook/${cookId}/events` },
     { label: "Summary",   href: `/cook/${cookId}/summary` },
   ];

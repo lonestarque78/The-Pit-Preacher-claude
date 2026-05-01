@@ -233,8 +233,7 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
   const NAV_LINKS = [
     { label: "Live Mode", href: `/cook/${cookId}/live` },
     { label: "Timeline",  href: `/cook/${cookId}/timeline` },
-    { label: "Fire",      href: `/cook/${cookId}/fire` },
-    { label: "Rubs",      href: `/cook/${cookId}/rubs` },
+    { label: "Guide",     href: `/cook/${cookId}/guide` },
     { label: "Events",    href: `/cook/${cookId}/events` },
     { label: "Summary",   href: `/cook/${cookId}/summary` },
   ];
