@@ -642,6 +642,15 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
           </div>
         )}
 
+        {cook.status === "in_progress" && !inputDisabled && (
+          <div style={{ flexShrink: 0, textAlign: "center", padding: "var(--space-1) var(--space-4)" }}>
+            <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Ready to wrap up? </span>
+            <Link href={`/cook/${cookId}/summary`} style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "#C9973A", textDecoration: "none" }}>
+              Complete This Cook →
+            </Link>
+          </div>
+        )}
+
         {/* Input area */}
         <div style={{
           flexShrink: 0,

@@ -60,6 +60,24 @@ function StatusBadge({ status }: { status: string }) {
       </span>
     );
   }
+  if (status === "abandoned") {
+    return (
+      <span style={{
+        background:    "rgba(100,100,100,0.2)",
+        color:         "var(--color-text-muted)",
+        fontFamily:    "var(--font-ui)",
+        fontSize:      "0.7rem",
+        padding:       "3px 8px",
+        borderRadius:  "var(--radius-sm)",
+        textTransform: "uppercase" as const,
+        letterSpacing: "0.05em",
+        whiteSpace:    "nowrap" as const,
+        flexShrink:    0,
+      }}>
+        Archived
+      </span>
+    );
+  }
   return (
     <span style={{
       background:    "var(--color-bg-alt)",
@@ -167,8 +185,7 @@ export default function LogsPage() {
     const matchesSearch = q === "" || cook.label.toLowerCase().includes(q);
     const matchesStatus =
       statusFilter === "all" ||
-      (statusFilter === "in_progress" && cook.status === "in_progress") ||
-      (statusFilter === "completed"   && cook.status === "completed");
+      cook.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -216,6 +233,7 @@ export default function LogsPage() {
           <option value="all">All</option>
           <option value="in_progress">In Progress</option>
           <option value="completed">Completed</option>
+          <option value="abandoned">Archived</option>
         </select>
       </div>
 
@@ -306,6 +324,20 @@ export default function LogsPage() {
               }}>
                 {smokerWood ? `${smokerWood} · ` : ""}{date}
               </p>
+
+              {/* Abandoned notice */}
+              {cook.status === "abandoned" && (
+                <p style={{
+                  fontFamily:   "var(--font-body)",
+                  fontSize:     "0.85rem",
+                  color:        "var(--color-text-muted)",
+                  fontStyle:    "italic",
+                  margin:       0,
+                  marginBottom: "var(--space-3)",
+                }}>
+                  This cook was archived after 48 hours of inactivity.
+                </p>
+              )}
 
               {/* Cook log */}
               {log ? (

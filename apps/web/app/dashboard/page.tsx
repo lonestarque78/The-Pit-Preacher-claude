@@ -132,6 +132,26 @@ export default async function DashboardPage() {
     for (const log of logsData ?? []) cookLogMap[log.cook_id] = log;
   }
 
+  // ── ABANDONED COOK CHECK ───────────────────────────────────────────────────
+  const renderNow = new Date();
+  const fortyEightHoursAgo = new Date(renderNow.getTime() - 48 * 60 * 60 * 1000).toISOString();
+  const displayActiveCooks: any[] = [];
+  for (const cook of activeCooks) {
+    const cookAgeMs = renderNow.getTime() - new Date(cook.created_at).getTime();
+    if (cookAgeMs > 48 * 60 * 60 * 1000) {
+      const { count } = await supabase
+        .from("cook_events")
+        .select("*", { count: "exact", head: true })
+        .eq("cook_id", cook.id)
+        .gte("created_at", fortyEightHoursAgo);
+      if ((count ?? 0) === 0) {
+        await supabase.from("cooks").update({ status: "abandoned" }).eq("id", cook.id);
+        continue;
+      }
+    }
+    displayActiveCooks.push(cook);
+  }
+
   // ── LOGGED IN — render ─────────────────────────────────────────────────────
 
   return (
@@ -164,7 +184,7 @@ export default async function DashboardPage() {
         {([
           { label: "Total Cooks",  value: totalCompleted },
           { label: "This Month",   value: thisMonthCompleted },
-          { label: "Active",       value: activeCooks.length },
+          { label: "Active",       value: displayActiveCooks.length },
         ] as { label: string; value: number }[]).map(stat => (
           <div key={stat.label} style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.1)", borderRadius: "var(--radius-md)", padding: "var(--space-2) var(--space-3)", textAlign: "center" }}>
             <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", color: "#F5E6C8", margin: "0 0 2px" }}>{stat.value}</p>
@@ -179,19 +199,34 @@ export default async function DashboardPage() {
           On the Pit
         </p>
 
-        {activeCooks.length > 0 ? (
+        {displayActiveCooks.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-            {activeCooks.map(cook => {
+            {displayActiveCooks.map(cook => {
               const plan    = cook.plan ?? {};
               const tools   = plan.tools ?? [];
               const smokerLine = [tools[0]?.name || cook.smoker_type, tools[0]?.wood || cook.wood_type].filter(Boolean).join(" · ");
               const countdown  = cook.eat_time ? formatCountdown(cook.eat_time) : null;
+              const cookAgeMs  = renderNow.getTime() - new Date(cook.created_at).getTime();
+              const cookAgeHours = cookAgeMs / (1000 * 60 * 60);
+              const cookAgeDays  = Math.floor(cookAgeHours / 24);
+              const elapsedDisplay = cookAgeDays >= 1
+                ? `Started ${cookAgeDays} day${cookAgeDays !== 1 ? "s" : ""} ago`
+                : `Started ${Math.floor(cookAgeHours)} hrs ago`;
+              const isInactive36h = cookAgeHours >= 36;
+              const isInactive48h = cookAgeHours >= 48;
               return (
                 <div key={cook.id} style={{ background: "var(--color-bg-alt)", border: "2px solid #C9973A", borderRadius: "var(--radius-lg)", boxShadow: "0 0 16px rgba(201,151,58,0.1)", padding: "var(--space-3) var(--space-4)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "var(--space-3)" }}>
                   <div style={{ flex: "3 1 180px" }}>
                     <p style={{ fontFamily: "var(--font-heading)", fontSize: "1.1rem", color: "#F5E6C8", margin: "0 0 4px" }}>{cook.label || "Unnamed Cook"}</p>
-                    {smokerLine && <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", margin: "0 0 6px" }}>{smokerLine}</p>}
-                    {countdown  && <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.9rem", color: "#C9973A", margin: 0 }}>{countdown}</p>}
+                    {smokerLine && <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", margin: "0 0 4px" }}>{smokerLine}</p>}
+                    <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "var(--color-text-muted)", margin: "0 0 4px" }}>{elapsedDisplay}</p>
+                    {isInactive36h && !isInactive48h && (
+                      <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#8B6914", margin: "0 0 4px" }}>⚠ Inactive for 36+ hours — complete this cook or it will be archived</p>
+                    )}
+                    {isInactive48h && (
+                      <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", margin: "0 0 4px" }}>This cook has been archived</p>
+                    )}
+                    {countdown && <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.9rem", color: "#C9973A", margin: 0 }}>{countdown}</p>}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", flex: "2 1 140px" }}>
                     <Link href={`/cook/${cook.id}/live`} style={{ display: "block", textAlign: "center", background: "#C9973A", color: "var(--color-bg)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "6px 16px", borderRadius: "var(--radius-md)", textDecoration: "none" }}>

@@ -78,6 +78,7 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
   const [planText, setPlanText] = useState<string | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
   const [userTier, setUserTier] = useState<string>("free");
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [loadingVerse, setLoadingVerse] = useState<{ text: string; chapter: string } | null>(null);
 
   useEffect(() => {
@@ -187,6 +188,11 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
     } finally {
       setPlanLoading(false);
     }
+  };
+
+  const handleComplete = async () => {
+    await supabase.from("cooks").update({ status: "completed", completed_at: new Date().toISOString() }).eq("id", cook.id);
+    window.location.href = `/cook/${cookId}/summary`;
   };
 
   const regeneratePlan = async () => {
@@ -568,6 +574,70 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
               >
                 ↺ Generate New Plan
               </button>
+            </div>
+          )}
+
+          {/* Complete This Cook */}
+          {cook.status === "in_progress" && (
+            <div style={{ borderTop: "1px solid rgba(201,151,58,0.15)", marginTop: "var(--space-3)", paddingTop: "var(--space-3)" }}>
+              {!showCompleteConfirm ? (
+                <button
+                  onClick={() => setShowCompleteConfirm(true)}
+                  style={{
+                    width: "100%",
+                    background: "transparent",
+                    border: "1px solid rgba(201,151,58,0.4)",
+                    color: "#C9973A",
+                    fontFamily: "var(--font-ui)",
+                    fontSize: "0.85rem",
+                    padding: "8px 16px",
+                    borderRadius: "var(--radius-md)",
+                    cursor: "pointer",
+                  }}
+                >
+                  Complete This Cook →
+                </button>
+              ) : (
+                <div>
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text-muted)", margin: "0 0 var(--space-2)" }}>
+                    Mark this cook as complete and write your summary?
+                  </p>
+                  <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                    <button
+                      onClick={handleComplete}
+                      style={{
+                        flex: 1,
+                        background: "#C9973A",
+                        color: "var(--color-bg)",
+                        border: "none",
+                        borderRadius: "var(--radius-md)",
+                        fontFamily: "var(--font-ui)",
+                        fontSize: "0.8rem",
+                        padding: "8px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Yes, complete it
+                    </button>
+                    <button
+                      onClick={() => setShowCompleteConfirm(false)}
+                      style={{
+                        flex: 1,
+                        background: "transparent",
+                        border: "1px solid rgba(201,151,58,0.3)",
+                        color: "var(--color-text-muted)",
+                        borderRadius: "var(--radius-md)",
+                        fontFamily: "var(--font-ui)",
+                        fontSize: "0.8rem",
+                        padding: "8px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

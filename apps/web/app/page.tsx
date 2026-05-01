@@ -279,6 +279,7 @@ export default function Home() {
   const [saving, setSaving] = useState(false);
   const [authError, setAuthError] = useState(false);
   const [buildError, setBuildError] = useState("");
+  const [atCookLimit, setAtCookLimit] = useState(false);
 
   const eatingTime = (() => {
     const d = new Date(pickerDate);
@@ -372,19 +373,21 @@ export default function Home() {
     setSaving(true);
 
     // ── FREE TIER COOK LIMIT ────────────────────────────────────────────────────
-    const { data: subData } = await supabase.from("subscriptions").select("tier, status").eq("user_id", user.id).single();
+    const { data: subData } = await supabase.from("subscriptions").select("tier").eq("user_id", user.id).maybeSingle();
     const userTier = subData?.tier ?? "free";
-    const isFreeTier = userTier === "free";
 
-    let freeMonthKey: string | null = null;
-    let freeCookCount = 0;
-
-    if (isFreeTier) {
-      freeMonthKey = new Date().toISOString().slice(0, 7);
-      const { data: usageData } = await supabase.from("usage").select("count").eq("user_id", user.id).eq("stage", 1).eq("month", freeMonthKey).single();
-      freeCookCount = usageData?.count ?? 0;
-      if (freeCookCount >= 2) {
-        setBuildError("You've reached your 2 cook limit for this month on the free plan. Upgrade to keep cooking.");
+    if (userTier === "free") {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+      const { count: monthlyCount } = await supabase
+        .from("cooks")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", monthStart)
+        .lt("created_at", monthEnd);
+      if ((monthlyCount ?? 0) >= 2) {
+        setAtCookLimit(true);
         setSaving(false);
         return;
       }
@@ -458,13 +461,6 @@ export default function Home() {
         setSaving(false);
         return;
       }
-    }
-
-    if (freeMonthKey !== null) {
-      await supabase.from("usage").upsert(
-        { user_id: user.id, stage: 1, month: freeMonthKey, count: freeCookCount + 1 },
-        { onConflict: "user_id,stage,month" }
-      );
     }
 
     window.location.href = `/cook/${cook.id}`;
@@ -1017,6 +1013,13 @@ export default function Home() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
+  const nextMonthStart = (() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(1);
+    return d.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+  })();
+
   return (
     <div>
 
@@ -1281,62 +1284,86 @@ export default function Home() {
 
         {/* BUILD BUTTON */}
         <div style={{ marginBottom: "var(--space-3)" }}>
-          <button
-            onClick={handleBuild}
-            disabled={isBuildDisabled || saving}
-            style={{
-              width:        "100%",
-              padding:      "10px 20px",
-              background:   isBuildDisabled || saving ? "var(--color-bg-alt)" : "var(--color-accent)",
-              color:        isBuildDisabled || saving ? "var(--color-text-muted)" : "white",
-              border:       "none",
-              borderRadius: "var(--radius-lg)",
-              fontFamily:   "var(--font-heading)",
-              fontSize:     "1.25rem",
-              cursor:       isBuildDisabled || saving ? "not-allowed" : "pointer",
-              transition:   "background 0.15s",
-            }}
-          >
-            {saving ? "Building your cook..." : "Build My Cook Plan"}
-          </button>
-
-          {buildError && (
-            <div style={{
-              marginTop: "var(--space-3)",
-              padding: "var(--space-2) var(--space-3)",
-              background: "#2a0a0a",
-              border: "1px solid #c0392b",
-              borderRadius: "var(--radius-sm)",
-              color: "#c0392b",
-              fontFamily: "var(--font-body)",
-              fontSize: "0.875rem",
-              lineHeight: 1.5,
-            }}>
-              {buildError}
-            </div>
-          )}
-
-          {authError && (
-            <div style={{ textAlign: "center", marginTop: "var(--space-3)", fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
-              <span style={{ color: "var(--color-text-muted)" }}>Sign in to save your cook plan. </span>
-              <Link href="/auth/login?tab=signup" style={{ color: "var(--color-accent)", textDecoration: "underline" }}>
-                Sign in
-              </Link>
-            </div>
-          )}
-
-          {hasUnassigned && (
-            <div style={{
-              marginTop: "var(--space-3)",
-              padding: "var(--space-2) var(--space-3)",
-              background: "var(--color-bg-alt)",
-              borderRadius: "var(--radius-sm)",
-              borderLeft: "3px solid var(--color-accent)",
-            }}>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-accent)", margin: 0 }}>
-                Open Cook Settings → Smokers and assign all items before building your plan.
+          {atCookLimit ? (
+            <div style={{ background: "var(--color-bg-alt)", border: "2px solid #C9973A", borderRadius: "var(--radius-lg)", padding: "var(--space-4)" }}>
+              <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "1.1rem", color: "#F5E6C8", margin: "0 0 var(--space-2)" }}>
+                You&apos;ve reached your free cook limit
+              </h3>
+              <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", fontSize: "0.9rem", margin: "0 0 var(--space-3)", lineHeight: 1.6 }}>
+                Free accounts get 2 cooks per month. Your limit resets on {nextMonthStart}. Upgrade to keep cooking.
+              </p>
+              <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-2)" }}>
+                <Link href="/premium" style={{ display: "inline-block", background: "#C9973A", color: "var(--color-bg)", fontFamily: "var(--font-ui)", fontSize: "0.9rem", padding: "10px 20px", borderRadius: "var(--radius-md)", textDecoration: "none" }}>
+                  Upgrade — $3.99/mo →
+                </Link>
+                <Link href="/premium" style={{ display: "inline-block", background: "transparent", border: "1px solid rgba(201,151,58,0.4)", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.9rem", padding: "10px 20px", borderRadius: "var(--radius-md)", textDecoration: "none" }}>
+                  See Plans
+                </Link>
+              </div>
+              <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "var(--color-text-muted)", margin: 0 }}>
+                Completed, abandoned, and active cooks all count toward your monthly limit.
               </p>
             </div>
+          ) : (
+            <>
+              <button
+                onClick={handleBuild}
+                disabled={isBuildDisabled || saving}
+                style={{
+                  width:        "100%",
+                  padding:      "10px 20px",
+                  background:   isBuildDisabled || saving ? "var(--color-bg-alt)" : "var(--color-accent)",
+                  color:        isBuildDisabled || saving ? "var(--color-text-muted)" : "white",
+                  border:       "none",
+                  borderRadius: "var(--radius-lg)",
+                  fontFamily:   "var(--font-heading)",
+                  fontSize:     "1.25rem",
+                  cursor:       isBuildDisabled || saving ? "not-allowed" : "pointer",
+                  transition:   "background 0.15s",
+                }}
+              >
+                {saving ? "Building your cook..." : "Build My Cook Plan"}
+              </button>
+
+              {buildError && (
+                <div style={{
+                  marginTop: "var(--space-3)",
+                  padding: "var(--space-2) var(--space-3)",
+                  background: "#2a0a0a",
+                  border: "1px solid #c0392b",
+                  borderRadius: "var(--radius-sm)",
+                  color: "#c0392b",
+                  fontFamily: "var(--font-body)",
+                  fontSize: "0.875rem",
+                  lineHeight: 1.5,
+                }}>
+                  {buildError}
+                </div>
+              )}
+
+              {authError && (
+                <div style={{ textAlign: "center", marginTop: "var(--space-3)", fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
+                  <span style={{ color: "var(--color-text-muted)" }}>Sign in to save your cook plan. </span>
+                  <Link href="/auth/login?tab=signup" style={{ color: "var(--color-accent)", textDecoration: "underline" }}>
+                    Sign in
+                  </Link>
+                </div>
+              )}
+
+              {hasUnassigned && (
+                <div style={{
+                  marginTop: "var(--space-3)",
+                  padding: "var(--space-2) var(--space-3)",
+                  background: "var(--color-bg-alt)",
+                  borderRadius: "var(--radius-sm)",
+                  borderLeft: "3px solid var(--color-accent)",
+                }}>
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-accent)", margin: 0 }}>
+                    Open Cook Settings → Smokers and assign all items before building your plan.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
