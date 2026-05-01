@@ -80,6 +80,12 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
   const [userTier, setUserTier] = useState<string>("free");
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [loadingVerse, setLoadingVerse] = useState<{ text: string; chapter: string } | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editLabel, setEditLabel] = useState("");
+  const [editSmokerType, setEditSmokerType] = useState("");
+  const [editWoodType, setEditWoodType] = useState("");
+  const [editEatTime, setEditEatTime] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     setLoadingVerse(getRandomVerse());
@@ -188,6 +194,37 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
     } finally {
       setPlanLoading(false);
     }
+  };
+
+  function toDateTimeLocal(iso: string | null | undefined): string {
+    if (!iso) return "";
+    try {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return "";
+      const pad = (n: number) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch { return ""; }
+  }
+
+  const handleEditSave = async () => {
+    const updatedPlan = cook.plan ? JSON.parse(JSON.stringify(cook.plan)) : null;
+    if (updatedPlan?.tools?.[0]) {
+      updatedPlan.tools[0].name = editSmokerType;
+      updatedPlan.tools[0].wood = editWoodType;
+    }
+    const updates: any = {
+      label: editLabel,
+      smoker_type: editSmokerType,
+      wood_type: editWoodType,
+      eat_time: editEatTime || null,
+    };
+    if (updatedPlan) updates.plan = updatedPlan;
+    const { error } = await supabase.from("cooks").update(updates).eq("id", cook.id);
+    if (error) { console.error(error); return; }
+    setCook((prev: any) => ({ ...prev, ...updates }));
+    setIsEditing(false);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2000);
   };
 
   const handleComplete = async () => {
@@ -527,34 +564,103 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
           {/* Cook Details */}
           <div style={{ ...sectionLabelStyle, marginTop: "var(--space-4)" }}>Cook Details</div>
 
-          <div style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", lineHeight: 2, marginBottom: "var(--space-3)" }}>
-            <div>
-              <span style={{ color: "var(--color-text-muted)" }}>Status</span>
-              {" · "}
-              {cook.status ? capitalize(cook.status) : "—"}
+          {isEditing ? (
+            <div style={{ marginBottom: "var(--space-3)" }}>
+              {(["Label", "Smoker", "Wood"] as const).map(field => {
+                const val = field === "Label" ? editLabel : field === "Smoker" ? editSmokerType : editWoodType;
+                const setter = field === "Label" ? setEditLabel : field === "Smoker" ? setEditSmokerType : setEditWoodType;
+                return (
+                  <div key={field} style={{ marginBottom: "var(--space-2)" }}>
+                    <label style={{ display: "block", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
+                      {field}
+                    </label>
+                    <input
+                      type="text"
+                      value={val}
+                      onChange={e => setter(e.target.value)}
+                      style={{ background: "var(--color-bg)", border: "1px solid rgba(201,151,58,0.3)", color: "var(--color-text)", fontFamily: "var(--font-body)", padding: "8px", borderRadius: "var(--radius-md)", width: "100%", boxSizing: "border-box", fontSize: "0.875rem" }}
+                    />
+                  </div>
+                );
+              })}
+              <div style={{ marginBottom: "var(--space-3)" }}>
+                <label style={{ display: "block", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
+                  Eating Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={editEatTime}
+                  onChange={e => setEditEatTime(e.target.value)}
+                  style={{ background: "var(--color-bg)", border: "1px solid rgba(201,151,58,0.3)", color: "var(--color-text)", fontFamily: "var(--font-body)", padding: "8px", borderRadius: "var(--radius-md)", width: "100%", boxSizing: "border-box", fontSize: "0.875rem" }}
+                />
+              </div>
+              <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                <button
+                  onClick={handleEditSave}
+                  style={{ flex: 1, background: "#C9973A", color: "var(--color-bg)", border: "none", borderRadius: "var(--radius-md)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "8px", cursor: "pointer" }}
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  style={{ flex: 1, background: "transparent", border: "1px solid rgba(201,151,58,0.3)", color: "var(--color-text-muted)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "8px", cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-            {cook.eat_time && (
+          ) : (
+            <div style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", lineHeight: 2, marginBottom: "var(--space-1)" }}>
               <div>
-                <span style={{ color: "var(--color-text-muted)" }}>Eating</span>
+                <span style={{ color: "var(--color-text-muted)" }}>Status</span>
                 {" · "}
-                {formatDateTime(cook.eat_time)}
+                {cook.status ? capitalize(cook.status) : "—"}
               </div>
-            )}
-            {cook.cooking_style && (
-              <div>
-                <span style={{ color: "var(--color-text-muted)" }}>Style</span>
-                {" · "}
-                {capitalize(cook.cooking_style)}
-              </div>
-            )}
-            {cook.created_at && (
-              <div>
-                <span style={{ color: "var(--color-text-muted)" }}>Created</span>
-                {" · "}
-                {formatDateTime(cook.created_at)}
-              </div>
-            )}
-          </div>
+              {cook.eat_time && (
+                <div>
+                  <span style={{ color: "var(--color-text-muted)" }}>Eating</span>
+                  {" · "}
+                  {formatDateTime(cook.eat_time)}
+                </div>
+              )}
+              {cook.cooking_style && (
+                <div>
+                  <span style={{ color: "var(--color-text-muted)" }}>Style</span>
+                  {" · "}
+                  {capitalize(cook.cooking_style)}
+                </div>
+              )}
+              {cook.created_at && (
+                <div>
+                  <span style={{ color: "var(--color-text-muted)" }}>Created</span>
+                  {" · "}
+                  {formatDateTime(cook.created_at)}
+                </div>
+              )}
+            </div>
+          )}
+
+          {!isEditing && (
+            <div style={{ marginBottom: "var(--space-3)" }}>
+              <button
+                onClick={() => {
+                  setEditLabel(cook.label || "");
+                  setEditSmokerType(cook.smoker_type || "");
+                  setEditWoodType(cook.wood_type || "");
+                  setEditEatTime(toDateTimeLocal(cook.eat_time));
+                  setIsEditing(true);
+                }}
+                style={{ background: "transparent", border: "none", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.8rem", cursor: "pointer", padding: 0 }}
+              >
+                ✎ Edit Cook Details
+              </button>
+              {saveSuccess && (
+                <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "#C9973A", marginLeft: "var(--space-3)" }}>
+                  Cook updated.
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Regenerate */}
           {planText && !planLoading && userTier !== "free" && (

@@ -35,16 +35,18 @@ function formatDateTime(iso: string): string {
   }
 }
 
-function inferSmokerType(name: string, fallback = ""): string {
-  const n = (name + " " + fallback).toLowerCase();
-  if (n.includes("pellet") || n.includes("traeger") || n.includes("smokefire") ||
-      n.includes("recteq") || n.includes("pit boss") || n.includes("camp chef")) return "pellet";
-  if (n.includes("kamado") || n.includes("big green egg") || n.includes("bge") ||
-      n.includes("akorn") || n.includes("primo")) return "kamado";
-  if (n.includes("offset") || n.includes("stick") || n.includes("lang") ||
-      n.includes("ole hickory")) return "offset";
-  if (n.includes("drum") || n.includes("uds") || n.includes("ugly drum")) return "drum";
-  if (n.includes("kettle") || n.includes("weber kettle")) return "kettle";
+function detectSmokerType(cook: any): "pellet" | "offset" | "kamado" | "drum" | "kettle" | "other" {
+  const sources = [
+    cook?.smoker_type ?? "",
+    cook?.plan?.tools?.[0]?.name ?? "",
+    ...(cook?.plan?.tools ?? []).map((t: any) => t.name ?? ""),
+  ].join(" ").toLowerCase();
+
+  if (sources.match(/pellet|traeger|smokefire|smoke fire|recteq|rec tec|pit boss|camp chef|gmg|green mountain|louisiana|weber smokefire/)) return "pellet";
+  if (sources.match(/offset|stick burner|stick-burner|lang|ole hickory|yoder|longhorn|brazos|pecos|highland/)) return "offset";
+  if (sources.match(/kamado|big green egg|bge|akorn|primo|vision|ceramic/)) return "kamado";
+  if (sources.match(/drum|ugly drum|uds/)) return "drum";
+  if (sources.match(/kettle|weber kettle|performer/)) return "kettle";
   return "other";
 }
 
@@ -114,52 +116,52 @@ function buildDisplayItems(planItems: PlanItem[], cookItems: any[]): DisplayItem
 }
 
 const FIRE_STEPS: Record<string, string[]> = {
-  offset: [
-    "Build a small hot fire in the firebox with kindling and one split",
-    "Let it establish before adding your main cook wood",
-    "Target 250°F in the cook chamber before loading meat",
-    "Add one split every 45–60 minutes to maintain temperature",
-    "Watch your exhaust — thin blue smoke is the goal",
-    "Keep the intake vent 75% open, exhaust fully open",
-  ],
   pellet: [
-    "Fill the hopper completely before starting",
-    "Run the startup cycle and let it reach set temperature",
-    "Allow 15 minutes at temperature before loading meat",
-    "Check hopper level every 3–4 hours on long cooks",
-    "Keep the grill area clear for consistent airflow",
-    "Trust the controller — resist the urge to constantly adjust",
+    "Fill the hopper completely before starting — check the level",
+    "Run the startup cycle and allow the grill to reach set temperature",
+    "Let it stabilize for 15 minutes at temperature before loading meat",
+    "Check hopper level every 3-4 hours on long cooks — running dry mid-cook is unrecoverable",
+    "Trust the controller — resist adjusting temperature constantly",
+    "Keep the grill area clear of debris for consistent airflow around the firepot",
+  ],
+  offset: [
+    "Build a small starter fire with kindling and one split — establish before adding cook wood",
+    "Let the fire breathe fully open until you have a clean coal bed",
+    "Target 250°F in the cook chamber before loading any meat",
+    "Add one split every 45-60 minutes to maintain temperature",
+    "Watch the stack — thin blue smoke is the goal, white smoke means the fire needs more heat",
+    "Keep the intake vent 75% open and the exhaust fully open at all times",
   ],
   kamado: [
-    "Light a small amount of lump charcoal in the center",
-    "Open top and bottom vents fully until temperature rises",
-    "Begin closing vents gradually as you approach target temp",
+    "Light a small amount of lump charcoal in the center of the basket",
+    "Open top and bottom vents fully until temperature begins to climb",
+    "Begin closing vents gradually as you approach your target temperature",
     "Final setting: bottom vent cracked 1/4 inch, top vent barely open",
-    "Kamado holds heat extremely well — small vent adjustments only",
-    "Add wood chunks (not chips) directly on the coals",
+    "Kamado holds heat exceptionally well — make only small vent adjustments",
+    "Add wood chunks (not chips) directly on the coals before loading meat",
   ],
   drum: [
-    "Fill the charcoal basket 3/4 full with lump or briquettes",
-    "Light one corner using a chimney starter",
-    "Install drum with all intakes open until temperature climbs",
+    "Fill the charcoal basket 3/4 full with lump charcoal or briquettes",
+    "Light one corner using a chimney starter — do not use lighter fluid",
+    "Install the drum with all intakes open until temperature begins climbing",
     "Close intakes to about 1/4 open as you approach 250°F",
-    "Add wood chunks on top of the lit coals",
-    "Drum runs hot — watch your intakes carefully",
+    "Add wood chunks on top of the lit coals before loading meat",
+    "Drum runs hot — watch your intakes carefully, small adjustments only",
   ],
   kettle: [
-    "Use the snake method for low and slow cooks",
-    "Place unlit briquettes in a C shape around the outer edge",
-    "Light 10–15 briquettes in a chimney and place at one end of the snake",
-    "Add 3–4 wood chunks spaced along the snake",
-    "Set up for indirect cooking with vents over the meat",
-    "Top vent half open, bottom vent quarter open",
+    "Use the snake method for low and slow cooks — briquettes in a C shape around the outer edge",
+    "Light 10-15 briquettes in a chimney and place at one end of the snake",
+    "Add 3-4 wood chunks spaced along the snake for smoke throughout the cook",
+    "Set up for indirect cooking — meat away from the coals",
+    "Top vent positioned over the meat, half open. Bottom vent quarter open.",
+    "The snake gives you 6-8 hours of consistent heat — set it and trust it",
   ],
   other: [
-    "Know your pit before you cook on it",
-    "Establish your fire before loading any meat",
-    "Target your cook temperature and stabilize for 20 minutes",
-    "Thin blue smoke means clean combustion",
-    "Add fuel before your temperature drops — not after",
+    "Establish your fire fully before loading any meat",
+    "Stabilize at your target temperature for at least 20 minutes",
+    "Thin blue smoke means clean combustion — wait for it before loading",
+    "Add fuel before your temperature drops, not after it already has",
+    "Every pit is different — take notes on your first few cooks to learn its behavior",
   ],
 };
 
@@ -200,30 +202,69 @@ const SMOKER_TEMP_RANGES: Record<string, string> = {
   other:  "225–275°F",
 };
 
-const RUB_PROFILES: Record<string, Record<string, string>> = {
-  texas: {
-    beef:    "Coarse black pepper and kosher salt. 50/50 by weight. Nothing else. This is the law.",
-    pork:    "Salt, pepper, and a touch of garlic. Keep it simple and let the smoke work.",
-    poultry: "Salt, pepper, garlic powder, onion powder. Light hand on the pepper.",
-    other:   "Salt and pepper. Texas does not overcomplicate.",
+const TEXAS_RUB_PROFILES: Record<string, Record<string, string>> = {
+  central: {
+    beef:    "Coarse black pepper and kosher salt. Equal parts by weight. Nothing else. This is the law in Central Texas.",
+    pork:    "Salt and pepper. Simple. Let the smoke carry the flavor.",
+    poultry: "Salt, pepper, a touch of garlic. Keep it clean.",
+    other:   "Salt and pepper. Central Texas does not overcomplicate.",
   },
+  hill_country: {
+    beef:    "Salt, coarse black pepper, garlic powder, onion powder. Four ingredients. That is all you need.",
+    pork:    "Salt, pepper, garlic, onion. A little paprika for color.",
+    poultry: "Salt, pepper, garlic powder, onion powder, light paprika.",
+    other:   "Salt, pepper, garlic, onion. The Hill Country foundation.",
+  },
+  texas_bbq: {
+    beef:    "Salt, coarse black pepper, garlic powder, onion powder, smoked paprika, a pinch of cayenne. Bold but balanced.",
+    pork:    "Brown sugar, paprika, salt, pepper, garlic, onion, cayenne. Built for bark and flavor.",
+    poultry: "Paprika, garlic, onion, salt, pepper, a touch of brown sugar for color and heat.",
+    other:   "Salt, pepper, paprika, garlic, onion. The Texas all-purpose foundation.",
+  },
+};
+
+const CAROLINA_RUB_PROFILES: Record<string, Record<string, string>> = {
+  eastern: {
+    beef:    "Simple salt and pepper with a touch of red pepper flake.",
+    pork:    "Whole hog tradition. Vinegar and pepper. The sauce is the seasoning.",
+    poultry: "Salt, pepper, garlic, paprika. Keep it light.",
+    other:   "Salt, pepper, red pepper. Let the sauce tell the story.",
+  },
+  western: {
+    beef:    "Simple salt and pepper with a touch of red pepper flake.",
+    pork:    "Pork shoulder with a touch of tomato in the vinegar base.",
+    poultry: "Salt, pepper, garlic, paprika. Keep it light.",
+    other:   "Salt, pepper, red pepper. Let the sauce tell the story.",
+  },
+  south_carolina: {
+    beef:    "Simple salt and pepper with a touch of red pepper flake.",
+    pork:    "Mustard-based tradition. Season light — the gold sauce carries the flavor.",
+    poultry: "Salt, pepper, garlic, paprika. Keep it light.",
+    other:   "Salt, pepper, red pepper. Let the sauce tell the story.",
+  },
+};
+
+const MEMPHIS_RUB_PROFILES: Record<string, Record<string, string>> = {
+  dry: {
+    beef:    "Paprika, salt, pepper, garlic, onion, celery salt, dry mustard.",
+    pork:    "The classic Memphis dry rub is the star. Paprika, salt, pepper, garlic, onion, celery salt, dry mustard, cayenne. No sauce.",
+    poultry: "Paprika, garlic, onion, celery salt, a touch of cayenne.",
+    other:   "Memphis leans on paprika and celery salt. Build from there.",
+  },
+  wet: {
+    beef:    "Paprika, salt, pepper, garlic, onion, celery salt, dry mustard.",
+    pork:    "Same rub base but sauce goes on in the last 30 minutes and again at the table.",
+    poultry: "Paprika, garlic, onion, celery salt, a touch of cayenne.",
+    other:   "Memphis leans on paprika and celery salt. Sauce at the end.",
+  },
+};
+
+const RUB_PROFILES: Record<string, Record<string, string>> = {
   kansas_city: {
     beef:    "Brown sugar, paprika, salt, pepper, garlic, onion, cayenne. Sweet and bold.",
     pork:    "Heavy on the brown sugar and paprika. The sauce will finish the flavor story.",
     poultry: "Brown sugar, paprika, garlic, onion, a pinch of cayenne.",
     other:   "KC style welcomes sweetness. Brown sugar and paprika on almost anything.",
-  },
-  memphis: {
-    beef:    "Paprika, salt, pepper, garlic, onion, celery salt, dry mustard.",
-    pork:    "The classic Memphis dry rub: paprika, salt, pepper, garlic, onion, celery salt, brown sugar, dry mustard, cayenne.",
-    poultry: "Paprika, garlic, onion, celery salt, a touch of cayenne.",
-    other:   "Memphis leans on paprika and celery salt. Build from there.",
-  },
-  carolina: {
-    beef:    "Simple salt and pepper with a touch of red pepper flake.",
-    pork:    "Salt, pepper, red pepper flake, a little brown sugar. The vinegar sauce does the heavy lifting.",
-    poultry: "Salt, pepper, garlic, paprika. Keep it light.",
-    other:   "Salt, pepper, red pepper. Let the sauce tell the story.",
   },
   backyard: {
     beef:    "Salt, pepper, garlic powder, onion powder, smoked paprika. The all-purpose beef rub.",
@@ -312,6 +353,23 @@ const itemLabelStyle: React.CSSProperties = {
   marginBottom: "var(--space-1)",
 };
 
+const texasPillOptions: { key: "central" | "hill_country" | "texas_bbq"; label: string }[] = [
+  { key: "central",      label: "Central Texas" },
+  { key: "hill_country", label: "Hill Country" },
+  { key: "texas_bbq",   label: "Texas BBQ" },
+];
+
+const carolinaPillOptions: { key: "eastern" | "western" | "south_carolina"; label: string }[] = [
+  { key: "eastern",        label: "Eastern NC" },
+  { key: "western",        label: "Western NC" },
+  { key: "south_carolina", label: "South Carolina" },
+];
+
+const memphisPillOptions: { key: "dry" | "wet"; label: string }[] = [
+  { key: "dry", label: "Dry" },
+  { key: "wet", label: "Wet" },
+];
+
 export default function GuidePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: cookId } = use(params);
   const supabase = createClient();
@@ -321,22 +379,16 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"fire" | "seasoning">("fire");
-  const [userTier, setUserTier] = useState("free");
-  const [preacherInput, setPreacherInput] = useState("");
-  const [preacherReply, setPreacherReply] = useState<string | null>(null);
-  const [preacherLoading, setPreacherLoading] = useState(false);
-  const [hasAskedQuestion, setHasAskedQuestion] = useState(false);
   const [openTroubleCard, setOpenTroubleCard] = useState<number | null>(null);
   const [weightInputs, setWeightInputs] = useState<Record<string, string>>({});
+  const [texasProfile, setTexasProfile] = useState<"central" | "hill_country" | "texas_bbq">("texas_bbq");
+  const [carolinaProfile, setCarolinaProfile] = useState<"eastern" | "western" | "south_carolina">("eastern");
+  const [memphisProfile, setMemphisProfile] = useState<"dry" | "wet">("dry");
 
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { window.location.href = "/auth/login"; return; }
-
-      const { data: subData } = await supabase
-        .from("subscriptions").select("tier").eq("user_id", user.id).single();
-      setUserTier(subData?.tier ?? "free");
 
       const { data: cookData } = await supabase
         .from("cooks").select("*").eq("id", cookId).eq("user_id", user.id).single();
@@ -357,43 +409,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     };
     load();
   }, [cookId]);
-
-  const handleAsk = async () => {
-    if (!preacherInput.trim() || preacherLoading) return;
-    if (userTier === "free" && hasAskedQuestion) return;
-
-    setPreacherLoading(true);
-    const prefix = activeTab === "fire" ? "[Fire & Smoke Question] " : "[Seasoning & Rubs Question] ";
-    const message = prefix + preacherInput;
-
-    const plan = cook?.plan as any;
-    const cookContext = {
-      label: cook?.label ?? "",
-      eat_time: cook?.eat_time ?? "",
-      cooking_style: cook?.cooking_style ?? "",
-      tools: plan?.tools ?? [],
-      planItems: plan?.items ?? [],
-      recentEvents: [],
-      flavor_smoke: session?.flavor_smoke ?? null,
-      flavor_bark: session?.flavor_bark ?? null,
-      flavor_tenderness: session?.flavor_tenderness ?? null,
-    };
-
-    try {
-      const res = await fetch("/api/preacher", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cookId, message, cookContext }),
-      });
-      const data = await res.json();
-      setPreacherReply(data.reply ?? "The Preacher is silent. Try again.");
-      if (userTier === "free") setHasAskedQuestion(true);
-    } catch {
-      setPreacherReply("Could not reach the Preacher. Check your connection.");
-    }
-
-    setPreacherLoading(false);
-  };
 
   if (loading) {
     return (
@@ -421,7 +436,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const activeTool = planTools[0] ?? null;
   const smokerName = activeTool?.name || cook.smoker_type || "Smoker";
   const woodType = activeTool?.wood || cook.wood_type || "";
-  const smokerType = inferSmokerType(smokerName, cook.smoker_type || "");
+  const smokerType = detectSmokerType(cook);
   const fireSteps = FIRE_STEPS[smokerType] ?? FIRE_STEPS.other ?? [];
   const woodProfile = woodType ? getWoodProfile(woodType) : "";
 
@@ -439,7 +454,30 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const flavorTenderness = session?.flavor_tenderness;
   const hasFlavorData = flavorSmoke != null || flavorBark != null || flavorTenderness != null;
   const statusIsCompleted = cook?.status === "completed";
-  const isPreacherDisabled = userTier === "free" && hasAskedQuestion;
+
+  function getRubProfile(category: string): string {
+    if (styleId === "texas") return TEXAS_RUB_PROFILES[texasProfile]?.[category] ?? "";
+    if (styleId === "carolina") return CAROLINA_RUB_PROFILES[carolinaProfile]?.[category] ?? "";
+    if (styleId === "memphis") return MEMPHIS_RUB_PROFILES[memphisProfile]?.[category] ?? "";
+    return RUB_PROFILES[styleId]?.[category] ?? RUB_PROFILES["backyard"]?.[category] ?? "";
+  }
+
+  const pillBase: React.CSSProperties = {
+    border: "1px solid rgba(201,151,58,0.3)",
+    background: "transparent",
+    color: "var(--color-text-muted)",
+    fontFamily: "var(--font-ui)",
+    fontSize: "0.75rem",
+    padding: "4px 12px",
+    borderRadius: "12px",
+    cursor: "pointer",
+  };
+  const pillActive: React.CSSProperties = {
+    ...pillBase,
+    background: "#C9973A",
+    color: "var(--color-bg)",
+    borderColor: "#C9973A",
+  };
 
   const NAV_LINKS = [
     { label: "Live Mode", href: `/cook/${cookId}/live` },
@@ -452,14 +490,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   return (
     <div>
       <style>{`
-        @keyframes logoPulse {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-        @keyframes dotPulse {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 1; }
-        }
         .cook-nav-btn {
           background: transparent;
           border: 1px solid rgba(201,151,58,0.3);
@@ -479,8 +509,19 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
         @media (max-width: 767px) {
           .cook-grid { grid-template-columns: 1fr !important; }
         }
-        .guide-textarea:focus { outline: none; border-color: rgba(201,151,58,0.5); }
       `}</style>
+
+      {/* ── BACK TO COOK ── */}
+      <Link href={`/cook/${cookId}`} style={{
+        display: "block",
+        padding: "var(--space-2) var(--space-4) 0 var(--space-4)",
+        fontFamily: "var(--font-ui)",
+        fontSize: "0.8rem",
+        color: "#C9973A",
+        textDecoration: "none",
+      }}>
+        ← Back to Cook
+      </Link>
 
       {/* ── MISSION CARD ── */}
       <div style={{
@@ -590,7 +631,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
           gap: "var(--space-4)",
           maxWidth: "1200px",
           margin: "0 auto",
-          padding: "var(--space-4)",
+          padding: "var(--space-4) var(--space-4) 80px var(--space-4)",
         }}
       >
         {/* ── LEFT COLUMN ── */}
@@ -731,6 +772,37 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
             <div style={cardStyle}>
               <div style={{ ...sectionLabelStyle, marginBottom: "var(--space-3)" }}>Seasoning Guide</div>
 
+              {/* Regional sub-profile toggles */}
+              {styleId === "texas" && (
+                <div style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
+                  {texasPillOptions.map(({ key, label }) => (
+                    <button key={key} onClick={() => setTexasProfile(key)} style={texasProfile === key ? pillActive : pillBase}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {styleId === "carolina" && (
+                <div style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
+                  {carolinaPillOptions.map(({ key, label }) => (
+                    <button key={key} onClick={() => setCarolinaProfile(key)} style={carolinaProfile === key ? pillActive : pillBase}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {styleId === "memphis" && (
+                <div style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
+                  {memphisPillOptions.map(({ key, label }) => (
+                    <button key={key} onClick={() => setMemphisProfile(key)} style={memphisProfile === key ? pillActive : pillBase}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {displayItems.length === 0 ? (
                 <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", margin: 0 }}>
                   No items found for this cook.
@@ -766,7 +838,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                       );
                     }
 
-                    const profile = RUB_PROFILES[styleId]?.[item.category] ?? RUB_PROFILES["texas"]?.["other"] ?? "";
+                    const profile = getRubProfile(item.category);
                     const binder = BINDERS[item.category] ?? "";
                     const ratio = SALT_RATIOS[item.category] ?? 0.005;
                     const ratioLabel = SALT_RATIO_LABEL[item.category] ?? "";
@@ -972,192 +1044,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
               }}>
                 {REGIONAL_NOTES[styleId] ?? REGIONAL_NOTES.texas}
               </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── PREACHER SECTION ── */}
-      <div style={{
-        maxWidth: "1200px",
-        margin: "0 auto",
-        padding: "0 var(--space-4) 80px var(--space-4)",
-      }}>
-        <div style={{
-          background: "var(--color-bg-alt)",
-          border: "1px solid rgba(201,151,58,0.15)",
-          borderRadius: "var(--radius-lg)",
-          padding: "var(--space-4)",
-          marginTop: "var(--space-4)",
-        }}>
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "var(--space-2)",
-            marginBottom: "var(--space-3)",
-          }}>
-            <img
-              src="/logo.jpeg"
-              alt="The Pit Preacher"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "1px solid rgba(201,151,58,0.3)",
-                flexShrink: 0,
-              }}
-            />
-            <div style={{ fontFamily: "var(--font-heading)", color: "#F5E6C8", fontSize: "1.1rem", flex: 1 }}>
-              Ask the Preacher
-            </div>
-            <div style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "0.7rem",
-              color: userTier === "free" ? "#C9973A" : "var(--color-text-muted)",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}>
-              {userTier === "free" ? "Free Plan" : userTier}
-            </div>
-          </div>
-
-          {userTier === "free" && hasAskedQuestion && (
-            <div style={{
-              fontFamily: "var(--font-body)",
-              fontSize: "0.9rem",
-              color: "var(--color-text-muted)",
-              marginBottom: "var(--space-3)",
-              lineHeight: 1.5,
-            }}>
-              You&apos;ve used your free question.{" "}
-              <Link href="/premium" style={{ color: "#C9973A", textDecoration: "none" }}>
-                Upgrade for unlimited access.
-              </Link>
-            </div>
-          )}
-
-          <div style={{
-            display: "flex",
-            gap: "var(--space-2)",
-            alignItems: "flex-end",
-            marginBottom: preacherReply || preacherLoading ? "var(--space-3)" : 0,
-          }}>
-            <textarea
-              className="guide-textarea"
-              rows={2}
-              value={preacherInput}
-              onChange={e => setPreacherInput(e.target.value)}
-              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-                if (e.key === "Enter" && !e.shiftKey && !preacherLoading && !isPreacherDisabled) {
-                  e.preventDefault();
-                  handleAsk();
-                }
-              }}
-              disabled={preacherLoading || isPreacherDisabled}
-              placeholder={
-                activeTab === "fire"
-                  ? "Ask about your fire, smoke, or temperature..."
-                  : "Ask about rubs, seasoning, or flavor..."
-              }
-              style={{
-                flex: 1,
-                background: "var(--color-bg)",
-                border: "1px solid rgba(201,151,58,0.25)",
-                borderRadius: "var(--radius-md)",
-                color: "var(--color-text)",
-                fontFamily: "var(--font-body)",
-                fontSize: "0.95rem",
-                padding: "10px 14px",
-                resize: "none",
-                lineHeight: 1.5,
-                opacity: isPreacherDisabled ? 0.5 : 1,
-              }}
-            />
-            <button
-              onClick={handleAsk}
-              disabled={preacherLoading || isPreacherDisabled || !preacherInput.trim()}
-              style={{
-                background: preacherLoading || isPreacherDisabled || !preacherInput.trim()
-                  ? "rgba(201,151,58,0.3)"
-                  : "#C9973A",
-                color: preacherLoading || isPreacherDisabled || !preacherInput.trim()
-                  ? "rgba(201,151,58,0.5)"
-                  : "var(--color-bg)",
-                fontFamily: "var(--font-ui)",
-                fontSize: "0.9rem",
-                padding: "8px 20px",
-                borderRadius: "var(--radius-md)",
-                border: "none",
-                cursor: preacherLoading || isPreacherDisabled || !preacherInput.trim() ? "not-allowed" : "pointer",
-                flexShrink: 0,
-                alignSelf: "flex-end",
-                height: "42px",
-              }}
-            >
-              Send
-            </button>
-          </div>
-
-          {preacherLoading && (
-            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-              <img
-                src="/logo.jpeg"
-                alt=""
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  border: "1px solid rgba(201,151,58,0.3)",
-                  flexShrink: 0,
-                  animation: "logoPulse 1.2s ease-in-out infinite",
-                }}
-              />
-              <div style={{ display: "flex", gap: "5px", padding: "10px 0" }}>
-                {([0, 0.3, 0.6] as number[]).map((delay, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      background: "#C9973A",
-                      animation: "dotPulse 1.2s ease-in-out infinite",
-                      animationDelay: `${delay}s`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {preacherReply && !preacherLoading && (
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-2)" }}>
-              <img
-                src="/logo.jpeg"
-                alt="The Pit Preacher"
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  border: "1px solid rgba(201,151,58,0.3)",
-                  flexShrink: 0,
-                }}
-              />
-              <div style={{
-                background: "var(--color-bg)",
-                border: "1px solid rgba(201,151,58,0.15)",
-                borderRadius: "16px 16px 16px 4px",
-                padding: "var(--space-2) var(--space-3)",
-                fontFamily: "var(--font-body)",
-                fontSize: "0.95rem",
-                color: "var(--color-text)",
-                lineHeight: 1.6,
-              }}>
-                {preacherReply}
-              </div>
             </div>
           )}
         </div>

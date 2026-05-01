@@ -366,6 +366,18 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
         }
       `}</style>
 
+      {/* ── BACK TO COOK ── */}
+      <Link href={`/cook/${cookId}`} style={{
+        display: "block",
+        padding: "var(--space-2) var(--space-4) 0 var(--space-4)",
+        fontFamily: "var(--font-ui)",
+        fontSize: "0.8rem",
+        color: "#C9973A",
+        textDecoration: "none",
+      }}>
+        ← Back to Cook
+      </Link>
+
       {/* ── MISSION CARD ── */}
       <div style={{
         background: "var(--color-bg-alt)",

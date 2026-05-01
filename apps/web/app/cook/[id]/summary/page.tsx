@@ -202,11 +202,16 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
         </div>
       )}
 
-      <div style={{ marginBottom: "var(--space-4)" }}>
-        <Link href={`/cook/${cookId}`}>
-          <Button>← Back to Cook</Button>
-        </Link>
-      </div>
+      <Link href={`/cook/${cookId}`} style={{
+        display: "block",
+        padding: "0 0 var(--space-4) 0",
+        fontFamily: "var(--font-ui)",
+        fontSize: "0.8rem",
+        color: "#C9973A",
+        textDecoration: "none",
+      }}>
+        ← Back to Cook
+      </Link>
 
       <h1 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-4)" }}>
         Cook Summary

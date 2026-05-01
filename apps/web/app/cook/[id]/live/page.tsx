@@ -74,6 +74,47 @@ function buildCookContext(
   return ctx;
 }
 
+const TOPIC_PILLS = ["▲ Fire", "⊙ Temps", "◉ Timing", "⊕ Seasoning", "⚠ Troubleshoot", "✦ Finishing"];
+
+const CANNED_QUESTIONS: Record<string, string[]> = {
+  "▲ Fire": [
+    "What temp should my pit be running right now?",
+    "My fire is running too hot — what do I do?",
+    "My fire keeps dropping — how do I stabilize it?",
+    "What does good smoke look like right now?",
+  ],
+  "⊙ Temps": [
+    "What internal temp should I be looking for?",
+    "My temp has been stuck for an hour — is this the stall?",
+    "How far am I from being done?",
+    "Should I be probing yet?",
+  ],
+  "◉ Timing": [
+    "How much time do I have left on this cook?",
+    "When should I wrap?",
+    "When should I start my sides?",
+    "What time should I pull this off the pit?",
+  ],
+  "⊕ Seasoning": [
+    "Did I season this right for what I'm cooking?",
+    "Should I spritz right now?",
+    "What sauce or glaze should I finish with?",
+    "Is it too late to add more seasoning?",
+  ],
+  "⚠ Troubleshoot": [
+    "My bark is not setting — what's wrong?",
+    "The outside looks done but the inside is not there yet",
+    "I opened the lid too many times — did I ruin it?",
+    "My temp spiked — what do I do?",
+  ],
+  "✦ Finishing": [
+    "How do I know when this is truly done?",
+    "How long should I rest this?",
+    "Should I wrap for the rest or leave it naked?",
+    "Walk me through the final steps",
+  ],
+};
+
 export default function LiveModePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: cookId } = use(params);
   const supabase = createClient();
@@ -87,6 +128,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   const [inputValue, setInputValue] = useState("");
   const [userTier, setUserTier] = useState<string>("free");
   const [inputDisabled, setInputDisabled] = useState(false);
+  const [activeTopic, setActiveTopic] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -417,7 +459,22 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
           outline: none;
           border-color: rgba(201,151,58,0.5);
         }
+        .topic-pills-row::-webkit-scrollbar { display: none; }
+        .canned-pills-row::-webkit-scrollbar { display: none; }
       `}</style>
+
+      {/* ── BACK TO COOK ── */}
+      <Link href={`/cook/${cookId}`} style={{
+        display: "block",
+        padding: "var(--space-2) var(--space-4) 0 var(--space-4)",
+        fontFamily: "var(--font-ui)",
+        fontSize: "0.8rem",
+        color: "#C9973A",
+        textDecoration: "none",
+        flexShrink: 0,
+      }}>
+        ← Back to Cook
+      </Link>
 
       {/* ── MISSION CARD ── */}
       <div style={{
@@ -490,6 +547,68 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
           )}
         </div>
       </div>
+
+      {/* ── TOPIC SELECTOR ── */}
+      <div
+        className="topic-pills-row"
+        style={{
+          overflowX: "auto",
+          scrollbarWidth: "none",
+          padding: "var(--space-2) var(--space-4)",
+          borderBottom: "1px solid rgba(201,151,58,0.1)",
+          display: "flex",
+          gap: "var(--space-2)",
+          flexWrap: "nowrap",
+          flexShrink: 0,
+        }}
+      >
+        {TOPIC_PILLS.map(topic => (
+          <button
+            key={topic}
+            onClick={() => setActiveTopic(activeTopic === topic ? null : topic)}
+            style={{
+              border: activeTopic === topic ? "1px solid #C9973A" : "1px solid rgba(201,151,58,0.3)",
+              background: activeTopic === topic ? "rgba(201,151,58,0.15)" : "transparent",
+              color: activeTopic === topic ? "#C9973A" : "var(--color-text-muted)",
+              fontFamily: "var(--font-ui)",
+              fontSize: "0.8rem",
+              padding: "5px 14px",
+              borderRadius: "20px",
+              whiteSpace: "nowrap",
+              cursor: "pointer",
+            }}
+          >
+            {topic}
+          </button>
+        ))}
+      </div>
+
+      {/* ── CANNED QUESTIONS ── */}
+      {activeTopic && (
+        <div
+          className="canned-pills-row"
+          style={{
+            overflowX: "auto",
+            scrollbarWidth: "none",
+            padding: "var(--space-2) var(--space-4)",
+            borderBottom: "1px solid rgba(201,151,58,0.1)",
+            display: "flex",
+            gap: "var(--space-2)",
+            flexWrap: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          {(CANNED_QUESTIONS[activeTopic] ?? []).map((q, idx) => (
+            <button
+              key={idx}
+              className="prompt-pill"
+              onClick={() => sendMessage(q)}
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── CHAT WRAPPER ── */}
       <div style={{
@@ -609,7 +728,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         </div>
 
         {/* Suggested prompts */}
-        {!isThinking && suggestedPrompts.length > 0 && userTier !== "free" && (
+        {!isThinking && suggestedPrompts.length > 0 && userTier !== "free" && !activeTopic && (
           <div style={{
             display: "flex",
             gap: "var(--space-2)",

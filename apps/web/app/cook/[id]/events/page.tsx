@@ -1,6 +1,5 @@
 import { createServerClient } from "@/lib/supabase-server";
 import Link from "next/link";
-import Button from "@/components/Button";
 
 const navBtnStyle = {
   background: "transparent",
@@ -59,11 +58,16 @@ export default async function CookEventsPage({ params }: { params: Promise<{ id:
 
   return (
     <div style={{ padding: "40px", paddingBottom: "80px" }}>
-      <div style={{ marginBottom: "var(--space-4)" }}>
-        <Link href={`/cook/${cookId}`}>
-          <Button>← Back to Cook</Button>
-        </Link>
-      </div>
+      <Link href={`/cook/${cookId}`} style={{
+        display: "block",
+        padding: "0 0 var(--space-4) 0",
+        fontFamily: "var(--font-ui)",
+        fontSize: "0.8rem",
+        color: "#C9973A",
+        textDecoration: "none",
+      } as const}>
+        ← Back to Cook
+      </Link>
 
       <h1
         style={{
