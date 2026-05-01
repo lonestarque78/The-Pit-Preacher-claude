@@ -425,7 +425,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     { label: "Live Mode", href: `/cook/${cookId}/live` },
     { label: "Timeline",  href: `/cook/${cookId}/timeline` },
     { label: "Guide",     href: `/cook/${cookId}/guide`, active: true },
-    { label: "Events",    href: `/cook/${cookId}/events` },
+    { label: "Journal",   href: `/cook/${cookId}/events` },
     { label: "Summary",   href: `/cook/${cookId}/summary` },
   ];
 

@@ -447,7 +447,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     { label: "Live Mode", href: `/cook/${cookId}/live`, active: true },
     { label: "Timeline",  href: `/cook/${cookId}/timeline` },
     { label: "Guide",     href: `/cook/${cookId}/guide` },
-    { label: "Events",    href: `/cook/${cookId}/events` },
+    { label: "Journal",   href: `/cook/${cookId}/events` },
     { label: "Summary",   href: `/cook/${cookId}/summary` },
   ];
 

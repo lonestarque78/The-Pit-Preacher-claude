@@ -271,7 +271,7 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
     { label: "Live Mode", href: `/cook/${cookId}/live` },
     { label: "Timeline",  href: `/cook/${cookId}/timeline` },
     { label: "Guide",     href: `/cook/${cookId}/guide` },
-    { label: "Events",    href: `/cook/${cookId}/events` },
+    { label: "Journal",   href: `/cook/${cookId}/events` },
     { label: "Summary",   href: `/cook/${cookId}/summary` },
   ];
 
