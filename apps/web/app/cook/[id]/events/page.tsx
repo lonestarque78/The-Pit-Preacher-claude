@@ -29,8 +29,8 @@ function parseTempFromMessage(message: string): { pit: number | null; internal: 
   const pitMatch = message?.match(/Pit:\s*(\d+)/i);
   const internalMatch = message?.match(/Internal:\s*(\d+)/i);
   return {
-    pit: pitMatch ? parseInt(pitMatch[1]) : null,
-    internal: internalMatch ? parseInt(internalMatch[1]) : null,
+  pit: pitMatch?.[1] ? parseInt(pitMatch[1]) : null,
+internal: internalMatch?.[1] ? parseInt(internalMatch[1]) : null,
   };
 }
 
