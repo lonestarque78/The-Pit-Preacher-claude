@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { message, cookId, cookContext } = await req.json();
+  const { message, cookId, cookContext, imageBase64 } = await req.json();
 
   const {
     label,
@@ -324,7 +324,7 @@ Eat time: ${eatTimeFormatted}
 Recent events: ${recentEventsText}`;
 
   } else {
-    maxTokens = 500;
+    maxTokens = imageBase64 ? 800 : 500;
     const recentEventsText = buildRecentEvents(recentEvents ?? []);
 
     let historySection: string;
@@ -351,11 +351,27 @@ Eating at: ${eatTimeFormatted}
 ${historySection}
 
 Remember to return your response as valid JSON with reply and logEvent fields.`;
+
+    if (imageBase64) {
+      userMessage += "\n\nIMAGE ANALYSIS: The pitmaster has sent you a photo from their cook. Look at it carefully. Assess: bark color and development, surface moisture, smoke penetration, fat rendering, any problem areas. Be specific about what you see. Tell them exactly what it means and what to do next.";
+    }
   }
 
   const systemForCall = isRegularMessage
     ? SYSTEM_PROMPT + "\n\n" + EVENT_DETECTION_INSTRUCTIONS
     : SYSTEM_PROMPT;
+
+  const anthropicMessages = isRegularMessage && imageBase64
+    ? [
+        {
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageBase64 } },
+            { type: "text", text: userMessage },
+          ],
+        },
+      ]
+    : [{ role: "user", content: userMessage }];
 
   const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -368,7 +384,7 @@ Remember to return your response as valid JSON with reply and logEvent fields.`;
       model: "claude-sonnet-4-20250514",
       max_tokens: maxTokens,
       system: systemForCall,
-      messages: [{ role: "user", content: userMessage }],
+      messages: anthropicMessages,
     }),
   });
 

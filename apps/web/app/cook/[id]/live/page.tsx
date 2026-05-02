@@ -8,6 +8,7 @@ type Message = {
   role: "user" | "preacher";
   content: string;
   timestamp: Date;
+  imagePreview?: string;
 };
 
 type PlanTool = { id: string; name: string; wood: string };
@@ -102,6 +103,32 @@ function buildEventMessage(logEvent: { event_type: string; data: any }): string 
 
 const TOPIC_PILLS = ["▲ Fire", "⊙ Temps", "◉ Timing", "⊕ Seasoning", "⚠ Troubleshoot", "✦ Finishing"];
 
+async function compressImage(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')!
+    const img = new Image()
+    img.onload = () => {
+      const maxSize = 1200
+      let width = img.width
+      let height = img.height
+      if (width > height && width > maxSize) {
+        height = (height * maxSize) / width
+        width = maxSize
+      } else if (height > maxSize) {
+        width = (width * maxSize) / height
+        height = maxSize
+      }
+      canvas.width = width
+      canvas.height = height
+      ctx.drawImage(img, 0, 0, width, height)
+      const compressed = canvas.toDataURL('image/jpeg', 0.7)
+      resolve(compressed.split(',')[1])
+    }
+    img.src = URL.createObjectURL(file)
+  })
+}
+
 export default function LiveModePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: cookId } = use(params);
   const supabase = createClient();
@@ -119,9 +146,12 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   const [tempInputMode, setTempInputMode] = useState<"pit" | "internal" | "both" | null>(null);
   const [pitTempValue, setPitTempValue] = useState("");
   const [internalTempValue, setInternalTempValue] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadData();
@@ -254,13 +284,23 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     if (!text.trim() || isThinking || !cook) return;
 
     const userMessage = text.trim();
-    const userMsg: Message = { role: "user", content: userMessage, timestamp: new Date() };
+    const currentImage = selectedImage;
+    const currentImagePreview = imagePreview;
+    const userMsg: Message = {
+      role: "user",
+      content: userMessage,
+      timestamp: new Date(),
+      ...(currentImagePreview ? { imagePreview: currentImagePreview } : {}),
+    };
     const historyForContext = messages;
 
     setMessages(prev => [...prev, userMsg]);
     setInputValue("");
     setSuggestedPrompts([]);
     setIsThinking(true);
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (imageInputRef.current) imageInputRef.current.value = "";
 
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -272,7 +312,12 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       const res = await fetch("/api/preacher", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cookId: cook.id, message: userMessage, cookContext }),
+        body: JSON.stringify({
+          cookId: cook.id,
+          message: userMessage,
+          cookContext,
+          imageBase64: currentImage ?? undefined,
+        }),
       });
 
       if (res.status === 403) {
@@ -407,6 +452,14 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     const el = e.target;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 72) + "px";
+  };
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImagePreview(URL.createObjectURL(file));
+    const compressed = await compressImage(file);
+    setSelectedImage(compressed);
   };
 
   if (loading) {
@@ -854,6 +907,20 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
                     color: "var(--color-text)",
                     lineHeight: 1.6,
                   }}>
+                    {msg.role === "user" && msg.imagePreview && (
+                      <img
+                        src={msg.imagePreview}
+                        alt=""
+                        style={{
+                          display: "block",
+                          width: 60,
+                          height: 60,
+                          objectFit: "cover",
+                          borderRadius: "var(--radius-md)",
+                          marginBottom: "var(--space-1)",
+                        }}
+                      />
+                    )}
                     {msg.content}
                   </div>
                   <div style={{
@@ -960,54 +1027,122 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
           background: "var(--color-bg-alt)",
           borderTop: "1px solid rgba(201,151,58,0.2)",
           padding: "var(--space-2) var(--space-4)",
-          display: "flex",
-          gap: "var(--space-2)",
-          alignItems: "flex-end",
         }}>
-          <textarea
-            ref={textareaRef}
-            className="live-textarea"
-            rows={1}
-            value={inputValue}
-            onChange={handleInput}
-            onKeyDown={handleKeyDown}
-            disabled={isThinking || inputDisabled}
-            placeholder="What's happening at the pit?"
-            style={{
-              flex: 1,
-              background: "var(--color-bg)",
-              border: "1px solid rgba(201,151,58,0.25)",
-              borderRadius: "var(--radius-md)",
-              color: "var(--color-text)",
-              fontFamily: "var(--font-body)",
-              fontSize: "0.95rem",
-              padding: "10px 14px",
-              resize: "none",
-              lineHeight: 1.5,
-              minHeight: "42px",
-              maxHeight: "72px",
-              overflow: "auto",
-            }}
-          />
-          <button
-            onClick={() => sendMessage(inputValue)}
-            disabled={isThinking || inputDisabled || !inputValue.trim()}
-            style={{
-              background: isThinking || inputDisabled || !inputValue.trim() ? "rgba(201,151,58,0.3)" : "#C9973A",
-              color: isThinking || inputDisabled || !inputValue.trim() ? "rgba(201,151,58,0.5)" : "var(--color-bg)",
-              fontFamily: "var(--font-ui)",
-              fontSize: "0.9rem",
-              padding: "8px 20px",
-              borderRadius: "var(--radius-md)",
-              border: "none",
-              cursor: isThinking || !inputValue.trim() ? "not-allowed" : "pointer",
-              flexShrink: 0,
-              alignSelf: "flex-end",
-              height: "42px",
-            }}
-          >
-            Send
-          </button>
+          {(userTier === "backyard" || userTier === "pitmaster") && selectedImage && imagePreview && (
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-2)" }}>
+              <img
+                src={imagePreview}
+                alt=""
+                style={{
+                  width: 60,
+                  height: 60,
+                  objectFit: "cover",
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid rgba(201,151,58,0.3)",
+                  flexShrink: 0,
+                }}
+              />
+              <button
+                onClick={() => {
+                  setSelectedImage(null);
+                  setImagePreview(null);
+                  if (imageInputRef.current) imageInputRef.current.value = "";
+                }}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--color-text-muted)",
+                  cursor: "pointer",
+                  fontSize: "1.1rem",
+                  padding: "0 4px",
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+              >
+                ×
+              </button>
+              <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
+                Photo ready to send
+              </span>
+            </div>
+          )}
+          <div style={{ display: "flex", gap: "var(--space-2)", alignItems: "flex-end" }}>
+            {(userTier === "backyard" || userTier === "pitmaster") && (
+              <>
+                <button
+                  onClick={() => imageInputRef.current?.click()}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(201,151,58,0.3)",
+                    color: "#C9973A",
+                    width: 36,
+                    height: 36,
+                    borderRadius: "var(--radius-md)",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                    fontSize: "1rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  ⊙
+                </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  ref={imageInputRef}
+                  style={{ display: "none" }}
+                  onChange={handleImageSelect}
+                />
+              </>
+            )}
+            <textarea
+              ref={textareaRef}
+              className="live-textarea"
+              rows={1}
+              value={inputValue}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              disabled={isThinking || inputDisabled}
+              placeholder="What's happening at the pit?"
+              style={{
+                flex: 1,
+                background: "var(--color-bg)",
+                border: "1px solid rgba(201,151,58,0.25)",
+                borderRadius: "var(--radius-md)",
+                color: "var(--color-text)",
+                fontFamily: "var(--font-body)",
+                fontSize: "0.95rem",
+                padding: "10px 14px",
+                resize: "none",
+                lineHeight: 1.5,
+                minHeight: "42px",
+                maxHeight: "72px",
+                overflow: "auto",
+              }}
+            />
+            <button
+              onClick={() => sendMessage(inputValue)}
+              disabled={isThinking || inputDisabled || !inputValue.trim()}
+              style={{
+                background: isThinking || inputDisabled || !inputValue.trim() ? "rgba(201,151,58,0.3)" : "#C9973A",
+                color: isThinking || inputDisabled || !inputValue.trim() ? "rgba(201,151,58,0.5)" : "var(--color-bg)",
+                fontFamily: "var(--font-ui)",
+                fontSize: "0.9rem",
+                padding: "8px 20px",
+                borderRadius: "var(--radius-md)",
+                border: "none",
+                cursor: isThinking || !inputValue.trim() ? "not-allowed" : "pointer",
+                flexShrink: 0,
+                alignSelf: "flex-end",
+                height: "42px",
+              }}
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
 
