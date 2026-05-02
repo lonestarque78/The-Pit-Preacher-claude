@@ -30,25 +30,35 @@ const HOURS_OPTIONS = [
 const SECTION_HEADERS = ["WHAT IS HAPPENING", "WHAT TO DO RIGHT NOW", "WHAT TO WATCH FOR"] as const;
 
 function parseDiagnosis(text: string): { header: string; content: string }[] {
-  const results: { header: string; content: string }[] = [];
-  let remaining = text;
+  const headers = ["WHAT IS HAPPENING", "WHAT TO DO RIGHT NOW", "WHAT TO WATCH FOR"]
+  const result: { header: string; content: string }[] = []
 
-  for (let i = 0; i < SECTION_HEADERS.length; i++) {
-    const header = SECTION_HEADERS[i];
-    const idx = header ? remaining.indexOf(header) : -1;
-    if (idx === -1) continue;
+  let remaining = text
 
-    const afterHeader = remaining.slice(idx + header.length).replace(/^[\s:]+/, "");
-    const nextIdx = SECTION_HEADERS.slice(i + 1).reduce((min, h) => {
-      const pos = afterHeader.indexOf(h);
-      return pos !== -1 && pos < min ? pos : min;
-    }, Infinity as number);
+  for (let i = 0; i < headers.length; i++) {
+    const header = headers[i]
+    if (!header) continue
+    const idx = remaining.indexOf(header)
+    if (idx === -1) continue
 
-    const content = nextIdx === Infinity ? afterHeader : afterHeader.slice(0, nextIdx);
-    results.push({ header, content: content.trim() });
+    const afterHeader = remaining.slice(idx + header.length).replace(/^[\s:]+/, "")
+
+    let content = afterHeader
+    for (let j = i + 1; j < headers.length; j++) {
+      const nextHeader = headers[j]
+      if (!nextHeader) continue
+      const nextIdx = afterHeader.indexOf(nextHeader)
+      if (nextIdx !== -1) {
+        content = afterHeader.slice(0, nextIdx).trim()
+        break
+      }
+    }
+
+    result.push({ header, content: content.trim() })
+    remaining = remaining.slice(idx + header.length)
   }
 
-  return results;
+  return result
 }
 
 export default function FixPage() {
