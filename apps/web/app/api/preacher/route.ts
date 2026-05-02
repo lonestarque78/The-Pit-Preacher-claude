@@ -249,6 +249,38 @@ Wood: ${woodList}
 Eating at: ${eatTimeFormatted}
 Flavor target: ${flavorLine}
 
+BEFORE YOU WRITE ANYTHING — calculate these explicitly:
+1. Cut type: identify the specific cut from the items list
+2. Weight: use the weight provided in lbs
+3. Cook time estimate: calculate using these real-world rates:
+   - Ribeye/steak under 2 lbs: 45-75 minutes at 225F for reverse sear to 110F internal
+   - Ribeye/steak over 2 lbs: 60-90 minutes at 225F
+   - Brisket: 60-90 minutes per pound at 250F
+   - Pork butt: 60-75 minutes per pound at 250F
+   - Ribs baby back: 4-5 hours total at 250F
+   - Ribs spare: 5-6 hours total at 250F
+   - Chicken whole: 3-4 hours at 325F
+   - Chicken thighs/wings: 1.5-2 hours at 325F
+   - Turkey whole: 20-25 minutes per pound at 300F
+   - Salmon: 45-60 minutes at 225F
+   - Burgers: 45-60 minutes at 275F
+4. Fire start time: eating time minus cook time minus rest time minus 45 minute warmup
+5. Show your math before writing the plan sections
+
+SEASONING RULES — Texas BBQ style means:
+- For brisket and large beef cuts: salt and pepper only (this IS the Texas law)
+- For steaks, ribs, chicken, pork: suggest a quality commercial BBQ rub by name — Meat Church Holy Gospel, Meat Church TX Sugar, Oakridge Secret Weapon, Killer Hogs The BBQ Rub, Plowboys Yardbird, or simply 'your favorite Texas BBQ rub' — do NOT list individual spices
+- Never suggest SPG for Texas BBQ style unless it is a Central Texas brisket
+
+TEMPERATURE RULES:
+- Ribeye and steaks: 225F for smoke phase then 500F+ for sear — reverse sear method
+- Chicken and poultry: 325-350F throughout — never low and slow
+- Burgers: 275F
+- Brisket: 250F on pellet, 225-250F on offset
+- Pork butt: 250F
+- Ribs: 250F
+- Everything else: use judgment based on the cut
+
 Your response MUST use these exact section headers in this order, each on its own line in ALL CAPS:
 
 THE NIGHT BEFORE
@@ -258,16 +290,10 @@ THE FINISH
 THE PREACHER'S WORD
 
 THE NIGHT BEFORE: Prep the night before — trim, season, inject, brine, or rest. Be specific to this cut.
-FIRE & TIMING: Exact temps, estimated time to eat, when to light. Work backwards from the eat time.
+FIRE & TIMING: Exact temps, real clock times working backward from the eat time, when to light. Be specific.
 THE COOK: What to watch for, when to wrap, when to probe, when to spritz. The stall. The bark window.
 THE FINISH: Pull temp, rest time, how to hold, how to serve.
 THE PREACHER'S WORD: One paragraph. The wisdom. The warning. The encouragement. Make it feel like scripture. End by naturally transitioning the pitmaster to the cook itself. Do not ask them to report back to you on this page. Simply close with conviction and confidence. The last line should be a statement not a question.
-
-TEMPERATURE: Do not default to 225F for every cook. Consider the smoker type — pellet grills at 200-225F produce more smoke, offsets run best at 225-275F, kamados at 250F, hot and fast cooks at 275-325F, steaks use reverse sear at 225F then 500F+. Always justify your temp choice.
-
-SEASONING: Do not list individual spices. Say 'apply your favorite BBQ rub' or 'a simple SPG rub works here'. Central Texas brisket gets salt and pepper only.
-
-CLOCK TIMES: Calculate real clock times working backward from the eating time. Be specific.
 
 SMOKER: Every tip must reference this specific smoker type — pellet controller and hopper, offset splits and vents, kamado lump and ceramic, drum intake, kettle snake method.`;
 

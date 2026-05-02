@@ -264,12 +264,6 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
   const planItemsList: PlanItem[] = plan?.items ?? [];
   const parsedSections = planText ? parsePlan(planText) : null;
 
-  const flavorSmoke = session?.flavor_smoke;
-  const flavorBark = session?.flavor_bark;
-  const flavorTenderness = session?.flavor_tenderness;
-  const hasFlavorData = flavorSmoke != null || flavorBark != null || flavorTenderness != null;
-  const statusIsCompleted = cook?.status === "completed";
-
   const NAV_LINKS = [
     { label: "Live Mode", href: `/cook/${cookId}/live` },
     { label: "Timeline",  href: `/cook/${cookId}/timeline` },
@@ -409,17 +403,18 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
         ) : (
           <>
             {/* ROW 1: Label + Actions */}
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-3)", marginBottom: "var(--space-2)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-3)" }}>
               <h1 style={{
                 fontFamily: "var(--font-heading)",
                 fontSize: "clamp(1.4rem, 3vw, 2rem)",
                 color: "#F5E6C8",
+                fontWeight: 900,
                 margin: 0,
                 lineHeight: 1.1,
               }}>
                 {cook.label}
               </h1>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, paddingTop: "4px" }}>
+              <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", flexShrink: 0, paddingTop: "4px", whiteSpace: "nowrap" }}>
                 <button
                   onClick={() => {
                     setEditLabel(cook.label || "");
@@ -429,133 +424,59 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
                     setIsEditing(true);
                   }}
                   style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A", padding: 0 }}
-                >
-                  ✎ Edit
-                </button>
-                <span style={{ color: "rgba(201,151,58,0.4)", fontSize: "0.75rem", userSelect: "none" }}>·</span>
+                >✎ Edit</button>
+                <span style={{ color: "var(--color-text-muted)" }}> · </span>
                 <button
                   onClick={regeneratePlan}
                   disabled={planLoading}
                   style={{ background: "none", border: "none", cursor: planLoading ? "default" : "pointer", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", padding: 0, opacity: planLoading ? 0.5 : 1 }}
-                >
-                  ↺ New Plan
-                </button>
-                <span style={{ color: "rgba(201,151,58,0.4)", fontSize: "0.75rem", userSelect: "none" }}>·</span>
+                >↺ New Plan</button>
+                <span style={{ color: "var(--color-text-muted)" }}> · </span>
                 <button
                   onClick={() => setShowCompleteConfirm(true)}
                   style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", padding: 0 }}
-                >
-                  Complete →
-                </button>
-              </div>
-            </div>
-
-            {/* ROW 2: Pills */}
-            <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-2)" }}>
-              <span style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "0.78rem",
-                padding: "3px 10px",
-                borderRadius: "var(--radius-md)",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                background: statusIsCompleted ? "rgba(45,106,79,0.2)" : "rgba(201,151,58,0.2)",
-                color: statusIsCompleted ? "#2D6A4F" : "#C9973A",
-              }}>
-                {cook.status ? capitalize(cook.status) : "In Progress"}
+                >Complete →</button>
               </span>
-              {cook.cooking_style && (
-                <span style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "0.78rem",
-                  padding: "3px 10px",
-                  borderRadius: "var(--radius-md)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  background: "rgba(201,151,58,0.12)",
-                  color: "var(--color-text-muted)",
-                }}>
-                  {capitalize(cook.cooking_style)}
-                </span>
-              )}
-              {hasFlavorData && (
-                <span style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "0.78rem",
-                  padding: "3px 10px",
-                  borderRadius: "var(--radius-md)",
-                  background: "rgba(201,151,58,0.08)",
-                  color: "var(--color-text-muted)",
-                }}>
-                  Smoke {flavorSmoke ?? "—"} · Bark {flavorBark ?? "—"} · Tenderness {flavorTenderness ?? "—"}
-                </span>
-              )}
             </div>
 
-            {/* ROW 3: Pit breakdown + eating time */}
-            {(planTools.length > 0 || cook.smoker_type) && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)", alignItems: "flex-start" }}>
-                {planTools.length > 0 ? planTools.map((tool, idx) => {
-                  const assigned = planItemsList.filter(
-                    i => i.smokerId != null && String(i.smokerId) === String(tool.id)
-                  );
-                  return (
-                    <div key={tool.id} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                      <div style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        background: "rgba(201,151,58,0.15)",
-                        border: "1px solid rgba(201,151,58,0.3)",
-                        borderRadius: "var(--radius-md)",
-                        padding: "4px 12px",
-                        fontFamily: "var(--font-ui)",
-                        fontSize: "0.8rem",
-                        color: "#C9973A",
-                      }}>
-                        {tool.name || `Smoker ${idx + 1}`}
-                        {tool.wood && <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>&nbsp;· {tool.wood}</span>}
-                      </div>
-                      {assigned.length > 0 && (
-                        <div style={{ paddingLeft: "4px", fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.7 }}>
-                          {assigned.map(item => (
-                            <div key={item.name}>{item.name}{item.weight ? ` · ${item.weight} lbs` : ""}</div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                }) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <div style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      background: "rgba(201,151,58,0.15)",
-                      border: "1px solid rgba(201,151,58,0.3)",
-                      borderRadius: "var(--radius-md)",
-                      padding: "4px 12px",
-                      fontFamily: "var(--font-ui)",
-                      fontSize: "0.8rem",
-                      color: "#C9973A",
-                    }}>
-                      {cook.smoker_type}
-                      {cook.wood_type && <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>&nbsp;· {cook.wood_type}</span>}
-                    </div>
-                    {cookItems.length > 0 && (
-                      <div style={{ paddingLeft: "4px", fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.7 }}>
-                        {cookItems.map((item: any) => <div key={item.id}>{item.name}</div>)}
-                      </div>
-                    )}
-                  </div>
-                )}
-                {cook.eat_time && (
-                  <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", alignSelf: "center" }}>
-                    Eating {formatDateTime(cook.eat_time)}
-                  </span>
-                )}
-              </div>
+            {/* ROW 2: Eating time */}
+            {cook.eat_time && (
+              <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", margin: "var(--space-1) 0 0" }}>
+                Eating {formatDateTime(cook.eat_time)}
+              </p>
             )}
+
+            {/* ROW 3: Smoker · Wood · Items */}
+            {(() => {
+              const smokerName = planTools[0]?.name || cook.smoker_type;
+              const wood = planTools[0]?.wood || cook.wood_type;
+              const items: { name: string; weight?: string | number | null }[] =
+                planItemsList.length > 0 ? planItemsList : cookItems.map((i: any) => ({ name: i.name, weight: i.weight }));
+              const parts: string[] = [];
+              if (smokerName) parts.push(smokerName);
+              if (wood) parts.push(wood);
+              items.forEach(item => {
+                parts.push(item.weight ? `${item.name} ${item.weight}lbs` : item.name);
+              });
+              return parts.length > 0 ? (
+                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", margin: "var(--space-1) 0 0" }}>
+                  {parts.join(" · ")}
+                </p>
+              ) : null;
+            })()}
+
+            {/* ROW 4: Status · Style */}
+            {(() => {
+              const parts = [
+                cook.status ? capitalize(cook.status) : "In Progress",
+                cook.cooking_style ? capitalize(cook.cooking_style) : null,
+              ].filter(Boolean) as string[];
+              return (
+                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", margin: "var(--space-1) 0 0" }}>
+                  {parts.join(" · ")}
+                </p>
+              );
+            })()}
 
             {/* Complete confirm */}
             {showCompleteConfirm && (
