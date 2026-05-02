@@ -6,13 +6,22 @@ import { createClient } from "@/lib/supabase";
 
 export default function Nav() {
   const [user, setUser] = useState<any>(null);
+  const [tier, setTier] = useState<string>("free");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const supabase = createClient();
 
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       setUser(data?.user || null);
+      if (data?.user) {
+        const { data: subData } = await supabase
+          .from("subscriptions")
+          .select("tier")
+          .eq("user_id", data.user.id)
+          .single();
+        setTier(subData?.tier ?? "free");
+      }
       setLoading(false);
     });
 
@@ -61,6 +70,12 @@ export default function Nav() {
         {!loading && user && (
           <Link href="/" style={linkStyle}>
             Start a Cook
+          </Link>
+        )}
+
+        {!loading && user && (tier === "backyard" || tier === "pitmaster") && (
+          <Link href="/fix" style={{ ...linkStyle, color: "#C9973A" }}>
+            Pit Rescue
           </Link>
         )}
       </div>
