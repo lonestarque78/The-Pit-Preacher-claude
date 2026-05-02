@@ -35,7 +35,7 @@ function parseDiagnosis(text: string): { header: string; content: string }[] {
 
   for (let i = 0; i < SECTION_HEADERS.length; i++) {
     const header = SECTION_HEADERS[i];
-    const idx = remaining.indexOf(header);
+    const idx = header ? remaining.indexOf(header) : -1;
     if (idx === -1) continue;
 
     const afterHeader = remaining.slice(idx + header.length).replace(/^[\s:]+/, "");
