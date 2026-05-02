@@ -148,6 +148,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   const [internalTempValue, setInternalTempValue] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [readOnly, setReadOnly] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -228,7 +229,9 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     setMessages(rebuiltMessages);
     setLoading(false);
 
-    if (rebuiltMessages.length === 0) {
+    if (cookData.status === 'completed' || cookData.status === 'abandoned') {
+      setReadOnly(true);
+    } else if (rebuiltMessages.length === 0) {
       if (fetchedTier === "free") {
         setMessages([{
           role: "preacher",
@@ -658,7 +661,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       </div>
 
       {/* ── TOPIC SELECTOR ── */}
-      <div
+      {!readOnly && <div
         className="topic-pills-row"
         style={{
           overflowX: "auto",
@@ -698,10 +701,10 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
             {topic}
           </button>
         ))}
-      </div>
+      </div>}
 
       {/* ── CANNED QUESTIONS ── */}
-      {activeTopic && (
+      {!readOnly && activeTopic && (
         <div
           className="canned-pills-row"
           style={{
@@ -864,6 +867,34 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
           padding: "var(--space-3) var(--space-4)",
         }}>
           <div style={{ maxWidth: "860px", margin: "0 auto" }}>
+            {readOnly && (
+              <div style={{
+                background: cook.status === 'completed' ? "rgba(45,106,79,0.1)" : "rgba(201,151,58,0.1)",
+                border: cook.status === 'completed' ? "1px solid rgba(45,106,79,0.3)" : "1px solid rgba(201,151,58,0.3)",
+                borderRadius: "var(--radius-md)",
+                padding: "var(--space-2) var(--space-3)",
+                marginBottom: "var(--space-3)",
+                fontFamily: "var(--font-body)",
+                fontStyle: "italic",
+                color: "var(--color-text-muted)",
+                fontSize: "0.85rem",
+              }}>
+                {cook.status === 'completed'
+                  ? "This cook is complete. Your conversation with the Preacher is preserved below."
+                  : "This cook was archived. Your conversation with the Preacher is preserved below."}
+              </div>
+            )}
+            {readOnly && messages.length === 0 && (
+              <div style={{
+                fontFamily: "var(--font-body)",
+                fontStyle: "italic",
+                color: "var(--color-text-muted)",
+                textAlign: "center",
+                padding: "var(--space-4)",
+              }}>
+                No conversations were logged during this cook.
+              </div>
+            )}
             {messages.map((msg, idx) => (
               <div
                 key={idx}
@@ -980,7 +1011,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         </div>
 
         {/* Suggested prompts */}
-        {!isThinking && suggestedPrompts.length > 0 && userTier !== "free" && !activeTopic && (
+        {!isThinking && suggestedPrompts.length > 0 && userTier !== "free" && !activeTopic && !readOnly && (
           <div style={{
             display: "flex",
             gap: "var(--space-2)",
@@ -1001,7 +1032,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
           </div>
         )}
 
-        {inputDisabled && (
+        {!readOnly && inputDisabled && (
           <div style={{ flexShrink: 0, padding: "var(--space-2) var(--space-4)", textAlign: "center", borderTop: "1px solid rgba(201,151,58,0.1)" }}>
             <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", margin: "0 0 var(--space-1)" }}>
               Free plan limit reached for this cook.
@@ -1022,7 +1053,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         )}
 
         {/* Input area */}
-        <div style={{
+        {!readOnly && <div style={{
           flexShrink: 0,
           background: "var(--color-bg-alt)",
           borderTop: "1px solid rgba(201,151,58,0.2)",
@@ -1071,6 +1102,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
               <>
                 <button
                   onClick={() => imageInputRef.current?.click()}
+                  title="Upload a photo for the Preacher to assess"
                   style={{
                     background: "transparent",
                     border: "1px solid rgba(201,151,58,0.3)",
@@ -1080,13 +1112,15 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
                     borderRadius: "var(--radius-md)",
                     cursor: "pointer",
                     flexShrink: 0,
-                    fontSize: "1rem",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
-                  ⊙
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
                 </button>
                 <input
                   type="file"
@@ -1143,7 +1177,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
               Send
             </button>
           </div>
-        </div>
+        </div>}
       </div>
 
       {/* ── STICKY BOTTOM BAR ── */}
