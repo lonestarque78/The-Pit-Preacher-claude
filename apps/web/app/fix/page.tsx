@@ -586,9 +586,9 @@ export default function FixPage() {
                                       color: "#C9973A",
                                       flexShrink: 0,
                                     }}>
-                                      {match[1].trim()}
+                                      {match[1]?.trim()}
                                     </span>
-                                    <span>{match[2]}</span>
+                                    <span>{match[2] ?? ''}</span>
                                   </div>
                                 );
                               }
