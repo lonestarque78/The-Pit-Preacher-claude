@@ -261,7 +261,15 @@ THE NIGHT BEFORE: Prep the night before — trim, season, inject, brine, or rest
 FIRE & TIMING: Exact temps, estimated time to eat, when to light. Work backwards from the eat time.
 THE COOK: What to watch for, when to wrap, when to probe, when to spritz. The stall. The bark window.
 THE FINISH: Pull temp, rest time, how to hold, how to serve.
-THE PREACHER'S WORD: One paragraph. The wisdom. The warning. The encouragement. Make it feel like scripture.`;
+THE PREACHER'S WORD: One paragraph. The wisdom. The warning. The encouragement. Make it feel like scripture.
+
+TEMPERATURE: Do not default to 225F for every cook. Consider the smoker type — pellet grills at 200-225F produce more smoke, offsets run best at 225-275F, kamados at 250F, hot and fast cooks at 275-325F, steaks use reverse sear at 225F then 500F+. Always justify your temp choice.
+
+SEASONING: Do not list individual spices. Say 'apply your favorite BBQ rub' or 'a simple SPG rub works here'. Central Texas brisket gets salt and pepper only.
+
+CLOCK TIMES: Calculate real clock times working backward from the eating time. Be specific.
+
+SMOKER: Every tip must reference this specific smoker type — pellet controller and hopper, offset splits and vents, kamado lump and ceramic, drum intake, kettle snake method.`;
 
   } else if (isReflection) {
     maxTokens = 200;

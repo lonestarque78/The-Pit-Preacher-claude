@@ -326,6 +326,10 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
           0%, 100% { opacity: 0.4; }
           50% { opacity: 0.8; }
         }
+        @keyframes pitDot {
+          0%, 100% { opacity: 0.2; transform: scale(0.85); }
+          50% { opacity: 1; transform: scale(1.15); }
+        }
         .cook-nav-btn {
           background: transparent;
           border: 1px solid rgba(201,151,58,0.3);
@@ -418,6 +422,66 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
             </span>
           )}
         </div>
+
+        {/* ── PIT BREAKDOWN ROW ── */}
+        {(planTools.length > 0 || cook.smoker_type) && (
+          <div style={{ marginTop: "var(--space-3)", display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
+            {planTools.length > 0 ? planTools.map((tool, idx) => {
+              const assigned = planItemsList.filter(
+                i => i.smokerId != null && String(i.smokerId) === String(tool.id)
+              );
+              return (
+                <div key={tool.id} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <div style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    background: "rgba(201,151,58,0.15)",
+                    border: "1px solid rgba(201,151,58,0.3)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "4px 12px",
+                    fontFamily: "var(--font-ui)",
+                    fontSize: "0.8rem",
+                    color: "#C9973A",
+                  }}>
+                    {tool.name || `Smoker ${idx + 1}`}
+                    {tool.wood && <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>&nbsp;· {tool.wood}</span>}
+                  </div>
+                  {assigned.length > 0 && (
+                    <div style={{ paddingLeft: "4px", fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.7 }}>
+                      {assigned.map(item => (
+                        <div key={item.name}>{item.name}{item.weight ? ` · ${item.weight} lbs` : ""}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <div style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "rgba(201,151,58,0.15)",
+                  border: "1px solid rgba(201,151,58,0.3)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "4px 12px",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.8rem",
+                  color: "#C9973A",
+                }}>
+                  {cook.smoker_type}
+                  {cook.wood_type && <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>&nbsp;· {cook.wood_type}</span>}
+                </div>
+                {cookItems.length > 0 && (
+                  <div style={{ paddingLeft: "4px", fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.7 }}>
+                    {cookItems.map((item: any) => <div key={item.id}>{item.name}</div>)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── TWO-COLUMN GRID ── */}
@@ -444,16 +508,21 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
           </h2>
 
           {planLoading ? (
-            <div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>
-                {[85, 100, 70, 92, 60].map((w, i) => (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-4) 0" }}>
+              <img
+                src="/logo.jpeg"
+                style={{ width: "64px", height: "64px", borderRadius: "50%", objectFit: "cover", border: "1px solid rgba(201,151,58,0.3)" }}
+                alt=""
+              />
+              <div style={{ display: "flex", gap: "8px" }}>
+                {[0, 1, 2].map(i => (
                   <div key={i} style={{
-                    width: `${w}%`,
-                    height: "16px",
-                    background: "rgba(201,151,58,0.1)",
-                    borderRadius: "4px",
-                    animation: "pulse 1.5s ease-in-out infinite",
-                    animationDelay: `${i * 0.15}s`,
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: "rgba(201,151,58,0.7)",
+                    animation: "pitDot 1.2s ease-in-out infinite",
+                    animationDelay: `${i * 0.3}s`,
                   }} />
                 ))}
               </div>
@@ -462,9 +531,10 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
                   fontFamily: "var(--font-body)",
                   fontStyle: "italic",
                   color: "var(--color-text-muted)",
-                  fontSize: "0.9rem",
+                  fontSize: "0.85rem",
                   lineHeight: 1.7,
                   margin: 0,
+                  textAlign: "center",
                 }}>
                   &ldquo;{loadingVerse.text}&rdquo;
                 </p>
@@ -500,69 +570,29 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
               Plan could not be generated.
             </p>
           )}
+
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--space-2)",
+            borderTop: "1px solid rgba(201,151,58,0.15)",
+            marginTop: "var(--space-3)",
+            paddingTop: "var(--space-2)",
+          }}>
+            <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
+              Ready to cook?
+            </span>
+            <Link href={`/cook/${cookId}/live`} style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "#C9973A", textDecoration: "none" }}>
+              Open Live Mode →
+            </Link>
+          </div>
         </div>
 
         {/* RIGHT — Cook Details */}
         <div style={cardStyle}>
 
-          {/* Pit Breakdown */}
-          <div style={{ ...sectionLabelStyle, marginTop: 0 }}>Pit Breakdown</div>
-
-          {planTools.length > 0 ? (
-            <div style={{ marginBottom: "var(--space-4)" }}>
-              {planTools.map((tool, idx) => {
-                const assigned = planItemsList.filter(
-                  i => i.smokerId != null && String(i.smokerId) === String(tool.id)
-                );
-                return (
-                  <div key={tool.id} style={{ marginBottom: idx < planTools.length - 1 ? "var(--space-3)" : 0 }}>
-                    <div style={{ fontFamily: "var(--font-body)", fontWeight: 600, color: "var(--color-text)", marginBottom: "2px" }}>
-                      {tool.name || `Smoker ${idx + 1}`}
-                    </div>
-                    {tool.wood && (
-                      <div style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", marginBottom: "var(--space-1)" }}>
-                        {tool.wood}
-                      </div>
-                    )}
-                    {assigned.length > 0 && (
-                      <ul style={{ margin: 0, paddingLeft: "var(--space-3)", fontFamily: "var(--font-body)", fontSize: "0.875rem", lineHeight: 1.7 }}>
-                        {assigned.map(item => (
-                          <li key={item.name}>
-                            {item.name}{item.weight ? ` · ${item.weight} lbs` : ""}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div style={{ marginBottom: "var(--space-4)" }}>
-              {(cook.smoker_type || cook.wood_type) && (
-                <>
-                  {cook.smoker_type && (
-                    <div style={{ fontFamily: "var(--font-body)", fontWeight: 600, color: "var(--color-text)", marginBottom: "2px" }}>
-                      {cook.smoker_type}
-                    </div>
-                  )}
-                  {cook.wood_type && (
-                    <div style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", marginBottom: "var(--space-1)" }}>
-                      {cook.wood_type}
-                    </div>
-                  )}
-                </>
-              )}
-              {cookItems.length > 0 && (
-                <ul style={{ margin: 0, paddingLeft: "var(--space-3)", fontFamily: "var(--font-body)", fontSize: "0.875rem", lineHeight: 1.7 }}>
-                  {cookItems.map((item: any) => <li key={item.id}>{item.name}</li>)}
-                </ul>
-              )}
-            </div>
-          )}
-
           {/* Cook Details */}
-          <div style={{ ...sectionLabelStyle, marginTop: "var(--space-4)" }}>Cook Details</div>
+          <div style={{ ...sectionLabelStyle, marginTop: 0 }}>Cook Details</div>
 
           {isEditing ? (
             <div style={{ marginBottom: "var(--space-3)" }}>
