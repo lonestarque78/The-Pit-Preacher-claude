@@ -237,7 +237,19 @@ ${message}`;
       flavor_tenderness != null ? `Tenderness ${flavor_tenderness}/10` : null,
     ].filter(Boolean).join(" · ") || "Not specified";
 
-    userMessage = `Generate a cook plan for this specific cook. Be a real pitmaster — specific, practical, no filler.
+    userMessage = `THINK FIRST — before writing any section, reason through this cook explicitly in your head:
+- What is this specific cut? What does it want?
+- How much does it weigh and how does that affect timing?
+- What cooking method does this cut actually need — low and slow, hot and fast, reverse sear, direct heat?
+- What temperature serves this cut best on this specific smoker?
+- Working backward from the eating time — what time does the fire need to be lit?
+- What does Texas BBQ style actually mean for THIS cut specifically?
+
+A pitmaster does not apply the same template to every cook. A ribeye is not a brisket. Chicken is not pork. Think about what this specific cook needs and write accordingly.
+
+For Texas BBQ seasoning — brisket gets salt and pepper only. Everything else gets a quality BBQ rub — suggest Meat Church, Killer Hogs, Oakridge, or simply 'your favorite Texas BBQ rub'. Never list individual spices for Texas BBQ style.
+
+Generate a cook plan for this specific cook. Be a real pitmaster — specific, practical, no filler.
 
 PIT SETUP:
 ${pitSetup}
