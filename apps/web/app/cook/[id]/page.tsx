@@ -32,6 +32,10 @@ function capitalize(str: string): string {
   return str.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 
+function stripMarkdown(text: string): string {
+  return text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').trim();
+}
+
 function formatDateTime(iso: string): string {
   try {
     return new Date(iso).toLocaleString(undefined, {
@@ -50,11 +54,12 @@ function parsePlan(text: string): { header: string; content: string }[] | null {
 
   for (const line of text.split("\n")) {
     const trimmed = line.trim();
-    if (SECTION_HEADERS.includes(trimmed)) {
+    const stripped = stripMarkdown(trimmed);
+    if (SECTION_HEADERS.includes(stripped)) {
       if (currentHeader) {
         sections.push({ header: currentHeader, content: currentLines.join("\n").trim() });
       }
-      currentHeader = trimmed;
+      currentHeader = stripped;
       currentLines = [];
     } else {
       currentLines.push(line);
@@ -154,6 +159,10 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
     const planTools: PlanTool[] = plan?.tools ?? [];
     const planItems: PlanItem[] = plan?.items ?? [];
 
+    const eatTimeLocal = cookData.eat_time
+      ? new Date(cookData.eat_time).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })
+      : 'Not set';
+
     try {
       const res = await fetch("/api/preacher", {
         method: "POST",
@@ -163,7 +172,7 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
           message: "Generate a full cook plan for this cook.",
           cookContext: {
             label: cookData.label,
-            eat_time: cookData.eat_time,
+            eat_time: eatTimeLocal,
             cooking_style: cookData.cooking_style,
             tools: planTools,
             planItems,
@@ -255,12 +264,6 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
   const planItemsList: PlanItem[] = plan?.items ?? [];
   const parsedSections = planText ? parsePlan(planText) : null;
 
-  const smokerSubtitle = [
-    planTools.map(t => t.name).filter(Boolean).join(", ") || cook?.smoker_type || null,
-    planTools.map(t => t.wood).filter(Boolean).join(", ") || cook?.wood_type || null,
-    cook?.eat_time ? formatDateTime(cook.eat_time) : null,
-  ].filter(Boolean).join(" · ");
-
   const flavorSmoke = session?.flavor_smoke;
   const flavorBark = session?.flavor_bark;
   const flavorTenderness = session?.flavor_tenderness;
@@ -306,8 +309,8 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
     fontSize: "0.75rem",
     color: "#C9973A",
     textTransform: "uppercase",
-    letterSpacing: "0.1em",
-    marginBottom: "var(--space-2)",
+    letterSpacing: "0.15em",
+    marginBottom: "var(--space-1)",
   };
 
   const sectionContentStyle: React.CSSProperties = {
@@ -348,9 +351,6 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
           border-color: #C9973A;
           color: #C9973A;
         }
-        @media (max-width: 767px) {
-          .cook-grid { grid-template-columns: 1fr !important; }
-        }
       `}</style>
 
       {/* ── MISSION CARD ── */}
@@ -359,144 +359,236 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
         borderBottom: "1px solid rgba(201,151,58,0.2)",
         padding: "var(--space-3) var(--space-4)",
       }}>
-        <h1 style={{
-          fontFamily: "var(--font-heading)",
-          fontSize: "clamp(1.4rem, 3vw, 2rem)",
-          color: "#F5E6C8",
-          margin: "0 0 var(--space-1)",
-          lineHeight: 1.1,
-        }}>
-          {cook.label}
-        </h1>
-
-        {smokerSubtitle && (
-          <p style={{
-            fontFamily: "var(--font-body)",
-            fontSize: "0.9rem",
-            color: "var(--color-text-muted)",
-            margin: "0 0 var(--space-2)",
-          }}>
-            {smokerSubtitle}
-          </p>
-        )}
-
-        <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-          <span style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "0.78rem",
-            padding: "3px 10px",
-            borderRadius: "var(--radius-md)",
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            background: statusIsCompleted ? "rgba(45,106,79,0.2)" : "rgba(201,151,58,0.2)",
-            color: statusIsCompleted ? "#2D6A4F" : "#C9973A",
-          }}>
-            {cook.status ? capitalize(cook.status) : "In Progress"}
-          </span>
-
-          {cook.cooking_style && (
-            <span style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "0.78rem",
-              padding: "3px 10px",
-              borderRadius: "var(--radius-md)",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              background: "rgba(201,151,58,0.12)",
-              color: "var(--color-text-muted)",
-            }}>
-              {capitalize(cook.cooking_style)}
-            </span>
-          )}
-
-          {hasFlavorData && (
-            <span style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "0.78rem",
-              padding: "3px 10px",
-              borderRadius: "var(--radius-md)",
-              background: "rgba(201,151,58,0.08)",
-              color: "var(--color-text-muted)",
-            }}>
-              Smoke {flavorSmoke ?? "—"} · Bark {flavorBark ?? "—"} · Tenderness {flavorTenderness ?? "—"}
-            </span>
-          )}
-        </div>
-
-        {/* ── PIT BREAKDOWN ROW ── */}
-        {(planTools.length > 0 || cook.smoker_type) && (
-          <div style={{ marginTop: "var(--space-3)", display: "flex", flexWrap: "wrap", gap: "var(--space-3)" }}>
-            {planTools.length > 0 ? planTools.map((tool, idx) => {
-              const assigned = planItemsList.filter(
-                i => i.smokerId != null && String(i.smokerId) === String(tool.id)
-              );
-              return (
-                <div key={tool.id} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <div style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    background: "rgba(201,151,58,0.15)",
-                    border: "1px solid rgba(201,151,58,0.3)",
-                    borderRadius: "var(--radius-md)",
-                    padding: "4px 12px",
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "0.8rem",
-                    color: "#C9973A",
-                  }}>
-                    {tool.name || `Smoker ${idx + 1}`}
-                    {tool.wood && <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>&nbsp;· {tool.wood}</span>}
+        {isEditing ? (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
+              {(["Label", "Smoker", "Wood"] as const).map(field => {
+                const val = field === "Label" ? editLabel : field === "Smoker" ? editSmokerType : editWoodType;
+                const setter = field === "Label" ? setEditLabel : field === "Smoker" ? setEditSmokerType : setEditWoodType;
+                return (
+                  <div key={field}>
+                    <label style={{ display: "block", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
+                      {field}
+                    </label>
+                    <input
+                      type="text"
+                      value={val}
+                      onChange={e => setter(e.target.value)}
+                      style={{ background: "var(--color-bg)", border: "1px solid rgba(201,151,58,0.3)", color: "var(--color-text)", fontFamily: "var(--font-body)", padding: "8px", borderRadius: "var(--radius-md)", width: "100%", boxSizing: "border-box", fontSize: "0.875rem" }}
+                    />
                   </div>
-                  {assigned.length > 0 && (
-                    <div style={{ paddingLeft: "4px", fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.7 }}>
-                      {assigned.map(item => (
-                        <div key={item.name}>{item.name}{item.weight ? ` · ${item.weight} lbs` : ""}</div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            }) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <div style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  background: "rgba(201,151,58,0.15)",
-                  border: "1px solid rgba(201,151,58,0.3)",
-                  borderRadius: "var(--radius-md)",
-                  padding: "4px 12px",
+                );
+              })}
+              <div>
+                <label style={{ display: "block", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
+                  Eating Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={editEatTime}
+                  onChange={e => setEditEatTime(e.target.value)}
+                  style={{ background: "var(--color-bg)", border: "1px solid rgba(201,151,58,0.3)", color: "var(--color-text)", fontFamily: "var(--font-body)", padding: "8px", borderRadius: "var(--radius-md)", width: "100%", boxSizing: "border-box", fontSize: "0.875rem" }}
+                />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "var(--space-2)" }}>
+              <button
+                onClick={handleEditSave}
+                style={{ background: "#C9973A", color: "var(--color-bg)", border: "none", borderRadius: "var(--radius-md)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "8px 16px", cursor: "pointer" }}
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                style={{ background: "transparent", border: "1px solid rgba(201,151,58,0.3)", color: "var(--color-text-muted)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "8px 16px", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* ROW 1: Label + Actions */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-3)", marginBottom: "var(--space-2)" }}>
+              <h1 style={{
+                fontFamily: "var(--font-heading)",
+                fontSize: "clamp(1.4rem, 3vw, 2rem)",
+                color: "#F5E6C8",
+                margin: 0,
+                lineHeight: 1.1,
+              }}>
+                {cook.label}
+              </h1>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, paddingTop: "4px" }}>
+                <button
+                  onClick={() => {
+                    setEditLabel(cook.label || "");
+                    setEditSmokerType(cook.smoker_type || "");
+                    setEditWoodType(cook.wood_type || "");
+                    setEditEatTime(toDateTimeLocal(cook.eat_time));
+                    setIsEditing(true);
+                  }}
+                  style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A", padding: 0 }}
+                >
+                  ✎ Edit
+                </button>
+                <span style={{ color: "rgba(201,151,58,0.4)", fontSize: "0.75rem", userSelect: "none" }}>·</span>
+                <button
+                  onClick={regeneratePlan}
+                  disabled={planLoading}
+                  style={{ background: "none", border: "none", cursor: planLoading ? "default" : "pointer", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", padding: 0, opacity: planLoading ? 0.5 : 1 }}
+                >
+                  ↺ New Plan
+                </button>
+                <span style={{ color: "rgba(201,151,58,0.4)", fontSize: "0.75rem", userSelect: "none" }}>·</span>
+                <button
+                  onClick={() => setShowCompleteConfirm(true)}
+                  style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", padding: 0 }}
+                >
+                  Complete →
+                </button>
+              </div>
+            </div>
+
+            {/* ROW 2: Pills */}
+            <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-2)" }}>
+              <span style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "0.78rem",
+                padding: "3px 10px",
+                borderRadius: "var(--radius-md)",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                background: statusIsCompleted ? "rgba(45,106,79,0.2)" : "rgba(201,151,58,0.2)",
+                color: statusIsCompleted ? "#2D6A4F" : "#C9973A",
+              }}>
+                {cook.status ? capitalize(cook.status) : "In Progress"}
+              </span>
+              {cook.cooking_style && (
+                <span style={{
                   fontFamily: "var(--font-ui)",
-                  fontSize: "0.8rem",
-                  color: "#C9973A",
+                  fontSize: "0.78rem",
+                  padding: "3px 10px",
+                  borderRadius: "var(--radius-md)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  background: "rgba(201,151,58,0.12)",
+                  color: "var(--color-text-muted)",
                 }}>
-                  {cook.smoker_type}
-                  {cook.wood_type && <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>&nbsp;· {cook.wood_type}</span>}
-                </div>
-                {cookItems.length > 0 && (
-                  <div style={{ paddingLeft: "4px", fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.7 }}>
-                    {cookItems.map((item: any) => <div key={item.id}>{item.name}</div>)}
+                  {capitalize(cook.cooking_style)}
+                </span>
+              )}
+              {hasFlavorData && (
+                <span style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.78rem",
+                  padding: "3px 10px",
+                  borderRadius: "var(--radius-md)",
+                  background: "rgba(201,151,58,0.08)",
+                  color: "var(--color-text-muted)",
+                }}>
+                  Smoke {flavorSmoke ?? "—"} · Bark {flavorBark ?? "—"} · Tenderness {flavorTenderness ?? "—"}
+                </span>
+              )}
+            </div>
+
+            {/* ROW 3: Pit breakdown + eating time */}
+            {(planTools.length > 0 || cook.smoker_type) && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)", alignItems: "flex-start" }}>
+                {planTools.length > 0 ? planTools.map((tool, idx) => {
+                  const assigned = planItemsList.filter(
+                    i => i.smokerId != null && String(i.smokerId) === String(tool.id)
+                  );
+                  return (
+                    <div key={tool.id} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <div style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        background: "rgba(201,151,58,0.15)",
+                        border: "1px solid rgba(201,151,58,0.3)",
+                        borderRadius: "var(--radius-md)",
+                        padding: "4px 12px",
+                        fontFamily: "var(--font-ui)",
+                        fontSize: "0.8rem",
+                        color: "#C9973A",
+                      }}>
+                        {tool.name || `Smoker ${idx + 1}`}
+                        {tool.wood && <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>&nbsp;· {tool.wood}</span>}
+                      </div>
+                      {assigned.length > 0 && (
+                        <div style={{ paddingLeft: "4px", fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.7 }}>
+                          {assigned.map(item => (
+                            <div key={item.name}>{item.name}{item.weight ? ` · ${item.weight} lbs` : ""}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <div style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      background: "rgba(201,151,58,0.15)",
+                      border: "1px solid rgba(201,151,58,0.3)",
+                      borderRadius: "var(--radius-md)",
+                      padding: "4px 12px",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "0.8rem",
+                      color: "#C9973A",
+                    }}>
+                      {cook.smoker_type}
+                      {cook.wood_type && <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>&nbsp;· {cook.wood_type}</span>}
+                    </div>
+                    {cookItems.length > 0 && (
+                      <div style={{ paddingLeft: "4px", fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.7 }}>
+                        {cookItems.map((item: any) => <div key={item.id}>{item.name}</div>)}
+                      </div>
+                    )}
                   </div>
+                )}
+                {cook.eat_time && (
+                  <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", alignSelf: "center" }}>
+                    Eating {formatDateTime(cook.eat_time)}
+                  </span>
                 )}
               </div>
             )}
-          </div>
+
+            {/* Complete confirm */}
+            {showCompleteConfirm && (
+              <div style={{ marginTop: "var(--space-3)", display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                <span style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text-muted)" }}>
+                  Mark this cook as complete?
+                </span>
+                <button
+                  onClick={handleComplete}
+                  style={{ background: "#C9973A", color: "var(--color-bg)", border: "none", borderRadius: "var(--radius-md)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "6px 14px", cursor: "pointer" }}
+                >
+                  Yes, complete it
+                </button>
+                <button
+                  onClick={() => setShowCompleteConfirm(false)}
+                  style={{ background: "transparent", border: "1px solid rgba(201,151,58,0.3)", color: "var(--color-text-muted)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "6px 14px", cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            {saveSuccess && (
+              <div style={{ marginTop: "var(--space-2)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "#C9973A" }}>
+                Cook updated.
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* ── TWO-COLUMN GRID ── */}
-      <div
-        className="cook-grid"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "3fr 2fr",
-          gap: "var(--space-4)",
-          maxWidth: "1200px",
-          margin: "0 auto",
-          padding: "var(--space-4) var(--space-4) 80px var(--space-4)",
-        }}
-      >
-        {/* LEFT — The Preacher's Plan */}
+      {/* ── PLAN ── */}
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "var(--space-4) var(--space-4) 80px" }}>
         <div style={cardStyle}>
           <h2 style={{
             fontFamily: "var(--font-heading)",
@@ -548,17 +640,35 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
                     {section.header}
                   </div>
                   {section.header === "THE PREACHER'S WORD" ? (
-                    <p style={{
-                      ...sectionContentStyle,
-                      borderLeft: "3px solid #C9973A",
-                      paddingLeft: "var(--space-3)",
-                      fontStyle: "italic",
-                      fontSize: "1rem",
-                    }}>
-                      {section.content}
-                    </p>
+                    <div>
+                      <p style={{
+                        ...sectionContentStyle,
+                        borderLeft: "3px solid #C9973A",
+                        paddingLeft: "var(--space-3)",
+                        fontStyle: "italic",
+                        fontSize: "1rem",
+                      }}>
+                        {stripMarkdown(section.content)}
+                      </p>
+                      <p style={{
+                        fontFamily: "var(--font-body)",
+                        fontStyle: "italic",
+                        color: "var(--color-text-muted)",
+                        fontSize: "0.9rem",
+                        margin: "var(--space-2) 0 0",
+                        paddingLeft: "var(--space-3)",
+                      }}>
+                        When you are ready —{" "}
+                        <Link
+                          href={`/cook/${cookId}/live`}
+                          style={{ color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.8rem", textDecoration: "none" }}
+                        >
+                          step into Live Mode →
+                        </Link>
+                      </p>
+                    </div>
                   ) : (
-                    <p style={sectionContentStyle}>{section.content}</p>
+                    <p style={sectionContentStyle}>{stripMarkdown(section.content)}</p>
                   )}
                 </div>
               ))}
@@ -569,211 +679,6 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
             <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", fontSize: "0.9rem", margin: 0 }}>
               Plan could not be generated.
             </p>
-          )}
-
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "var(--space-2)",
-            borderTop: "1px solid rgba(201,151,58,0.15)",
-            marginTop: "var(--space-3)",
-            paddingTop: "var(--space-2)",
-          }}>
-            <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
-              Ready to cook?
-            </span>
-            <Link href={`/cook/${cookId}/live`} style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "#C9973A", textDecoration: "none" }}>
-              Open Live Mode →
-            </Link>
-          </div>
-        </div>
-
-        {/* RIGHT — Cook Details */}
-        <div style={cardStyle}>
-
-          {/* Cook Details */}
-          <div style={{ ...sectionLabelStyle, marginTop: 0 }}>Cook Details</div>
-
-          {isEditing ? (
-            <div style={{ marginBottom: "var(--space-3)" }}>
-              {(["Label", "Smoker", "Wood"] as const).map(field => {
-                const val = field === "Label" ? editLabel : field === "Smoker" ? editSmokerType : editWoodType;
-                const setter = field === "Label" ? setEditLabel : field === "Smoker" ? setEditSmokerType : setEditWoodType;
-                return (
-                  <div key={field} style={{ marginBottom: "var(--space-2)" }}>
-                    <label style={{ display: "block", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
-                      {field}
-                    </label>
-                    <input
-                      type="text"
-                      value={val}
-                      onChange={e => setter(e.target.value)}
-                      style={{ background: "var(--color-bg)", border: "1px solid rgba(201,151,58,0.3)", color: "var(--color-text)", fontFamily: "var(--font-body)", padding: "8px", borderRadius: "var(--radius-md)", width: "100%", boxSizing: "border-box", fontSize: "0.875rem" }}
-                    />
-                  </div>
-                );
-              })}
-              <div style={{ marginBottom: "var(--space-3)" }}>
-                <label style={{ display: "block", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>
-                  Eating Time
-                </label>
-                <input
-                  type="datetime-local"
-                  value={editEatTime}
-                  onChange={e => setEditEatTime(e.target.value)}
-                  style={{ background: "var(--color-bg)", border: "1px solid rgba(201,151,58,0.3)", color: "var(--color-text)", fontFamily: "var(--font-body)", padding: "8px", borderRadius: "var(--radius-md)", width: "100%", boxSizing: "border-box", fontSize: "0.875rem" }}
-                />
-              </div>
-              <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                <button
-                  onClick={handleEditSave}
-                  style={{ flex: 1, background: "#C9973A", color: "var(--color-bg)", border: "none", borderRadius: "var(--radius-md)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "8px", cursor: "pointer" }}
-                >
-                  Save Changes
-                </button>
-                <button
-                  onClick={() => setIsEditing(false)}
-                  style={{ flex: 1, background: "transparent", border: "1px solid rgba(201,151,58,0.3)", color: "var(--color-text-muted)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "8px", cursor: "pointer" }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", lineHeight: 2, marginBottom: "var(--space-1)" }}>
-              <div>
-                <span style={{ color: "var(--color-text-muted)" }}>Status</span>
-                {" · "}
-                {cook.status ? capitalize(cook.status) : "—"}
-              </div>
-              {cook.eat_time && (
-                <div>
-                  <span style={{ color: "var(--color-text-muted)" }}>Eating</span>
-                  {" · "}
-                  {formatDateTime(cook.eat_time)}
-                </div>
-              )}
-              {cook.cooking_style && (
-                <div>
-                  <span style={{ color: "var(--color-text-muted)" }}>Style</span>
-                  {" · "}
-                  {capitalize(cook.cooking_style)}
-                </div>
-              )}
-              {cook.created_at && (
-                <div>
-                  <span style={{ color: "var(--color-text-muted)" }}>Created</span>
-                  {" · "}
-                  {formatDateTime(cook.created_at)}
-                </div>
-              )}
-            </div>
-          )}
-
-          {!isEditing && (
-            <div style={{ marginBottom: "var(--space-3)" }}>
-              <button
-                onClick={() => {
-                  setEditLabel(cook.label || "");
-                  setEditSmokerType(cook.smoker_type || "");
-                  setEditWoodType(cook.wood_type || "");
-                  setEditEatTime(toDateTimeLocal(cook.eat_time));
-                  setIsEditing(true);
-                }}
-                style={{ background: "transparent", border: "none", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.8rem", cursor: "pointer", padding: 0 }}
-              >
-                ✎ Edit Cook Details
-              </button>
-              {saveSuccess && (
-                <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "#C9973A", marginLeft: "var(--space-3)" }}>
-                  Cook updated.
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Regenerate */}
-          {planText && !planLoading && userTier !== "free" && (
-            <div style={{ borderTop: "1px solid rgba(201,151,58,0.1)", paddingTop: "var(--space-3)" }}>
-              <button
-                onClick={regeneratePlan}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--color-text-muted)",
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "0.85rem",
-                  cursor: "pointer",
-                  padding: 0,
-                }}
-              >
-                ↺ Generate New Plan
-              </button>
-            </div>
-          )}
-
-          {/* Complete This Cook */}
-          {cook.status === "in_progress" && (
-            <div style={{ borderTop: "1px solid rgba(201,151,58,0.15)", marginTop: "var(--space-3)", paddingTop: "var(--space-3)" }}>
-              {!showCompleteConfirm ? (
-                <button
-                  onClick={() => setShowCompleteConfirm(true)}
-                  style={{
-                    width: "100%",
-                    background: "transparent",
-                    border: "1px solid rgba(201,151,58,0.4)",
-                    color: "#C9973A",
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "0.85rem",
-                    padding: "8px 16px",
-                    borderRadius: "var(--radius-md)",
-                    cursor: "pointer",
-                  }}
-                >
-                  Complete This Cook →
-                </button>
-              ) : (
-                <div>
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text-muted)", margin: "0 0 var(--space-2)" }}>
-                    Mark this cook as complete and write your summary?
-                  </p>
-                  <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                    <button
-                      onClick={handleComplete}
-                      style={{
-                        flex: 1,
-                        background: "#C9973A",
-                        color: "var(--color-bg)",
-                        border: "none",
-                        borderRadius: "var(--radius-md)",
-                        fontFamily: "var(--font-ui)",
-                        fontSize: "0.8rem",
-                        padding: "8px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Yes, complete it
-                    </button>
-                    <button
-                      onClick={() => setShowCompleteConfirm(false)}
-                      style={{
-                        flex: 1,
-                        background: "transparent",
-                        border: "1px solid rgba(201,151,58,0.3)",
-                        color: "var(--color-text-muted)",
-                        borderRadius: "var(--radius-md)",
-                        fontFamily: "var(--font-ui)",
-                        fontSize: "0.8rem",
-                        padding: "8px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
           )}
         </div>
       </div>
