@@ -123,7 +123,7 @@ async function compressImage(file: File): Promise<string> {
       canvas.height = height
       ctx.drawImage(img, 0, 0, width, height)
       const compressed = canvas.toDataURL('image/jpeg', 0.7)
-      resolve(compressed.split(',')[1])
+      resolve(compressed.split(',')[1] ?? '')
     }
     img.src = URL.createObjectURL(file)
   })
