@@ -181,9 +181,10 @@ export async function POST(req: NextRequest) {
   const isSuggestPrompts = (message as string).startsWith("SUGGEST_PROMPTS:");
   const isCookPlan = (message as string).startsWith("Generate a full cook plan");
   const isReflection = (message as string).startsWith("REFLECTION:");
+  const isRescue = (message as string).startsWith("RESCUE:");
 
   // ── FREE TIER MESSAGE LIMIT ──────────────────────────────────────────────────
-  const isRegularMessage = !isOpeningMessage && !isSuggestPrompts && !isCookPlan && !isReflection;
+  const isRegularMessage = !isOpeningMessage && !isSuggestPrompts && !isCookPlan && !isReflection && !isRescue;
   if (isRegularMessage) {
     const { data: subData } = await supabase.from("subscriptions").select("tier").eq("user_id", user.id).single();
     const userTier = subData?.tier ?? "free";
@@ -308,6 +309,12 @@ THE FINISH: Pull temp, rest time, how to hold, how to serve.
 THE PREACHER'S WORD: One paragraph. The wisdom. The warning. The encouragement. Make it feel like scripture. End by naturally transitioning the pitmaster to the cook itself. Do not ask them to report back to you on this page. Simply close with conviction and confidence. The last line should be a statement not a question.
 
 SMOKER: Every tip must reference this specific smoker type — pellet controller and hopper, offset splits and vents, kamado lump and ceramic, drum intake, kettle snake method.`;
+
+  } else if (isRescue) {
+    maxTokens = 600;
+    userMessage = `${message}
+
+Structure your response with exactly these three headers on their own lines: WHAT IS HAPPENING, WHAT TO DO RIGHT NOW, WHAT TO WATCH FOR. Under WHAT TO DO RIGHT NOW give numbered steps maximum 5. Be direct. This pitmaster needs help right now.`;
 
   } else if (isReflection) {
     maxTokens = 200;
