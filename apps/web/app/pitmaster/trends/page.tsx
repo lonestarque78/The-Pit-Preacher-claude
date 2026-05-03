@@ -13,8 +13,6 @@ interface TrendsResult {
   weaknesses: string[];
 }
 
-const TIER_RANK: Record<string, number> = { free: 0, basic: 1, backyard: 2, pitmaster: 3 };
-
 function InsightList({ items, bullet, color }: { items: string[]; bullet: string; color: string }) {
   if (items.length === 0) return (
     <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text-muted)", fontStyle: "italic", margin: 0 }}>
@@ -78,7 +76,7 @@ export default function TrendsPage() {
       const userTier = sub?.tier ?? "free";
       setTier(userTier);
 
-      if ((TIER_RANK[userTier] ?? 0) < TIER_RANK["pitmaster"]) {
+      if (userTier !== "pitmaster") {
         setLoading(false);
         return;
       }
@@ -98,7 +96,7 @@ export default function TrendsPage() {
     load();
   }, []);
 
-  const isPitmaster = (TIER_RANK[tier] ?? 0) >= TIER_RANK["pitmaster"];
+  const isPitmaster = tier === "pitmaster";
 
   if (loading) {
     return (
