@@ -737,6 +737,257 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
           )}
         </div>
 
+
+          {/* ── PLANNED VS ACTUAL ── */}
+          {outcome && (
+            <div style={{ marginTop: "var(--space-4)" }}>
+              <div style={{
+                fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A",
+                textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "var(--space-3)",
+              }}>
+                Planned vs Actual
+              </div>
+              <div style={cardStyle}>
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "var(--space-2)",
+                  marginBottom: "var(--space-2)",
+                }}>
+                  <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.1em" }}>Planned</div>
+                  <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.1em" }}>Actual</div>
+                </div>
+                {[
+                  {
+                    label: "Start",
+                    planned: cook.created_at ? new Date(cook.created_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : "—",
+                    actual: outcome.start_time_actual ? new Date(outcome.start_time_actual).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : "—",
+                  },
+                  {
+                    label: "Finish",
+                    planned: cook.eat_time ? new Date(cook.eat_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : "—",
+                    actual: outcome.finish_time_actual ? new Date(outcome.finish_time_actual).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : "—",
+                  },
+                  {
+                    label: "Rest",
+                    planned: "60 min",
+                    actual: outcome.rest_time_minutes ? `${outcome.rest_time_minutes} min` : "—",
+                  },
+                  {
+                    label: "Final Temp",
+                    planned: "203°F",
+                    actual: outcome.final_internal_temp ? `${outcome.final_internal_temp}°F` : "—",
+                  },
+                ].map(({ label, planned, actual }) => (
+                  <div key={label} style={{
+                    display: "grid",
+                    gridTemplateColumns: "80px 1fr 1fr",
+                    gap: "var(--space-2)",
+                    alignItems: "center",
+                    borderBottom: "1px solid rgba(201,151,58,0.08)",
+                    padding: "var(--space-1) 0",
+                  }}>
+                    <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "var(--color-text-muted)", textTransform: "uppercase" }}>{label}</span>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>{planned}</span>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text)", fontWeight: "500" }}>{actual}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── COOK TRACKER RESULTS ── */}
+          {outcome && (
+            <div style={{ marginTop: "var(--space-4)" }}>
+              <div style={{
+                fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A",
+                textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "var(--space-3)",
+              }}>
+                Cook Tracker Results
+              </div>
+
+              {/* Pit Behavior */}
+              <div style={{ ...cardStyle, marginBottom: "var(--space-3)" }}>
+                <div style={trackerLabelStyle}>Pit Behavior</div>
+                {[
+                  { label: "Temp Range", value: outcome.pit_temp_low && outcome.pit_temp_high ? `${outcome.pit_temp_low}°F – ${outcome.pit_temp_high}°F` : null },
+                  { label: "Wood", value: outcome.wood_used },
+                  { label: "Stall", value: outcome.stall_time_minutes ? `${outcome.stall_time_minutes} min` : null },
+                  { label: "Wrap Time", value: outcome.wrap_time ? new Date(outcome.wrap_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : null },
+                  { label: "Final Temp", value: outcome.final_internal_temp ? `${outcome.final_internal_temp}°F` : null },
+                  { label: "Weather", value: outcome.weather_impact },
+                  { label: "Fire Issues", value: outcome.fire_issues },
+                  { label: "Adjustments", value: outcome.adjustments_made },
+                ].filter(r => r.value).map(({ label, value }) => (
+                  <div key={label} style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+                    gap: "var(--space-2)", borderBottom: "1px solid rgba(201,151,58,0.08)", padding: "var(--space-1) 0",
+                  }}>
+                    <span style={statLabelStyle}>{label}</span>
+                    <span style={{ ...statValueStyle, maxWidth: "65%" }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Outcome Ratings */}
+              {(outcome.tenderness || outcome.bark_quality || outcome.moisture_level || outcome.smoke_profile || outcome.flavor_balance || outcome.overall_success) && (
+                <div style={cardStyle}>
+                  <div style={trackerLabelStyle}>Outcome Ratings</div>
+                  {[
+                    { label: "Tenderness", value: outcome.tenderness },
+                    { label: "Bark", value: outcome.bark_quality },
+                    { label: "Moisture", value: outcome.moisture_level },
+                    { label: "Smoke", value: outcome.smoke_profile },
+                    { label: "Flavor", value: outcome.flavor_balance },
+                    { label: "Overall", value: outcome.overall_success },
+                  ].filter(r => r.value).map(({ label, value }) => (
+                    <div key={label} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      borderBottom: "1px solid rgba(201,151,58,0.08)", padding: "var(--space-1) 0",
+                      gap: "var(--space-2)",
+                    }}>
+                      <span style={statLabelStyle}>{label}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flex: 1, justifyContent: "flex-end" }}>
+                        <div style={{
+                          flex: 1,
+                          maxWidth: "100px",
+                          height: "4px",
+                          background: "rgba(201,151,58,0.15)",
+                          borderRadius: "2px",
+                          overflow: "hidden",
+                        }}>
+                          <div style={{
+                            height: "100%",
+                            width: `${(value / 5) * 100}%`,
+                            background: value >= 4 ? "#2D6A4F" : value >= 3 ? "#C9973A" : "#8B1A1A",
+                            borderRadius: "2px",
+                          }} />
+                        </div>
+                        <span style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "#C9973A", minWidth: "16px", textAlign: "right" }}>
+                          {value}/5
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── NEXT-TIME NOTES (USER) ── */}
+          {trackerNotes && [trackerNotes.note_1, trackerNotes.note_2, trackerNotes.note_3, trackerNotes.note_4, trackerNotes.note_5].some(Boolean) && (
+            <div style={{ marginTop: "var(--space-4)" }}>
+              <div style={{
+                fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A",
+                textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "var(--space-3)",
+              }}>
+                Next-Time Notes
+              </div>
+              <div style={cardStyle}>
+                <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                  {[trackerNotes.note_1, trackerNotes.note_2, trackerNotes.note_3, trackerNotes.note_4, trackerNotes.note_5]
+                    .filter(Boolean)
+                    .map((note: string, i: number) => (
+                      <li key={i} style={{
+                        display: "flex", gap: "var(--space-2)",
+                        fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text)",
+                        padding: "var(--space-1) 0", borderBottom: "1px solid rgba(201,151,58,0.08)", lineHeight: 1.5,
+                      }}>
+                        <span style={{ color: "#C9973A", flexShrink: 0 }}>—</span>
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* ── AI INSIGHTS ── */}
+          {insights && (insights.patternInsights.length > 0 || insights.pitInsights.length > 0 || insights.nextTimeRecommendations.length > 0) ? (
+            <div style={{ marginTop: "var(--space-4)" }}>
+              <div style={{
+                fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A",
+                textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "var(--space-3)",
+              }}>
+                AI Insights
+              </div>
+
+              {insights.patternInsights.length > 0 && (
+                <div style={{ ...cardStyle, marginBottom: "var(--space-3)" }}>
+                  <div style={trackerLabelStyle}>Patterns</div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                    {insights.patternInsights.map((insight: string, i: number) => (
+                      <li key={i} style={{
+                        display: "flex", gap: "var(--space-2)",
+                        fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text)",
+                        padding: "var(--space-1) 0", borderBottom: "1px solid rgba(201,151,58,0.08)", lineHeight: 1.5,
+                      }}>
+                        <span style={{ color: "#C9973A", flexShrink: 0, marginTop: "2px" }}>◆</span>
+                        <span>{insight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {insights.pitInsights.length > 0 && (
+                <div style={{ ...cardStyle, marginBottom: "var(--space-3)" }}>
+                  <div style={trackerLabelStyle}>Your Pit</div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                    {insights.pitInsights.map((insight: string, i: number) => (
+                      <li key={i} style={{
+                        display: "flex", gap: "var(--space-2)",
+                        fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text)",
+                        padding: "var(--space-1) 0", borderBottom: "1px solid rgba(201,151,58,0.08)", lineHeight: 1.5,
+                      }}>
+                        <span style={{ color: "#C9973A", flexShrink: 0, marginTop: "2px" }}>◆</span>
+                        <span>{insight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {insights.nextTimeRecommendations.length > 0 && (
+                <div style={cardStyle}>
+                  <div style={trackerLabelStyle}>Next Time</div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                    {insights.nextTimeRecommendations.map((rec: string, i: number) => (
+                      <li key={i} style={{
+                        display: "flex", gap: "var(--space-2)",
+                        fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text)",
+                        padding: "var(--space-1) 0", borderBottom: "1px solid rgba(201,151,58,0.08)", lineHeight: 1.5,
+                      }}>
+                        <span style={{ color: "#C9973A", flexShrink: 0, marginTop: "2px" }}>—</span>
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : outcome && (
+            <div style={{ ...cardStyle, marginTop: "var(--space-4)", borderStyle: "dashed" }}>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text-muted)", margin: 0, fontStyle: "italic" }}>
+                More tracked cooks are needed before we can generate insights.
+              </p>
+            </div>
+          )}
+
+          {/* No tracker data CTA */}
+          {!outcome && !trackerNotes && statusIsCompleted && (
+            <div style={{ ...cardStyle, marginTop: "var(--space-4)", border: "1px solid rgba(201,151,58,0.25)" }}>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text-muted)", margin: "0 0 var(--space-2)", fontStyle: "italic" }}>
+                Track your next cook to unlock personalized insights.
+              </p>
+              <a href={`/cook/${cookId}/tracker`} style={{
+                color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.8rem", textDecoration: "none",
+              }}>
+                Track This Cook →
+              </a>
+            </div>
+          )}
+
         {/* ── RIGHT COLUMN ── */}
         <div>
           {cookLog && !editingVerdict ? (
