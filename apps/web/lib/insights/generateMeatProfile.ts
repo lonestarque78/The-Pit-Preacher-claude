@@ -35,21 +35,8 @@ function diffMinutes(a: string, b: string): number {
   return Math.abs(new Date(b).getTime() - new Date(a).getTime()) / 60000;
 }
 
-const MEAT_KEYWORDS: Record<string, string[]> = {
-  brisket: ["brisket"],
-  ribs: ["ribs", "spare rib", "baby back", "st. louis", "rib rack"],
-  "pork shoulder": ["pork shoulder", "pork butt", "boston butt", "pulled pork"],
-  chicken: ["chicken", "spatchcock", "whole bird", "thighs", "drumstick"],
-  turkey: ["turkey"],
-};
-
-export function normalizeMeatType(label: string): string | null {
-  const lower = label.toLowerCase();
-  for (const [meat, keywords] of Object.entries(MEAT_KEYWORDS)) {
-    if (keywords.some(k => lower.includes(k))) return meat;
-  }
-  return null;
-}
+import { normalizeMeatType, MEAT_KEYWORDS } from "@/lib/insights/normalizers";
+export { normalizeMeatType };
 
 export async function generateMeatProfile(
   userId: string,

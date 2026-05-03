@@ -5,8 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { getRandomVerse } from "@/lib/verses";
 import Link from "next/link";
 import PitmasterInsightsOverlay from "@/components/insights/PitmasterInsightsOverlay";
-import { normalizeMeatType } from "@/lib/insights/generateMeatProfile";
-import { normalizePitType } from "@/lib/insights/generatePitProfile";
+import { normalizeMeatType, normalizePitType } from "@/lib/insights/normalizers";
 
 type PlanTool = { id: string; name: string; wood: string };
 type PlanItem = {
