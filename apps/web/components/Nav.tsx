@@ -86,6 +86,11 @@ export default function Nav() {
             <Link href="/dashboard" style={linkStyle}>
               Dashboard
             </Link>
+            {(tier === "basic" || tier === "backyard" || tier === "pitmaster") && (
+              <Link href="/lab" style={linkStyle}>
+                Wood Lab
+              </Link>
+            )}
             <Link href="/logs" style={linkStyle}>
               History
             </Link>
