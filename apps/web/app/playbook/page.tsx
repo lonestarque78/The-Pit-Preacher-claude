@@ -30,7 +30,7 @@ const MODULES = [
     title: "Know Your Pit",
     description: "Offset, pellet, kamado, kettle, drum, cabinet. Every pit has a personality. Learn yours.",
     requiredTier: "basic",
-    href: "/playbook/pit-types/overview",
+    href: "/playbook/pit-types",
   },
   {
     slug: "troubleshooting",
