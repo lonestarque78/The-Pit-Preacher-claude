@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
+import PitmasterInsightsOverlay from "@/components/insights/PitmasterInsightsOverlay";
 
 interface TrendsResult {
   consistency: string[];
@@ -124,9 +125,12 @@ export default function TrendsPage() {
         }}>
           Trend Analysis
         </h1>
-        <p style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", color: "var(--color-text-muted)", margin: 0 }}>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", color: "var(--color-text-muted)", margin: "0 0 var(--space-3)" }}>
           Your long-term cooking patterns across all tracked cooks.
         </p>
+        <PitmasterInsightsOverlay
+          isPitmaster={isPitmaster}
+        />
       </div>
 
       {/* Premium gate */}

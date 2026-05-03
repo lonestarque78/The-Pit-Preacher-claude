@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { getRandomVerse } from "@/lib/verses";
 import Link from "next/link";
+import PitmasterInsightsOverlay from "@/components/insights/PitmasterInsightsOverlay";
 
 type PlanTool = { id: string; name: string; wood: string };
 type PlanItem = {
@@ -1138,6 +1139,18 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
           )}
         </div>
       </div>
+
+      {/* ── DEEP INSIGHTS TRIGGER ── */}
+      {statusIsCompleted && (
+        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 var(--space-4) var(--space-2)" }}>
+          <PitmasterInsightsOverlay
+            cookId={cookId}
+            isPitmaster={userTier === "pitmaster"}
+            pitType={cook?.smoker_type ?? ""}
+            meatLabel={cook?.label ?? ""}
+          />
+        </div>
+      )}
 
       {/* ── PITMASTER TRENDS LINK ── */}
       {userTier === "pitmaster" && (
