@@ -24,7 +24,7 @@ export default function PlaybookCard({
       <div className="relative border border-[#2a2218] rounded-sm bg-[#161310] p-6 opacity-60 cursor-not-allowed select-none">
         {/* Lock badge */}
         <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-[#1e1a14] border border-[#3a2e1e] rounded-sm px-2 py-1">
-          <svg className="w-3 h-3 text-[#7a6a55]" fill="currentColor" viewBox="0 0 20 20">
+          <svg className="w-3 h-3 text-[#7a6a55]" width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
             <path
               fillRule="evenodd"
               d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
@@ -74,6 +74,8 @@ export default function PlaybookCard({
           Read
           <svg
             className="w-3 h-3 translate-x-0 group-hover:translate-x-1 transition-transform"
+            width="12"
+            height="12"
             fill="none"
             stroke="currentColor"
             strokeWidth={2}
