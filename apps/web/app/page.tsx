@@ -1458,6 +1458,25 @@ export default function Home() {
         </div>
 
       </div>
+
+      <section style={{ maxWidth: "860px", margin: "var(--space-5) auto 0", padding: "var(--space-4) var(--space-4) var(--space-5)", borderTop: "1px solid rgba(201,151,58,0.1)" }}>
+        <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.1rem", color: "var(--color-text-muted)", fontWeight: 400, marginBottom: "var(--space-3)" }}>
+          The BBQ Cook Planner Built for Real Pitmasters
+        </h2>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", lineHeight: 1.8, marginBottom: "var(--space-3)" }}>
+          The Pit Preacher is a BBQ cook planner built by a pitmaster with 25 years of fire, smoke, and hard-earned wisdom. Whether you are smoking a whole packer brisket on an offset, running baby back ribs on a pellet grill, or managing three smokers for a backyard competition — the Pit Preacher builds your cook plan, calculates your brisket timeline, and coaches you from fire to table.
+        </p>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", lineHeight: 1.8, marginBottom: "var(--space-3)" }}>
+          Select your meats, sides, and appetizers. Set your eating time. Tell the Preacher what smoker you are running and what wood is in the hopper. The Pit Preacher builds a complete cook schedule working backward from the moment you want to eat — including when to light the fire, when to wrap, when to rest, and when to slice.
+        </p>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", lineHeight: 1.8, marginBottom: "var(--space-3)" }}>
+          Every cook is logged in your personal BBQ cook journal. Temperatures recorded. Milestones tracked. Lessons saved. The next time you fire up the pit, the Preacher remembers what worked and what did not.
+        </p>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", lineHeight: 1.8 }}>
+          When something goes wrong at the pit — brisket stall lasting too long, dirty smoke, fire running too hot — Pit Rescue Mode gives you an immediate diagnosis and step-by-step fix. The Wood Flavor Lab shows you exactly how every wood affects every meat. And the Preacher is always available in Live Mode to answer the questions that only a real pitmaster can answer.
+        </p>
+      </section>
+
     </div>
   );
 }
