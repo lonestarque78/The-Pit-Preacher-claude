@@ -3,7 +3,7 @@
 import PlaybookLayout from "@/components/playbook/PlaybookLayout";
 import PlaybookCard from "@/components/playbook/PlaybookCard";
 import { createServerClient } from "@/lib/supabase-server";
-import { tierMeetsRequirement } from "@/lib/premium";
+import { tierMeetsRequirement, getTier } from "@/lib/premium";
 import Link from "next/link";
 
 const MODULES = [
@@ -58,15 +58,7 @@ export default async function PlaybookIndexPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let userTier = "free";
-  if (user) {
-    const { data: profile } = await supabase
-      .from("public.profiles")
-      .select("tier")
-      .eq("id", user.id)
-      .single();
-    if (profile?.tier) userTier = profile.tier;
-  }
+const userTier = await getTier(user?.id, supabase);
 
   const hasLockedModules = MODULES.some(
     (m) => m.requiredTier !== "free" && !tierMeetsRequirement(userTier, m.requiredTier)
