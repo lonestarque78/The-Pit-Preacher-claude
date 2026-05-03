@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { getRandomVerse } from "@/lib/verses";
 import Link from "next/link";
+import { generateInsights, InsightsResult } from "@/lib/insights/generateInsights";
 
 type PlanTool = { id: string; name: string; wood: string };
 type PlanItem = {
@@ -57,6 +58,7 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
   const [session, setSession] = useState<any>(null);
   const [outcome, setOutcome] = useState<any>(null);
   const [trackerNotes, setTrackerNotes] = useState<any>(null);
+  const [insights, setInsights] = useState<InsightsResult | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [reflection, setReflection] = useState<string | null>(null);
@@ -95,6 +97,10 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
     setCookLog(logResult.data);
     setOutcome(outcomeResult.data);
     setTrackerNotes(trackerNotesResult.data);
+
+    if (outcomeResult.data && user) {
+      generateInsights(cookId, user.id).then(setInsights).catch(console.error);
+    }
 
     if (cookData?.prep_session_id) {
       const { data: sessionData } = await supabase
@@ -617,6 +623,78 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
             </div>
           )}
 
+
+          {/* ── COOK INSIGHTS SECTION ── */}
+          {insights && (insights.patternInsights.length > 0 || insights.pitInsights.length > 0 || insights.nextTimeRecommendations.length > 0) && (
+            <div style={{ marginTop: "var(--space-4)" }}>
+              <div style={{
+                fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A",
+                textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "var(--space-3)",
+              }}>
+                Cook Insights
+              </div>
+
+              {/* Pattern Insights */}
+              {insights.patternInsights.length > 0 && (
+                <div style={{ ...cardStyle, marginBottom: "var(--space-3)" }}>
+                  <div style={trackerLabelStyle}>Patterns</div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                    {insights.patternInsights.map((insight, i) => (
+                      <li key={i} style={{
+                        display: "flex", gap: "var(--space-2)",
+                        fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text)",
+                        padding: "var(--space-1) 0", borderBottom: "1px solid rgba(201,151,58,0.08)",
+                        lineHeight: 1.5,
+                      }}>
+                        <span style={{ color: "#C9973A", flexShrink: 0, marginTop: "2px" }}>◆</span>
+                        <span>{insight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Pit-Specific Insights */}
+              {insights.pitInsights.length > 0 && (
+                <div style={{ ...cardStyle, marginBottom: "var(--space-3)" }}>
+                  <div style={trackerLabelStyle}>Your Pit</div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                    {insights.pitInsights.map((insight, i) => (
+                      <li key={i} style={{
+                        display: "flex", gap: "var(--space-2)",
+                        fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text)",
+                        padding: "var(--space-1) 0", borderBottom: "1px solid rgba(201,151,58,0.08)",
+                        lineHeight: 1.5,
+                      }}>
+                        <span style={{ color: "#C9973A", flexShrink: 0, marginTop: "2px" }}>◆</span>
+                        <span>{insight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Next-Time Recommendations */}
+              {insights.nextTimeRecommendations.length > 0 && (
+                <div style={cardStyle}>
+                  <div style={trackerLabelStyle}>Next Time</div>
+                  <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                    {insights.nextTimeRecommendations.map((rec, i) => (
+                      <li key={i} style={{
+                        display: "flex", gap: "var(--space-2)",
+                        fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text)",
+                        padding: "var(--space-1) 0", borderBottom: "1px solid rgba(201,151,58,0.08)",
+                        lineHeight: 1.5,
+                      }}>
+                        <span style={{ color: "#C9973A", flexShrink: 0, marginTop: "2px" }}>—</span>
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
           {/* Track this cook CTA if not yet tracked */}
           {!hasTrackerData && statusIsCompleted && (
             <div style={{
