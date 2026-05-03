@@ -4,7 +4,6 @@ import { use, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { getRandomVerse } from "@/lib/verses";
 import Link from "next/link";
-import { generateInsights, InsightsResult } from "@/lib/insights/generateInsights";
 
 type PlanTool = { id: string; name: string; wood: string };
 type PlanItem = {
@@ -58,7 +57,11 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
   const [session, setSession] = useState<any>(null);
   const [outcome, setOutcome] = useState<any>(null);
   const [trackerNotes, setTrackerNotes] = useState<any>(null);
-  const [insights, setInsights] = useState<InsightsResult | null>(null);
+  const [insights, setInsights] = useState<{
+    patternInsights: string[];
+    pitInsights: string[];
+    nextTimeRecommendations: string[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [reflection, setReflection] = useState<string | null>(null);
@@ -98,8 +101,11 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
     setOutcome(outcomeResult.data);
     setTrackerNotes(trackerNotesResult.data);
 
-    if (outcomeResult.data && user) {
-      generateInsights(cookId, user.id).then(setInsights).catch(console.error);
+    if (outcomeResult.data) {
+      fetch(`/api/insights?cookId=${cookId}`)
+        .then(r => r.json())
+        .then(setInsights)
+        .catch(console.error);
     }
 
     if (cookData?.prep_session_id) {
