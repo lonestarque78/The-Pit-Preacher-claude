@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase";
 import { getRandomVerse } from "@/lib/verses";
 import Link from "next/link";
 import PitmasterInsightsOverlay from "@/components/insights/PitmasterInsightsOverlay";
+import { normalizeMeatType } from "@/lib/insights/generateMeatProfile";
+import { normalizePitType } from "@/lib/insights/generatePitProfile";
 
 type PlanTool = { id: string; name: string; wood: string };
 type PlanItem = {
@@ -1304,7 +1306,7 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
 
       {/* ── PITMASTER TRENDS LINK ── */}
       {userTier === "pitmaster" && (
-        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 var(--space-4) var(--space-3)" }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 var(--space-4) var(--space-3)", display: "flex", gap: "var(--space-4)", flexWrap: "wrap" }}>
           <Link
             href="/pitmaster/trends"
             style={{
@@ -1318,6 +1320,44 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
           >
             ◆ View your long-term trends →
           </Link>
+          {(() => {
+            const meatSlug = normalizeMeatType(cook?.label ?? "");
+            if (!meatSlug) return null;
+            return (
+              <Link
+                href={`/pitmaster/meat/${encodeURIComponent(meatSlug.replace(/ /g, "-"))}`}
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.75rem",
+                  color: "#C9973A",
+                  textDecoration: "none",
+                  letterSpacing: "0.05em",
+                  opacity: 0.8,
+                }}
+              >
+                ◆ View your {meatSlug} profile →
+              </Link>
+            );
+          })()}
+          {(() => {
+            const pitSlug = cook?.smoker_type ? normalizePitType(cook.smoker_type) : null;
+            if (!pitSlug) return null;
+            return (
+              <Link
+                href={`/pitmaster/pit/${encodeURIComponent(pitSlug)}`}
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.75rem",
+                  color: "#C9973A",
+                  textDecoration: "none",
+                  letterSpacing: "0.05em",
+                  opacity: 0.8,
+                }}
+              >
+                ◆ View your {pitSlug} profile →
+              </Link>
+            );
+          })()}
         </div>
       )}
 
