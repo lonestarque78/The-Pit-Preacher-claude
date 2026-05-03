@@ -1,9 +1,5 @@
 "use client";
 
-export const metadata = {
-  title: 'Cook History — BBQ Cook Log',
-  description: 'Your complete BBQ cook journal. Every cook logged, every lesson saved, every rating recorded. Build a personal library of your best cooks and what made them great.'
-}
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
