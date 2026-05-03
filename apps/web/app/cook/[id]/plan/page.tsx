@@ -4,6 +4,8 @@ import { createServerClient } from "@/lib/supabase-server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import PrepChecklist from "./PrepChecklist";
+import { autoAdjustPlan } from "@/lib/plan/autoAdjustPlan";
+import AdjustmentsBanner from "@/components/plan/AdjustmentsBanner";
 
 type PlanTool = { id: string; name: string; wood: string };
 type PlanItem = {
@@ -80,7 +82,6 @@ function parseTimeline(aiText: string, tools: PlanTool[]): TimelineStep[] | null
 
   if (steps.length > 0) return steps;
 
-  // sentence-level fallback
   const sentences = aiText.split(/(?<=[.!?])\s+/);
   for (const s of sentences) {
     const m = s.match(TIME_RE);
@@ -204,9 +205,39 @@ export default async function CookPlanPage({ params }: { params: Promise<{ id: s
   const planTools: PlanTool[] = plan?.tools ?? [];
   const planItems: PlanItem[] = plan?.items ?? [];
 
+  // ── AUTO-ADJUSTMENT ENGINE ──────────────────────────────────────────────
+  const pitType = cook.smoker_type ?? "";
+  const meatType = cook.label ?? "";
+
+  const { adjustments, hasAdjustments } = await autoAdjustPlan(
+    cookId,
+    user.id,
+    pitType,
+    meatType
+  );
+
   // Forward the auth cookie so /api/preacher can verify the session
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join("; ");
+
+  // Build adjustment context string for the Preacher prompt
+  let adjustmentContext = "";
+  if (hasAdjustments) {
+    const parts: string[] = [];
+    if (adjustments.startTimeAdjustment !== null) {
+      parts.push(`Start ${Math.abs(adjustments.startTimeAdjustment)} minutes ${adjustments.startTimeAdjustment < 0 ? "earlier" : "later"} than normal`);
+    }
+    if (adjustments.pitTempAdjustment !== null) {
+      parts.push(`Run pit ${Math.abs(adjustments.pitTempAdjustment)}°F ${adjustments.pitTempAdjustment < 0 ? "cooler" : "hotter"} than target`);
+    }
+    if (adjustments.wrapAdjustment !== null) {
+      parts.push(`Wrap ${Math.abs(adjustments.wrapAdjustment)} minutes ${adjustments.wrapAdjustment > 0 ? "later" : "earlier"} than normal`);
+    }
+    if (adjustments.restTimeAdjustment !== null) {
+      parts.push(`Rest ${Math.abs(adjustments.restTimeAdjustment)} minutes ${adjustments.restTimeAdjustment > 0 ? "longer" : "shorter"} than normal`);
+    }
+    adjustmentContext = `\n\nBased on past cook data, apply these adjustments to the plan: ${parts.join(". ")}.`;
+  }
 
   let aiReply = "";
   try {
@@ -220,7 +251,7 @@ export default async function CookPlanPage({ params }: { params: Promise<{ id: s
       body: JSON.stringify({
         cookId: cook.id,
         message:
-          "Generate a full cook plan for this cook. Include: when to trim and season each meat, when to light each smoker, key milestones (wrap windows, spritz windows, probe tender check), rest time, and slice/serve time. Be specific with clock times working backward from the eating time. Write in your voice — direct, confident, no fluff. End with a one paragraph overall read on this cook.",
+          "Generate a full cook plan for this cook. Include: when to trim and season each meat, when to light each smoker, key milestones (wrap windows, spritz windows, probe tender check), rest time, and slice/serve time. Be specific with clock times working backward from the eating time. Write in your voice — direct, confident, no fluff. End with a one paragraph overall read on this cook." + adjustmentContext,
         cookContext: {
           label: cook.label,
           eat_time: cook.eat_time,
@@ -246,7 +277,6 @@ export default async function CookPlanPage({ params }: { params: Promise<{ id: s
   const timelineSteps = aiReply ? parseTimeline(aiReply, planTools) : null;
   const preachersWord = aiReply ? extractPreachersWord(aiReply) : "";
 
-  // Build prep checklists — one card per smoker, only items that are meats
   const prepChecklists: { smokerName: string; items: { id: string; label: string }[] }[] = [];
 
   if (planTools.length > 0) {
@@ -301,6 +331,14 @@ export default async function CookPlanPage({ params }: { params: Promise<{ id: s
           <Button>← Back to Cook</Button>
         </Link>
       </div>
+
+      {/* ── AUTO-ADJUSTMENT BANNER ── */}
+      {hasAdjustments && (
+        <AdjustmentsBanner
+          adjustments={adjustments}
+          onRevert={() => {}}
+        />
+      )}
 
       {/* ── SECTION 1: MISSION BRIEF ── */}
       <div style={{
@@ -378,7 +416,6 @@ export default async function CookPlanPage({ params }: { params: Promise<{ id: s
 
               return (
                 <div key={tool.id}>
-                  {/* Smoker header */}
                   <div style={{
                     background: "var(--color-accent)",
                     color: "var(--color-bg)",
@@ -444,7 +481,6 @@ export default async function CookPlanPage({ params }: { params: Promise<{ id: s
             })}
           </div>
         ) : (
-          /* No tools — single unified timeline */
           timelineSteps ? (
             <div style={{ maxWidth: "640px" }}>
               <Timeline steps={timelineSteps} />
