@@ -6,6 +6,9 @@ import { redirect } from "next/navigation";
 import PrepChecklist from "./PrepChecklist";
 import { autoAdjustPlan } from "@/lib/plan/autoAdjustPlan";
 import AdjustmentsBanner from "@/components/plan/AdjustmentsBanner";
+import NextCookStrategyCard from "@/components/strategy/NextCookStrategyCard";
+import { getTier, tierMeetsRequirement } from "@/lib/premium";
+import { normalizeMeatType } from "@/lib/insights/normalizers";
 
 type PlanTool = { id: string; name: string; wood: string };
 type PlanItem = {
@@ -172,6 +175,9 @@ export default async function CookPlanPage({ params }: { params: Promise<{ id: s
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  const tier = await getTier(user.id, supabase);
+  const isPitmaster = tierMeetsRequirement(tier, "pitmaster");
+
   const { data: cook } = await supabase
     .from("cooks")
     .select("*")
@@ -331,6 +337,14 @@ export default async function CookPlanPage({ params }: { params: Promise<{ id: s
           <Button>← Back to Cook</Button>
         </Link>
       </div>
+
+      {/* ── NEXT COOK STRATEGY CARD ── */}
+      <NextCookStrategyCard
+        cookId={cookId}
+        meatType={normalizeMeatType(cook.label ?? "") ?? ""}
+        pitType={cook.smoker_type ?? ""}
+        isPitmaster={isPitmaster}
+      />
 
       {/* ── AUTO-ADJUSTMENT BANNER ── */}
       {hasAdjustments && (
