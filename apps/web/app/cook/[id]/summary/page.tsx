@@ -57,6 +57,7 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
   const [session, setSession] = useState<any>(null);
   const [outcome, setOutcome] = useState<any>(null);
   const [trackerNotes, setTrackerNotes] = useState<any>(null);
+  const [userTier, setUserTier] = useState<string>("free");
   const [insights, setInsights] = useState<{
     patternInsights: string[];
     pitInsights: string[];
@@ -82,6 +83,14 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
   const loadData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
+
+    const { data: subData } = await supabase
+      .from("subscriptions")
+      .select("tier")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle();
+    setUserTier(subData?.tier ?? "free");
 
     const { data: cookData } = await supabase
       .from("cooks").select("*").eq("id", cookId).single();
@@ -1129,6 +1138,25 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
           )}
         </div>
       </div>
+
+      {/* ── PITMASTER TRENDS LINK ── */}
+      {userTier === "pitmaster" && (
+        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 var(--space-4) var(--space-3)" }}>
+          <Link
+            href="/pitmaster/trends"
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "0.75rem",
+              color: "#C9973A",
+              textDecoration: "none",
+              letterSpacing: "0.05em",
+              opacity: 0.8,
+            }}
+          >
+            ◆ View your long-term trends →
+          </Link>
+        </div>
+      )}
 
       {/* ── STICKY BOTTOM BAR ── */}
       <div style={{
