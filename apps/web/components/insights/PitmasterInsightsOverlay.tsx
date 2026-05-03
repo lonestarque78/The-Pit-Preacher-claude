@@ -274,10 +274,12 @@ export default function PitmasterInsightsOverlay({ cookId, isPitmaster, pitType 
       strategy.push(...insights.nextTimeRecommendations.slice(0, 3));
     }
     if (trends?.improvements && trends.improvements.length > 0) {
-      strategy.push(`Keep doing what's working: ${trends.improvements[0].split(".")[0] ?? trends.improvements[0]}.`);
+      const imp = trends.improvements[0] ?? "";
+      strategy.push(`Keep doing what's working: ${imp.split(".")[0] ?? imp}.`);
     }
     if (trends?.weaknesses && trends.weaknesses.length > 0) {
-      strategy.push(`Address your top weakness: ${trends.weaknesses[0].split(".")[0] ?? trends.weaknesses[0]}.`);
+      const weak = trends.weaknesses[0] ?? "";
+      strategy.push(`Address your top weakness: ${weak.split(".")[0] ?? weak}.`);
     }
     return strategy.slice(0, 5);
   }
