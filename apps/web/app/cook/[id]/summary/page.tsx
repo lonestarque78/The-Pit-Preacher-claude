@@ -64,6 +64,16 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
     pitInsights: string[];
     nextTimeRecommendations: string[];
   } | null>(null);
+  const [confidenceScore, setConfidenceScore] = useState<{
+    score: number;
+    breakdown: {
+      pitStability: number;
+      planAdherence: number;
+      outcomeConsistency: number;
+      cookEfficiency: number;
+    };
+    notes: string[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [reflection, setReflection] = useState<string | null>(null);
@@ -115,6 +125,11 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
       fetch(`/api/insights?cookId=${cookId}`)
         .then(r => r.json())
         .then(setInsights)
+        .catch(console.error);
+
+      fetch(`/api/confidence?cookId=${cookId}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d && !d.error) setConfidenceScore(d); })
         .catch(console.error);
     }
 
@@ -1140,6 +1155,141 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
         </div>
       </div>
 
+
+          {/* ── COOK CONFIDENCE SCORE ── */}
+          {userTier === "pitmaster" && outcome ? (
+            confidenceScore ? (
+              <div style={{ marginTop: "var(--space-4)" }}>
+                <div style={{
+                  fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A",
+                  textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "var(--space-3)",
+                }}>
+                  Cook Confidence Score
+                </div>
+                <div style={cardStyle}>
+                  {/* Score display */}
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>
+                    <span style={{
+                      fontFamily: "var(--font-heading)",
+                      fontSize: "4rem",
+                      color: confidenceScore.score >= 75 ? "#2D6A4F" : confidenceScore.score >= 50 ? "#C9973A" : "#8B1A1A",
+                      lineHeight: 1,
+                    }}>
+                      {confidenceScore.score}
+                    </span>
+                    <span style={{ fontFamily: "var(--font-ui)", fontSize: "1rem", color: "var(--color-text-muted)", paddingBottom: "8px" }}>
+                      / 100
+                    </span>
+                    <span style={{
+                      fontFamily: "var(--font-ui)", fontSize: "0.7rem",
+                      color: confidenceScore.score >= 75 ? "#2D6A4F" : confidenceScore.score >= 50 ? "#C9973A" : "#8B1A1A",
+                      textTransform: "uppercase", letterSpacing: "0.1em",
+                      paddingBottom: "10px",
+                    }}>
+                      {confidenceScore.score >= 85 ? "Elite" : confidenceScore.score >= 70 ? "Strong" : confidenceScore.score >= 55 ? "Solid" : confidenceScore.score >= 40 ? "Developing" : "Needs Work"}
+                    </span>
+                  </div>
+
+                  {/* Breakdown bars */}
+                  <div style={{ marginBottom: "var(--space-3)" }}>
+                    {[
+                      { label: "Pit Stability", value: confidenceScore.breakdown.pitStability },
+                      { label: "Plan Adherence", value: confidenceScore.breakdown.planAdherence },
+                      { label: "Outcome Quality", value: confidenceScore.breakdown.outcomeConsistency },
+                      { label: "Cook Efficiency", value: confidenceScore.breakdown.cookEfficiency },
+                    ].map(({ label, value }) => (
+                      <div key={label} style={{ marginBottom: "var(--space-2)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                          <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                            {label}
+                          </span>
+                          <span style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "#C9973A" }}>
+                            {value}/25
+                          </span>
+                        </div>
+                        <div style={{ height: "4px", background: "rgba(201,151,58,0.15)", borderRadius: "2px", overflow: "hidden" }}>
+                          <div style={{
+                            height: "100%",
+                            width: `${(value / 25) * 100}%`,
+                            background: value >= 20 ? "#2D6A4F" : value >= 14 ? "#C9973A" : "#8B1A1A",
+                            borderRadius: "2px",
+                            transition: "width 0.3s ease",
+                          }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Notes */}
+                  {confidenceScore.notes.length > 0 && (
+                    <div style={{ borderTop: "1px solid rgba(201,151,58,0.1)", paddingTop: "var(--space-3)" }}>
+                      <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                        {confidenceScore.notes.map((note, i) => (
+                          <li key={i} style={{
+                            display: "flex", gap: "var(--space-2)",
+                            fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--color-text-muted)",
+                            padding: "4px 0", lineHeight: 1.5,
+                          }}>
+                            <span style={{ color: "#C9973A", flexShrink: 0 }}>—</span>
+                            <span>{note}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null
+          ) : outcome && statusIsCompleted && (
+            <div style={{ marginTop: "var(--space-4)" }}>
+              <div style={{
+                fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A",
+                textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "var(--space-3)",
+              }}>
+                Cook Confidence Score
+              </div>
+              <div style={{
+                ...cardStyle,
+                position: "relative",
+                overflow: "hidden",
+                minHeight: "120px",
+              }}>
+                <div style={{
+                  filter: "blur(4px)",
+                  pointerEvents: "none",
+                  userSelect: "none",
+                }}>
+                  <div style={{ fontFamily: "var(--font-heading)", fontSize: "4rem", color: "#C9973A", lineHeight: 1 }}>
+                    —
+                  </div>
+                  <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "var(--color-text-muted)", marginTop: "var(--space-2)" }}>
+                    Pit Stability · Plan Adherence · Outcome Quality · Cook Efficiency
+                  </div>
+                </div>
+                <div style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(14,12,10,0.7)",
+                  padding: "var(--space-3)",
+                  textAlign: "center",
+                }}>
+                  <span style={{ fontSize: "1.2rem", marginBottom: "var(--space-2)" }}>🔒</span>
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--color-text-muted)", margin: "0 0 var(--space-2)", lineHeight: 1.5 }}>
+                    Cook Confidence Score is a Pitmaster-tier feature.
+                  </p>
+                  <Link href="/premium" style={{
+                    color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.75rem", textDecoration: "none",
+                  }}>
+                    Upgrade to Pitmaster →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
       {/* ── DEEP INSIGHTS TRIGGER ── */}
       {statusIsCompleted && (
         <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 var(--space-4) var(--space-2)" }}>

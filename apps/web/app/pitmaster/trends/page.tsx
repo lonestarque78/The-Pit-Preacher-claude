@@ -60,6 +60,7 @@ export default function TrendsPage() {
   const [trends, setTrends] = useState<TrendsResult | null>(null);
   const [tier, setTier] = useState<string>("free");
   const [loading, setLoading] = useState(true);
+  const [confidenceHistory, setConfidenceHistory] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -246,6 +247,40 @@ export default function TrendsPage() {
             <InsightList items={trends.weaknesses} bullet="—" color="#C9973A" />
           </div>
 
+
+          {/* ── CONFIDENCE SCORE TRENDS ── */}
+          <div style={{ ...cardStyle, marginTop: "var(--space-2)" }}>
+            <div style={{ ...sectionLabelStyle, color: "#C9973A" }}>Confidence Score Trends</div>
+            <p style={{
+              fontFamily: "var(--font-body)", fontSize: "0.875rem",
+              color: "var(--color-text-muted)", margin: "0 0 var(--space-3)", lineHeight: 1.5,
+            }}>
+              Your Cook Confidence Score is computed after each tracked cook. Complete and track more cooks to build your score history. View your score on the Summary page after each cook.
+            </p>
+            <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+              {[
+                { label: "How to improve Pit Stability", value: "Stabilize fire 30+ min before adding meat. Keep exhaust fully open." },
+                { label: "How to improve Plan Adherence", value: "Use the timeline as a hard anchor. Build a 90-min buffer into every cook." },
+                { label: "How to improve Outcome Quality", value: "Focus on your lowest-rated category each cook. One improvement at a time." },
+                { label: "How to improve Cook Efficiency", value: "Minimize lid openings. Set a check schedule and stick to it." },
+              ].map(({ label, value }) => (
+                <div key={label} style={{
+                  flex: "1 1 200px",
+                  background: "rgba(201,151,58,0.05)",
+                  border: "1px solid rgba(201,151,58,0.12)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "var(--space-2) var(--space-3)",
+                }}>
+                  <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.65rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px" }}>
+                    {label}
+                  </p>
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>
+                    {value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
           {/* Back link */}
           <div style={{ marginTop: "var(--space-4)" }}>
             <Link href="/dashboard" style={{
