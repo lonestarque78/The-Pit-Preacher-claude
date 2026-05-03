@@ -92,12 +92,12 @@ const MEAT_REASONING: Record<string, string[]> = {
 
 function getPitReasoning(pitType: string): string[] {
   const key = Object.keys(PIT_REASONING).find(k => pitType.toLowerCase().includes(k));
-  return key ? PIT_REASONING[key] : ["No specific pit reasoning available for this pit type."];
+  return key ? (PIT_REASONING as Record<string, string[]>)[key]! : ["No specific pit reasoning available for this pit type."];
 }
 
 function getMeatReasoning(label: string): string[] {
   const key = Object.keys(MEAT_REASONING).find(k => label.toLowerCase().includes(k));
-  return key ? MEAT_REASONING[key] : [];
+  return key ? (MEAT_REASONING as Record<string, string[]>)[key]! : [];
 }
 
 const overlayStyle: React.CSSProperties = {
