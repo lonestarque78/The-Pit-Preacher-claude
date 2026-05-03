@@ -93,13 +93,18 @@ export default async function KnowYourPitPage() {
 
   let userPitKey: string | null = null;
   if (user) {
-    const { data: profile } = await supabase
-      .from("public.profiles")
-      .select("smoker_type")
-      .eq("id", user.id)
+    const { data: pit } = await supabase
+      .from("pits")
+      .select("type, name")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .single();
-    if (profile?.smoker_type) {
-      userPitKey = normalizePitKey(profile.smoker_type);
+    if (pit?.type) {
+      userPitKey = normalizePitKey(pit.type);
+    }
+    if (!userPitKey && pit?.name) {
+      userPitKey = normalizePitKey(pit.name);
     }
   }
 
