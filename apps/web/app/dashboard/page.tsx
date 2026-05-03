@@ -1,3 +1,8 @@
+export const metadata = {
+  title: 'Your Pitmaster Dashboard',
+  description: 'Track your active cooks, review your cook history, and manage your BBQ cook log. Your personal pitmaster dashboard from The Pit Preacher.'
+}
+
 import { createServerClient } from "@/lib/supabase-server";
 import { getTier } from "@/lib/premium";
 import { getRandomVerse } from "@/lib/verses";

@@ -1,5 +1,10 @@
 "use client";
 
+export const metadata = {
+  title: 'BBQ Cook Planner — Build Your Cook Plan',
+  description: 'Build your BBQ cook plan in minutes. Select your meats, set your eating time, choose your smoker and wood, and get a complete brisket timeline and cook schedule built for your specific setup.'
+}
+
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";

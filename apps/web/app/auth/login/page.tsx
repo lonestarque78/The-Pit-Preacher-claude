@@ -1,5 +1,10 @@
 "use client";
 
+export const metadata = {
+  title: 'Sign In — The Pit Preacher',
+  description: 'Sign in to your Pit Preacher account to access your BBQ cook planner, cook log, and pitmaster coaching.'
+}
+
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { getRandomVerse } from "@/lib/verses";

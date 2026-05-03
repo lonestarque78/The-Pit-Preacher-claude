@@ -1,6 +1,11 @@
 // apps/web/app/premium/page.tsx
 "use client";
 
+export const metadata = {
+  title: 'Plans & Pricing — Upgrade Your Cook',
+  description: 'Unlock the full Pit Preacher experience. Advanced BBQ cook planning, unlimited Preacher coaching, Wood Flavor Lab, Pit Rescue Mode, and more. Plans starting at $3.99 per month.'
+}
+
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { getTier } from "@/lib/premium";
