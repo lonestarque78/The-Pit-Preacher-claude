@@ -2,8 +2,7 @@
 
 import PlaybookLayout from "@/components/playbook/PlaybookLayout";
 import PlaybookCard from "@/components/playbook/PlaybookCard";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createServerClient } from "@/lib/supabase-server";
 import { tierMeetsRequirement } from "@/lib/premium";
 import Link from "next/link";
 
@@ -54,7 +53,7 @@ const MODULES = [
 ];
 
 export default async function PlaybookIndexPage() {
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
