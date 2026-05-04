@@ -771,7 +771,6 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
               </Link>
             </div>
           )}
-        </div>
 
 
           {/* ── PLANNED VS ACTUAL ── */}
@@ -1023,6 +1022,7 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
               </a>
             </div>
           )}
+        </div>
 
         {/* ── RIGHT COLUMN ── */}
         <div>

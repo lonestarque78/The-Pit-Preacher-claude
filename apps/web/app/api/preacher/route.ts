@@ -388,7 +388,7 @@ Remember to return your response as valid JSON with reply and logEvent fields.`;
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-20250514",
       max_tokens: maxTokens,
       system: systemForCall,
       messages: anthropicMessages,
