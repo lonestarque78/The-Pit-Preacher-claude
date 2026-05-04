@@ -75,6 +75,11 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
     };
     notes: string[];
   } | null>(null);
+  const [fireControlScore, setFireControlScore] = useState<{
+    score: number;
+    breakdown: { stability: number; responsiveness: number; efficiency: number };
+    notes: string[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [reflection, setReflection] = useState<string | null>(null);
@@ -131,6 +136,11 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
       fetch(`/api/confidence?cookId=${cookId}`)
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d && !d.error) setConfidenceScore(d); })
+        .catch(console.error);
+
+      fetch(`/api/fire-control?cookId=${cookId}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d && !d.error) setFireControlScore(d); })
         .catch(console.error);
     }
 
@@ -1285,6 +1295,102 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
                   <Link href="/premium" style={{
                     color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.75rem", textDecoration: "none",
                   }}>
+                    Upgrade to Pitmaster →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── FIRE CONTROL SCORE ── */}
+          {userTier === "pitmaster" && outcome ? (
+            fireControlScore ? (
+              <div style={{ marginTop: "var(--space-4)" }}>
+                <div style={{
+                  fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A",
+                  textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "var(--space-3)",
+                }}>
+                  Fire Control Score
+                </div>
+                <div style={cardStyle}>
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>
+                    <span style={{
+                      fontFamily: "var(--font-heading)", fontSize: "4rem", lineHeight: 1,
+                      color: fireControlScore.score >= 75 ? "#2D6A4F" : fireControlScore.score >= 50 ? "#C9973A" : "#8B1A1A",
+                    }}>
+                      {fireControlScore.score}
+                    </span>
+                    <span style={{ fontFamily: "var(--font-ui)", fontSize: "1rem", color: "var(--color-text-muted)", paddingBottom: "8px" }}>/100</span>
+                    <span style={{
+                      fontFamily: "var(--font-ui)", fontSize: "0.7rem",
+                      color: fireControlScore.score >= 75 ? "#2D6A4F" : fireControlScore.score >= 50 ? "#C9973A" : "#8B1A1A",
+                      textTransform: "uppercase", letterSpacing: "0.1em", paddingBottom: "10px",
+                    }}>
+                      {fireControlScore.score >= 85 ? "Elite" : fireControlScore.score >= 70 ? "Strong" : fireControlScore.score >= 55 ? "Solid" : fireControlScore.score >= 40 ? "Developing" : "Needs Work"}
+                    </span>
+                  </div>
+                  <div style={{ marginBottom: "var(--space-3)" }}>
+                    {[
+                      { label: "Stability", value: fireControlScore.breakdown.stability },
+                      { label: "Responsiveness", value: fireControlScore.breakdown.responsiveness },
+                      { label: "Efficiency", value: fireControlScore.breakdown.efficiency },
+                    ].map(({ label, value }) => (
+                      <div key={label} style={{ marginBottom: "var(--space-2)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                          <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</span>
+                          <span style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "#C9973A" }}>{value}/100</span>
+                        </div>
+                        <div style={{ height: "4px", background: "rgba(201,151,58,0.15)", borderRadius: "2px", overflow: "hidden" }}>
+                          <div style={{
+                            height: "100%", width: `${value}%`,
+                            background: value >= 75 ? "#2D6A4F" : value >= 50 ? "#C9973A" : "#8B1A1A",
+                            borderRadius: "2px",
+                          }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {fireControlScore.notes.length > 0 && (
+                    <div style={{ borderTop: "1px solid rgba(201,151,58,0.1)", paddingTop: "var(--space-3)" }}>
+                      <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                        {fireControlScore.notes.map((note, i) => (
+                          <li key={i} style={{
+                            display: "flex", gap: "var(--space-2)",
+                            fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--color-text-muted)",
+                            padding: "4px 0", lineHeight: 1.5,
+                          }}>
+                            <span style={{ color: "#C9973A", flexShrink: 0 }}>—</span>
+                            <span>{note}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null
+          ) : outcome && statusIsCompleted && (
+            <div style={{ marginTop: "var(--space-4)" }}>
+              <div style={{
+                fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A",
+                textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "var(--space-3)",
+              }}>
+                Fire Control Score
+              </div>
+              <div style={{ ...cardStyle, position: "relative", overflow: "hidden", minHeight: "100px" }}>
+                <div style={{ filter: "blur(4px)", pointerEvents: "none", userSelect: "none" }}>
+                  <div style={{ fontFamily: "var(--font-heading)", fontSize: "3rem", color: "#C9973A", lineHeight: 1 }}>—</div>
+                </div>
+                <div style={{
+                  position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "center",
+                  background: "rgba(14,12,10,0.7)", padding: "var(--space-3)", textAlign: "center",
+                }}>
+                  <span style={{ fontSize: "1.1rem", marginBottom: "var(--space-1)" }}>🔒</span>
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "var(--color-text-muted)", margin: "0 0 var(--space-2)", lineHeight: 1.4 }}>
+                    Fire Control Score is a Pitmaster-tier feature.
+                  </p>
+                  <Link href="/premium" style={{ color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.75rem", textDecoration: "none" }}>
                     Upgrade to Pitmaster →
                   </Link>
                 </div>
