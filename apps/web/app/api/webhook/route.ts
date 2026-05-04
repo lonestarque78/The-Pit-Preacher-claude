@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
-import type Stripe from "stripe";
+import Stripe from "stripe";
+import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export async function POST(request: Request) {
-  const stripe = new (await import("stripe")).default(process.env.STRIPE_SECRET_KEY!);
-  const supabase = (await import("@supabase/supabase-js")).createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
   const body = await request.text();
@@ -35,15 +38,12 @@ export async function POST(request: Request) {
         const customerId = session.customer as string;
         const subscriptionId = session.subscription as string;
 
-        // Get the subscription to find the price/tier
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const priceId = subscription.items.data[0]?.price.id ?? "";
         const tier = getTierFromPriceId(priceId);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rawPeriodEnd = (subscription as any).current_period_end as number | undefined;
         const periodEnd = rawPeriodEnd ? new Date(rawPeriodEnd * 1000).toISOString() : null;
 
-        // Find user by stripe_customer_id
         const { data: existing } = await supabase
           .from("subscriptions")
           .select("user_id")
@@ -71,7 +71,6 @@ export async function POST(request: Request) {
         const customerId = subscription.customer as string;
         const priceId = subscription.items.data[0]?.price.id ?? "";
         const tier = getTierFromPriceId(priceId);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rawEnd = (subscription as any).current_period_end as number | undefined;
         const periodEnd = rawEnd ? new Date(rawEnd * 1000).toISOString() : null;
         const status = subscription.status === "active" ? "active" : "inactive";
@@ -123,7 +122,6 @@ export async function POST(request: Request) {
       }
 
       default:
-        // Ignore unhandled event types
         break;
     }
   } catch (err) {
