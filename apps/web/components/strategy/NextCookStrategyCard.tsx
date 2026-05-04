@@ -63,7 +63,7 @@ export default function NextCookStrategyCard({ cookId, meatType, pitType, isPitm
       .then(d => { if (d && !d.error) setStrategy(d); })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [open, isPitmaster]);
+  }, [open, isPitmaster, meatType, pitType, cookId]);
 
   const cardBase: React.CSSProperties = {
     background: "var(--color-bg-alt)",

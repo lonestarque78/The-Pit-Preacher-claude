@@ -398,7 +398,7 @@ Remember to return your response as valid JSON with reply and logEvent fields.`;
   if (!anthropicRes.ok) {
     const errBody = await anthropicRes.text();
     console.error("Anthropic error:", anthropicRes.status, errBody);
-    return NextResponse.json({ error: "AI request failed", detail: errBody }, { status: 500 });
+    return NextResponse.json({ error: "AI request failed" }, { status: 500 });
   }
 
   const data = await anthropicRes.json();

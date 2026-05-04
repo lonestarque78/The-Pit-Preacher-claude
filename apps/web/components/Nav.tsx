@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
 
 export default function Nav() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [tier, setTier] = useState<string>("free");
   const [loading, setLoading] = useState(true);
 

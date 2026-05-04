@@ -1,5 +1,9 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function pitBehavior(events: any[]) {
+interface CookEvent {
+  type: string;
+  note?: string;
+}
+
+export function pitBehavior(events: CookEvent[]) {
   const tempLogs = events.filter((e) => e.type === "temp_log");
 
   if (tempLogs.length < 3) return "Pit behavior looks steady";
@@ -8,10 +12,8 @@ export function pitBehavior(events: any[]) {
   let drops = 0;
 
   for (let i = 1; i < tempLogs.length; i++) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prev = parseInt((tempLogs[i - 1] as any)?.note || "0");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const curr = parseInt((tempLogs[i] as any)?.note || "0");
+    const prev = parseInt(tempLogs[i - 1]?.note ?? "0");
+    const curr = parseInt(tempLogs[i]?.note ?? "0");
     const diff = curr - prev;
 
     if (diff > 20) spikes++;

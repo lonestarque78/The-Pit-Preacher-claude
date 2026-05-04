@@ -27,8 +27,6 @@ const HOURS_OPTIONS = [
   "Almost done",
 ];
 
-const SECTION_HEADERS = ["WHAT IS HAPPENING", "WHAT TO DO RIGHT NOW", "WHAT TO WATCH FOR"] as const;
-
 function parseDiagnosis(text: string): { header: string; content: string }[] {
   const headers = ["WHAT IS HAPPENING", "WHAT TO DO RIGHT NOW", "WHAT TO WATCH FOR"]
   const result: { header: string; content: string }[] = []
