@@ -134,12 +134,12 @@ export async function POST(request: Request) {
 
 function getTierFromPriceId(priceId: string): string {
   const priceMap: Record<string, string> = {
-    [process.env.STRIPE_PRICE_BASIC_MONTHLY!]: "basic",
-    [process.env.STRIPE_PRICE_BASIC_ANNUAL!]: "basic",
-    [process.env.STRIPE_PRICE_BACKYARD_MONTHLY!]: "backyard",
-    [process.env.STRIPE_PRICE_BACKYARD_ANNUAL!]: "backyard",
-    [process.env.STRIPE_PRICE_PITMASTER_MONTHLY!]: "pitmaster",
-    [process.env.STRIPE_PRICE_PITMASTER_ANNUAL!]: "pitmaster",
+    [process.env.STRIPE_BASIC_PRICE_ID!]: "basic",
+    [process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID!]: "basic",
+    [process.env.STRIPE_BACKYARD_PRICE_ID!]: "backyard",
+    [process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID!]: "backyard",
+    [process.env.STRIPE_PITMASTER_PRICE_ID!]: "pitmaster",
+    [process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID!]: "pitmaster",
   };
 
   return priceMap[priceId] ?? "free";
