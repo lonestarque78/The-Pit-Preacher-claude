@@ -10,17 +10,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2026-03-25.dahlia",
 });
 
-const PRICE_IDS: Record<string, string> = {
-  basic: "price_basic_monthly",
-  pitmaster: "price_pitmaster_monthly",
+const PRICE_IDS: Record<string, string | undefined> = {
+  basic:     process.env.STRIPE_BASIC_PRICE_ID,
+  backyard:  process.env.STRIPE_BACKYARD_PRICE_ID,
+  pitmaster: process.env.STRIPE_PITMASTER_PRICE_ID,
 };
 
 export async function POST(request: Request) {
   const supabase = await createServerClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -28,10 +26,10 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const tier = body.tier || "basic";
-
   const priceId = PRICE_IDS[tier];
+
   if (!priceId) {
-    return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid tier or price not configured" }, { status: 400 });
   }
 
   // Check if user already has a subscription
@@ -48,13 +46,10 @@ export async function POST(request: Request) {
   if (!customerId) {
     const customer = await stripe.customers.create({
       email: user.email,
-      metadata: {
-        userId: user.id,
-      },
+      metadata: { userId: user.id },
     });
     customerId = customer.id;
 
-    // Store the stripe_customer_id on subscriptions table
     await supabase.from("subscriptions").insert({
       user_id: user.id,
       tier: "free",
@@ -69,18 +64,10 @@ export async function POST(request: Request) {
     mode: "subscription",
     payment_method_types: ["card"],
     customer: customerId,
-    line_items: [
-      {
-        price: priceId,
-        quantity: 1,
-      },
-    ],
+    line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${siteUrl}/premium/success`,
     cancel_url: `${siteUrl}/premium/cancel`,
-    metadata: {
-      userId: user.id,
-      tier,
-    },
+    metadata: { userId: user.id, tier },
   });
 
   return NextResponse.json({ url: session.url });
