@@ -187,6 +187,7 @@ export default function Nav() {
                 {isPitmaster && (
                   <Link href="/pitmaster/trends" style={accentLinkStyle}>Pitmaster</Link>
                 )}
+                <Link href="/meet-the-preacher" style={linkStyle}>Meet the Preacher</Link>
                 <Link href="/about" style={linkStyle}>About</Link>
                 <button
                   onClick={handleLogout}
@@ -209,6 +210,7 @@ export default function Nav() {
             <div className="nav-desktop-links">
               <Link href="/how-it-works" style={linkStyle}>How It Works</Link>
               <Link href="/features" style={linkStyle}>Features</Link>
+              <Link href="/meet-the-preacher" style={linkStyle}>Meet the Preacher</Link>
               <Link href="/about" style={linkStyle}>About</Link>
               <Link href="/auth/login" style={linkStyle}>Log In</Link>
             </div>
@@ -309,6 +311,7 @@ export default function Nav() {
                 <Link href="/premium" className="slide-menu-link">Plans & Pricing</Link>
                 <Link href="/how-it-works" className="slide-menu-link">How It Works</Link>
                 <Link href="/features" className="slide-menu-link">Features</Link>
+                <Link href="/meet-the-preacher" className="slide-menu-link">Meet the Preacher</Link>
                 <Link href="/about" className="slide-menu-link">About</Link>
                 <button
                   onClick={handleLogout}
@@ -334,6 +337,7 @@ export default function Nav() {
                 <Link href="/auth/login" className="slide-menu-link">Log In</Link>
                 <Link href="/how-it-works" className="slide-menu-link">How It Works</Link>
                 <Link href="/features" className="slide-menu-link">Features</Link>
+                <Link href="/meet-the-preacher" className="slide-menu-link">Meet the Preacher</Link>
                 <Link href="/about" className="slide-menu-link">About</Link>
                 <Link href="/premium" className="slide-menu-link">Plans & Pricing</Link>
               </>
