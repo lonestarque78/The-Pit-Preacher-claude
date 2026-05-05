@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
+import { VERSES } from "@/lib/verses";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -211,6 +212,13 @@ const rowLabel: React.CSSProperties = {
   marginBottom: "var(--space-1)",
   marginTop: 0,
 };
+
+function getDailyVerse() {
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  return VERSES[dayOfYear % VERSES.length] ?? VERSES[0]!;
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -1086,6 +1094,31 @@ export default function Home() {
   };
 
   // ── Render ───────────────────────────────────────────────────────────────────
+
+  if (!user) {
+    const verse = getDailyVerse();
+    return (
+      <div style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(201,151,58,0.12) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(180,80,20,0.18) 0%, transparent 50%), linear-gradient(180deg, #0e0b07 0%, #1c1108 35%, #0e0b07 100%)", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(4rem, 10vw, 7rem) var(--space-4)", textAlign: "center", position: "relative", overflow: "hidden" }}>
+        <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.25em", margin: "0 0 var(--space-3)" }}>✦ Lone Star Que ✦</p>
+        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(2.2rem, 6vw, 4.5rem)", color: "#F5E6C8", fontWeight: 900, lineHeight: 1.08, margin: "0 0 var(--space-4)", maxWidth: "760px" }}>
+          Your Pitmaster<br /><span style={{ color: "transparent", WebkitTextStroke: "2px #C9973A" }}>in Your Pocket</span>
+        </h1>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: "clamp(1rem, 2.5vw, 1.2rem)", color: "#A89070", lineHeight: 1.7, maxWidth: "520px", margin: "0 auto var(--space-5)" }}>Cook with confidence. Learn your pit. Understand your meat. Get guidance that fits the way you cook.</p>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-3)" }}>
+          <Link href="/auth/login?tab=signup" style={{ display: "inline-block", background: "#C9973A", color: "#111", fontFamily: "var(--font-ui)", fontSize: "1rem", fontWeight: 700, padding: "14px 36px", borderRadius: "var(--radius-md)", textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.08em" }}>Start a Cook</Link>
+          <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", justifyContent: "center" }}>
+            <Link href="/meet-the-preacher" style={{ fontFamily: "var(--font-ui)", fontSize: "0.85rem", color: "#A89070", textDecoration: "none", borderBottom: "1px solid rgba(201,151,58,0.25)", paddingBottom: "2px" }}>Meet the Preacher</Link>
+            <Link href="/how-it-works" style={{ fontFamily: "var(--font-ui)", fontSize: "0.85rem", color: "#A89070", textDecoration: "none", borderBottom: "1px solid rgba(201,151,58,0.25)", paddingBottom: "2px" }}>How It Works</Link>
+            <Link href="/features" style={{ fontFamily: "var(--font-ui)", fontSize: "0.85rem", color: "#A89070", textDecoration: "none", borderBottom: "1px solid rgba(201,151,58,0.25)", paddingBottom: "2px" }}>Features</Link>
+          </div>
+        </div>
+        <div style={{ marginTop: "var(--space-6)", borderTop: "1px solid rgba(201,151,58,0.12)", paddingTop: "var(--space-4)", maxWidth: "480px" }}>
+          <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "rgba(201,151,58,0.55)", fontSize: "0.85rem", margin: "0 0 4px", lineHeight: 1.65 }}>&ldquo;{verse.text}&rdquo;</p>
+          <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.6rem", color: "rgba(201,151,58,0.35)", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0 }}>{verse.chapter}</p>
+        </div>
+      </div>
+    );
+  }
 
   const nextMonthStart = (() => {
     const d = new Date();
