@@ -3,17 +3,16 @@ import React from "react";
 import type { Metadata } from "next";
 import { Playfair_Display, Libre_Baskerville, Oswald } from "next/font/google";
 import Nav from "@/components/Nav";
+import Footer from "@/components/Footer";
 
 const heading = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-heading",
 });
-
 const body = Libre_Baskerville({
   subsets: ["latin"],
   variable: "--font-body",
 });
-
 const ui = Oswald({
   subsets: ["latin"],
   variable: "--font-ui",
@@ -56,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Nav />
         {children}
+        <Footer />
       </body>
     </html>
   );
