@@ -1270,7 +1270,7 @@ export default function Home() {
         lineHeight: 1.6,
         padding:    "0 var(--space-3)",
       }}>
-        &ldquo;{VERSES[0]}&rdquo;
+        &ldquo;{VERSES[0]?.text}&rdquo;
       </p>
 
       {/* ── MAIN BUILDER ── */}
