@@ -66,7 +66,20 @@ export default async function DashboardPage() {
         margin: "0 0 var(--space-3)",
         position: "relative",
       }}>
-        ✦ Lone Star Que ✦
+   ✦ Lone Star Que ✦
+      </p>
+
+      {/* Product name */}
+      <p style={{
+        fontFamily: "var(--font-ui)",
+        fontSize: "0.95rem",
+        color: "#C9973A",
+        textTransform: "uppercase",
+        letterSpacing: "0.3em",
+        margin: "0 0 var(--space-3)",
+        position: "relative",
+      }}>
+        The Pit Preacher
       </p>
 
       {/* Headline */}
