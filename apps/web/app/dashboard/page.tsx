@@ -29,35 +29,167 @@ export default async function DashboardPage() {
   const verse = getDailyVerse();
 
   const heroSection = (
-    <>
+    <div style={{
+      background: "radial-gradient(ellipse at 50% 0%, rgba(201,151,58,0.12) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(180,80,20,0.18) 0%, transparent 50%), linear-gradient(180deg, #0e0b07 0%, #1c1108 35%, #0e0b07 100%)",
+      padding: "clamp(4rem, 10vw, 7rem) var(--space-4) clamp(3rem, 8vw, 5rem)",
+      textAlign: "center",
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      {/* Ember glow accents */}
       <div style={{
-        background: "radial-gradient(ellipse at 50% 110%, rgba(232,98,10,0.15) 0%, transparent 55%), linear-gradient(180deg, #0c0a08 0%, #1a1008 40%, #0c0a08 100%)",
-        padding: "1.5rem 2rem 1rem",
-        textAlign: "center",
+        position: "absolute",
+        top: "15%",
+        left: "10%",
+        width: "300px",
+        height: "300px",
+        background: "radial-gradient(circle, rgba(201,100,20,0.08) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "absolute",
+        bottom: "10%",
+        right: "8%",
+        width: "250px",
+        height: "250px",
+        background: "radial-gradient(circle, rgba(201,151,58,0.06) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* Eyebrow */}
+      <p style={{
+        fontFamily: "var(--font-ui)",
+        fontSize: "0.7rem",
+        color: "#C9973A",
+        textTransform: "uppercase",
+        letterSpacing: "0.25em",
+        margin: "0 0 var(--space-3)",
+        position: "relative",
       }}>
-        <p style={{ fontFamily: "var(--font-ui)", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.75rem", marginTop: 0, marginBottom: "var(--space-3)" }}>
-          \u2756 Lone Star Que \u2756
-        </p>
-        <p style={{ fontFamily: "var(--font-heading)", fontStyle: "italic", color: "#C9973A", fontSize: "clamp(1rem, 2.5vw, 1.4rem)", fontWeight: 400, marginTop: 0, marginBottom: "var(--space-2)" }}>
-          The Gospel of Great BBQ
-        </p>
-        <h1 style={{ margin: 0, lineHeight: 1.05 }}>
-          <span style={{ display: "block", fontFamily: "var(--font-heading)", color: "#F5E6C8", fontSize: "clamp(2rem, 5vw, 3.5rem)", fontWeight: 400 }}>The</span>
-          <span style={{ display: "inline", fontFamily: "var(--font-heading)", color: "#F5E6C8", fontSize: "clamp(3rem, 8vw, 7rem)", fontWeight: 900 }}>Pit</span>
-          {" "}
-          <span style={{ display: "inline", fontFamily: "var(--font-heading)", color: "transparent", WebkitTextStroke: "2px #C9973A", fontSize: "clamp(3rem, 8vw, 7rem)", fontWeight: 900, fontStyle: "italic" }}>Preacher</span>
-        </h1>
+        ✦ Lone Star Que ✦
+      </p>
+
+      {/* Headline */}
+      <h1 style={{
+        fontFamily: "var(--font-heading)",
+        fontSize: "clamp(2.2rem, 6vw, 4.5rem)",
+        color: "#F5E6C8",
+        fontWeight: 900,
+        lineHeight: 1.08,
+        margin: "0 0 var(--space-4)",
+        maxWidth: "760px",
+        marginLeft: "auto",
+        marginRight: "auto",
+        position: "relative",
+      }}>
+        Your Pitmaster<br />
+        <span style={{ color: "transparent", WebkitTextStroke: "2px #C9973A" }}>in Your Pocket</span>
+      </h1>
+
+      {/* Subheadline */}
+      <p style={{
+        fontFamily: "var(--font-body)",
+        fontSize: "clamp(1rem, 2.5vw, 1.2rem)",
+        color: "#A89070",
+        lineHeight: 1.7,
+        maxWidth: "520px",
+        margin: "0 auto var(--space-5)",
+        position: "relative",
+      }}>
+        Cook with confidence. Learn your pit. Understand your meat. Get guidance that fits the way you cook.
+      </p>
+
+      {/* CTAs */}
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "var(--space-3)",
+        position: "relative",
+      }}>
+        {/* Primary CTA */}
+        <Link
+          href="/auth/login?tab=signup"
+          style={{
+            display: "inline-block",
+            background: "#C9973A",
+            color: "#111",
+            fontFamily: "var(--font-ui)",
+            fontSize: "1rem",
+            fontWeight: 700,
+            padding: "14px 36px",
+            borderRadius: "var(--radius-md)",
+            textDecoration: "none",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+          }}
+        >
+          Start a Cook
+        </Link>
+
+        {/* Secondary CTAs */}
+        <div style={{
+          display: "flex",
+          gap: "var(--space-4)",
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}>
+          {[
+            { label: "Meet the Preacher", href: "/meet-the-preacher" },
+            { label: "How It Works", href: "/how-it-works" },
+            { label: "Features", href: "/features" },
+          ].map(({ label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "0.85rem",
+                color: "#A89070",
+                textDecoration: "none",
+                letterSpacing: "0.05em",
+                borderBottom: "1px solid rgba(201,151,58,0.25)",
+                paddingBottom: "2px",
+              }}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
       </div>
-      <div style={{ height: "1px", background: "rgba(201,151,58,0.2)" }} />
-      <div style={{ textAlign: "center", padding: "var(--space-3) var(--space-4) 0", maxWidth: "560px", margin: "0 auto" }}>
-        <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "#D9C9A8", fontSize: "0.95rem", margin: "0 0 6px", lineHeight: 1.65 }}>
+
+      {/* Daily verse */}
+      <div style={{
+        marginTop: "var(--space-6)",
+        borderTop: "1px solid rgba(201,151,58,0.12)",
+        paddingTop: "var(--space-4)",
+        maxWidth: "480px",
+        marginLeft: "auto",
+        marginRight: "auto",
+        position: "relative",
+      }}>
+        <p style={{
+          fontFamily: "var(--font-body)",
+          fontStyle: "italic",
+          color: "rgba(201,151,58,0.55)",
+          fontSize: "0.85rem",
+          margin: "0 0 4px",
+          lineHeight: 1.65,
+        }}>
           &ldquo;{verse.text}&rdquo;
         </p>
-        <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.65rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0 }}>
+        <p style={{
+          fontFamily: "var(--font-ui)",
+          fontSize: "0.6rem",
+          color: "rgba(201,151,58,0.35)",
+          textTransform: "uppercase",
+          letterSpacing: "0.15em",
+          margin: 0,
+        }}>
           {verse.chapter}
         </p>
       </div>
-    </>
+    </div>
   );
 
   // ── LOGGED OUT ─────────────────────────────────────────────────────────────
@@ -67,22 +199,7 @@ export default async function DashboardPage() {
       <div>
         {heroSection}
 
-        <div style={{ textAlign: "center", padding: "var(--space-5) var(--space-4)" }}>
-          <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(1.8rem, 4vw, 2.5rem)", color: "#F5E6C8", margin: "0 0 var(--space-3)" }}>
-            Welcome to the Pulpit
-          </h2>
-          <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", maxWidth: "520px", margin: "0 auto var(--space-4)" }}>
-            The Pit Preacher is your personal BBQ coach. Built by a pitmaster, powered by 25 years of fire and smoke.
-          </p>
-          <div style={{ display: "flex", gap: "var(--space-3)", justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/auth/login?tab=signup" style={{ display: "inline-block", background: "#C9973A", color: "var(--color-bg)", fontFamily: "var(--font-ui)", padding: "12px 28px", borderRadius: "var(--radius-lg)", textDecoration: "none" }}>
-              Join Free \u2192
-            </Link>
-            <Link href="/premium" style={{ display: "inline-block", background: "transparent", border: "1px solid rgba(201,151,58,0.4)", color: "#C9973A", fontFamily: "var(--font-ui)", padding: "12px 28px", borderRadius: "var(--radius-lg)", textDecoration: "none" }}>
-              See Plans
-            </Link>
-          </div>
-        </div>
+        <div style={{ height: "1px", background: "rgba(201,151,58,0.1)" }} />
 
         <div style={{ maxWidth: "1000px", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "var(--space-4)", padding: "var(--space-2) var(--space-4) var(--space-5)" }}>
           {[
