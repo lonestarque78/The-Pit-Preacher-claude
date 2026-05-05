@@ -5,21 +5,28 @@ export const metadata = {
 
 import { createServerClient } from "@/lib/supabase-server";
 import { getTier } from "@/lib/premium";
-import { getRandomVerse } from "@/lib/verses";
+import { VERSES } from "@/lib/verses";
 import Link from "next/link";
 import CookList from "./CookList";
+
+function getDailyVerse() {
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  return VERSES[dayOfYear % VERSES.length] ?? VERSES[0]!;
+}
 
 function tierBadgeStyle(tier: string): { bg: string; border: string; label: string } {
   if (tier === "basic")     return { bg: "rgba(201,151,58,0.1)", border: "1px solid rgba(201,151,58,0.3)", label: "Basic" };
   if (tier === "backyard")  return { bg: "rgba(139,105,26,0.2)", border: "1px solid rgba(201,151,58,0.3)", label: "Backyard" };
-  if (tier === "pitmaster") return { bg: "rgba(201,151,58,0.2)", border: "1px solid #C9973A",              label: "✦ Pitmaster" };
+  if (tier === "pitmaster") return { bg: "rgba(201,151,58,0.2)", border: "1px solid #C9973A",              label: "\u2756 Pitmaster" };
   return { bg: "rgba(201,151,58,0.1)", border: "1px solid rgba(201,151,58,0.3)", label: "Free Plan" };
 }
 
 export default async function DashboardPage() {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const verse = getRandomVerse();
+  const verse = getDailyVerse();
 
   const heroSection = (
     <>
@@ -29,7 +36,7 @@ export default async function DashboardPage() {
         textAlign: "center",
       }}>
         <p style={{ fontFamily: "var(--font-ui)", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.75rem", marginTop: 0, marginBottom: "var(--space-3)" }}>
-          ✦ Lone Star Que ✦
+          \u2756 Lone Star Que \u2756
         </p>
         <p style={{ fontFamily: "var(--font-heading)", fontStyle: "italic", color: "#C9973A", fontSize: "clamp(1rem, 2.5vw, 1.4rem)", fontWeight: 400, marginTop: 0, marginBottom: "var(--space-2)" }}>
           The Gospel of Great BBQ
@@ -42,9 +49,14 @@ export default async function DashboardPage() {
         </h1>
       </div>
       <div style={{ height: "1px", background: "rgba(201,151,58,0.2)" }} />
-      <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "var(--color-text-muted)", fontSize: "0.85rem", textAlign: "center", margin: "var(--space-2) auto 0", maxWidth: "520px", lineHeight: 1.6, padding: "0 var(--space-3)" }}>
-        &ldquo;{verse.text}&rdquo;
-      </p>
+      <div style={{ textAlign: "center", padding: "var(--space-3) var(--space-4) 0", maxWidth: "560px", margin: "0 auto" }}>
+        <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "#D9C9A8", fontSize: "0.95rem", margin: "0 0 6px", lineHeight: 1.65 }}>
+          &ldquo;{verse.text}&rdquo;
+        </p>
+        <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.65rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0 }}>
+          {verse.chapter}
+        </p>
+      </div>
     </>
   );
 
@@ -64,7 +76,7 @@ export default async function DashboardPage() {
           </p>
           <div style={{ display: "flex", gap: "var(--space-3)", justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/auth/login?tab=signup" style={{ display: "inline-block", background: "#C9973A", color: "var(--color-bg)", fontFamily: "var(--font-ui)", padding: "12px 28px", borderRadius: "var(--radius-lg)", textDecoration: "none" }}>
-              Join Free →
+              Join Free \u2192
             </Link>
             <Link href="/premium" style={{ display: "inline-block", background: "transparent", border: "1px solid rgba(201,151,58,0.4)", color: "#C9973A", fontFamily: "var(--font-ui)", padding: "12px 28px", borderRadius: "var(--radius-lg)", textDecoration: "none" }}>
               See Plans
@@ -103,7 +115,6 @@ export default async function DashboardPage() {
   const displayName = profile?.display_name || "Pitmaster";
   const badge       = tierBadgeStyle(tier);
 
-  // Load cook_logs for all cook IDs
   const cookIds = allCooks.map(c => c.id as string);
   let cookLogMap: Record<string, any> = {};
   if (cookIds.length > 0) {
@@ -111,7 +122,6 @@ export default async function DashboardPage() {
     for (const log of logsData ?? []) cookLogMap[log.cook_id] = log;
   }
 
-  // Abandoned cook check
   const renderNow = new Date();
   const fortyEightHoursAgo = new Date(renderNow.getTime() - 48 * 60 * 60 * 1000).toISOString();
   const finalCooks: any[] = [];
@@ -142,12 +152,12 @@ export default async function DashboardPage() {
       {/* Compact header bar */}
       <div style={{ background: "var(--color-bg-alt)", borderBottom: "1px solid rgba(201,151,58,0.15)", padding: "var(--space-2) var(--space-4)", minHeight: "72px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
         <div>
-          <p style={{ fontFamily: "var(--font-ui)", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.65rem", margin: "0 0 2px" }}>✦ The Pit Preacher ✦</p>
+          <p style={{ fontFamily: "var(--font-ui)", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.65rem", margin: "0 0 2px" }}>\u2756 The Pit Preacher \u2756</p>
           <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.3rem", color: "#F5E6C8", margin: 0, fontWeight: 400 }}>The Pit Preacher</h1>
         </div>
         <div style={{ textAlign: "right", maxWidth: "280px" }}>
-          <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "var(--color-text-muted)", fontSize: "0.75rem", margin: "0 0 2px", lineHeight: 1.4 }}>
-            &ldquo;{verse.text.length > 80 ? verse.text.slice(0, 80) + "…" : verse.text}&rdquo;
+          <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "#D9C9A8", fontSize: "0.75rem", margin: "0 0 2px", lineHeight: 1.4 }}>
+            &ldquo;{verse.text.length > 80 ? verse.text.slice(0, 80) + "\u2026" : verse.text}&rdquo;
           </p>
           <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.6rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0 }}>{verse.chapter}</p>
         </div>
@@ -161,7 +171,7 @@ export default async function DashboardPage() {
         </span>
       </div>
 
-      {/* Cook list (client component — filter cards + cook cards) */}
+      {/* Cook list */}
       <CookList cooks={finalCooks} logsMap={cookLogMap} />
 
       {/* Tier-aware marketing */}
@@ -169,7 +179,7 @@ export default async function DashboardPage() {
         <>
           <div style={{ margin: "0 var(--space-4) var(--space-3)", display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
             <div style={{ flex: 1, height: "1px", background: "rgba(201,151,58,0.15)" }} />
-            <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.65rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", margin: 0, whiteSpace: "nowrap" }}>✦ Level Up Your Cook ✦</p>
+            <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.65rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", margin: 0, whiteSpace: "nowrap" }}>\u2756 Level Up Your Cook \u2756</p>
             <div style={{ flex: 1, height: "1px", background: "rgba(201,151,58,0.15)" }} />
           </div>
           <div style={{ padding: "0 var(--space-4) var(--space-4)" }}>
@@ -205,7 +215,7 @@ export default async function DashboardPage() {
               <div style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.15)", borderRadius: "var(--radius-lg)", padding: "var(--space-4)" }}>
                 <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: "#F5E6C8", margin: "0 0 var(--space-2)" }}>Ready for More?</h3>
                 <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", margin: "0 0 var(--space-3)" }}>
-                  Upgrade to Backyard and unlock advanced features including Secret Finishing Moves, Smoke Color Interpreter, and Pit Preacher Challenges.
+                  Upgrade to Backyard and unlock advanced features including the Pitmaster&apos;s Playbook, Pit Rescue Mode, and your full Cook Log.
                 </p>
                 <Link href="/premium" style={{ display: "inline-block", background: "#C9973A", color: "var(--color-bg)", fontFamily: "var(--font-ui)", fontSize: "0.85rem", padding: "10px 20px", borderRadius: "var(--radius-md)", textDecoration: "none" }}>
                   Upgrade to Backyard — $7.99/mo
@@ -216,10 +226,10 @@ export default async function DashboardPage() {
             {tier === "backyard" && (
               <div style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.1)", borderRadius: "var(--radius-lg)", padding: "var(--space-3) var(--space-4)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "var(--space-2)" }}>
                 <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "var(--color-text-muted)", margin: 0 }}>
-                  Ready for the Pitmaster tier? Unlock The Pitmaster&apos;s Table and elite techniques.
+                  Ready for the Pitmaster tier? Unlock Trend Analysis, Meat Profiles, Pit Profiles, and elite cook intelligence.
                 </p>
                 <Link href="/premium" style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "#C9973A", textDecoration: "none", whiteSpace: "nowrap" }}>
-                  Learn more →
+                  Learn more \u2192
                 </Link>
               </div>
             )}

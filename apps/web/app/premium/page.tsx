@@ -1,8 +1,6 @@
 // apps/web/app/premium/page.tsx
 "use client";
 
-
-
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { getTier } from "@/lib/premium";
@@ -14,43 +12,51 @@ const TIERS = [
     key: "basic",
     commandment: "The First Commandment",
     name: "Basic",
+    tagline: "You shall not cook blind.",
     price: "$3.99",
     period: "/mo",
+    description: "The Preacher speaks. Ask anything about your cook, your pit, or your meat. Unlimited questions. No more guessing.",
     features: [
-      "Meal Prep",
-      "Cook Plan",
-      "Cook Timeline",
-      "Fire Management",
-      "Seasoning & Rubs",
+      "Ask the Preacher — unlimited questions",
+      "Smart Cook Planner",
+      "Fire & Time Blueprint",
+      "Pitmaster's Playbook — foundational modules",
+      "Smoker Profile Engine",
     ],
   },
   {
     key: "backyard",
     commandment: "The Second Commandment",
     name: "Backyard",
+    tagline: "You shall tend the pit with purpose.",
     price: "$7.99",
     period: "/mo",
+    description: "Everything in Basic, plus the full Pitmaster's Playbook, Pit Rescue Mode, and your Cook Log. Your setup, your wood, your history — all in one place.",
     features: [
       "Everything in Basic",
-      "Cook Logs",
-      "Flavor Memory",
+      "Full Pitmaster's Playbook",
+      "Pit Rescue Mode",
+      "Cook Log & Notes",
+      "Flavor Autograph Builder",
       "Wood Flavor Lab",
-      "Fix My Cook Button",
     ],
   },
   {
     key: "pitmaster",
     commandment: "The Third Commandment",
     name: "Pitmaster",
+    tagline: "You shall know yourself as a cook.",
     price: "$11.99",
     period: "/mo",
+    description: "The full congregation. Trend Analysis, Meat Profiles, Pit Profiles, Cook Confidence Scores, Fire Control Scores, Deep Insights, and a personalized strategy before every cook.",
     features: [
       "Everything in Backyard",
-      "Secret Finishing Moves",
-      "Pit Preacher Challenges",
-      "Smoke Color Interpreter",
-      "Perfect Pairings Library",
-      "The Pitmaster's Table",
+      "Trend Analysis",
+      "Meat & Pit Profiles",
+      "Cook Confidence Score",
+      "Fire Control Score",
+      "Next Cook Strategy Card",
+      "Deep Insights Overlay",
     ],
   },
 ];
@@ -63,7 +69,6 @@ export default function PremiumPage() {
 
   useEffect(() => {
     const supabase = createClient();
-
     supabase.auth.getUser().then(({ data }) => {
       if (data?.user) {
         getTier(data.user.id, supabase).then((tier) => {
@@ -82,9 +87,7 @@ export default function PremiumPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tier: tierKey }),
     });
-
     const data = await res.json();
-
     if (data.url) {
       window.location.href = data.url;
     } else if (data.error) {
@@ -98,17 +101,16 @@ export default function PremiumPage() {
 
     if (tierKey === currentTier) {
       return (
-        <span
-          style={{
-            display: "inline-block",
-            padding: "var(--space-2) var(--space-4)",
-            background: "var(--color-bg-alt)",
-            borderRadius: "var(--radius-md)",
-            fontFamily: "var(--font-ui)",
-            color: "var(--color-text-muted)",
-            border: "1px solid var(--color-border)",
-          }}
-        >
+        <span style={{
+          display: "inline-block",
+          padding: "var(--space-2) var(--space-4)",
+          background: "var(--color-bg-alt)",
+          borderRadius: "var(--radius-md)",
+          fontFamily: "var(--font-ui)",
+          color: "var(--color-text-muted)",
+          border: "1px solid var(--color-border)",
+          fontSize: "0.85rem",
+        }}>
           ✓ Current Plan
         </span>
       );
@@ -119,14 +121,13 @@ export default function PremiumPage() {
     }
 
     return (
-      <span
-        style={{
-          display: "inline-block",
-          padding: "var(--space-2) var(--space-4)",
-          fontFamily: "var(--font-ui)",
-          color: "var(--color-text-muted)",
-        }}
-      >
+      <span style={{
+        display: "inline-block",
+        padding: "var(--space-2) var(--space-4)",
+        fontFamily: "var(--font-ui)",
+        color: "var(--color-text-muted)",
+        fontSize: "0.85rem",
+      }}>
         ✓ Included
       </span>
     );
@@ -141,48 +142,127 @@ export default function PremiumPage() {
   }
 
   return (
-    <div style={{ padding: "20px 24px" }}>
+    <div style={{ padding: "20px 24px", maxWidth: "1100px", margin: "0 auto" }}>
+
+      {/* Back nav */}
       <div style={{ marginBottom: "var(--space-3)" }}>
         <Link href="/dashboard" style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "var(--color-text-muted)", textDecoration: "none" }}>
           ← Dashboard
         </Link>
       </div>
 
-      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.4rem", marginBottom: "var(--space-2)", textAlign: "center" }}>
-        Pit Preacher Premium
-      </h1>
+      {/* Header */}
+      <div style={{ textAlign: "center", marginBottom: "var(--space-5)" }}>
+        <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", margin: "0 0 var(--space-2)" }}>
+          The Congregation
+        </p>
+        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(1.8rem, 4vw, 2.5rem)", color: "#F5E6C8", margin: "0 0 var(--space-2)" }}>
+          Plans & Pricing
+        </h1>
+        <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", fontSize: "0.9rem", maxWidth: "480px", margin: "0 auto", lineHeight: 1.6 }}>
+          Choose the plan that fits the way you cook. Upgrade anytime.
+        </p>
+      </div>
 
-      <p style={{ marginBottom: "var(--space-3)", textAlign: "center", color: "var(--color-text-muted)", fontSize: "0.85rem", maxWidth: "500px", marginLeft: "auto", marginRight: "auto" }}>
-        Choose the plan that fits your smoking style. Upgrade anytime to unlock more features.
-      </p>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "var(--space-3)", maxWidth: "1000px", margin: "0 auto" }}>
+      {/* Tier cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "var(--space-4)" }}>
         {TIERS.map((tier) => (
-          <div key={tier.key} style={{
-            background: "var(--color-bg-alt)",
-            padding: "var(--space-3)",
-            borderRadius: "var(--radius-lg)",
-            border: currentTier === tier.key ? "2px solid var(--color-accent)" : "2px solid transparent",
-          }}>
-            <p style={{ fontFamily: "var(--font-ui)", color: "var(--color-accent)", fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 var(--space-1)" }}>
+          <div
+            key={tier.key}
+            style={{
+              background: "var(--color-bg-alt)",
+              padding: "var(--space-4)",
+              borderRadius: "var(--radius-lg)",
+              border: currentTier === tier.key
+                ? "2px solid #C9973A"
+                : "1px solid rgba(201,151,58,0.15)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "var(--space-2)",
+            }}
+          >
+            {/* Commandment label */}
+            <p style={{
+              fontFamily: "var(--font-ui)",
+              color: "#C9973A",
+              fontSize: "0.65rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.15em",
+              margin: 0,
+            }}>
               {tier.commandment}
             </p>
-            <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.2rem", marginBottom: "var(--space-1)" }}>
+
+            {/* Tier name */}
+            <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.4rem", color: "#F5E6C8", margin: 0 }}>
               {tier.name}
             </h2>
-            <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", marginBottom: "var(--space-1)" }}>
+
+            {/* Tagline */}
+            <p style={{
+              fontFamily: "var(--font-body)",
+              fontStyle: "italic",
+              fontSize: "0.9rem",
+              color: "#D9C9A8",
+              margin: 0,
+              lineHeight: 1.5,
+            }}>
+              {tier.tagline}
+            </p>
+
+            {/* Price */}
+            <div style={{ fontFamily: "var(--font-heading)", fontSize: "2rem", color: "#F5E6C8", margin: "var(--space-1) 0" }}>
               {tier.price}
-              <span style={{ fontSize: "0.9rem", color: "var(--color-text-muted)" }}>{tier.period}</span>
+              <span style={{ fontSize: "1rem", color: "var(--color-text-muted)", fontFamily: "var(--font-body)" }}>{tier.period}</span>
             </div>
-            <ul style={{ marginBottom: "var(--space-3)", paddingLeft: "var(--space-3)", lineHeight: 1.6, fontSize: "0.875rem" }}>
+
+            {/* Description */}
+            <p style={{
+              fontFamily: "var(--font-body)",
+              fontSize: "0.85rem",
+              color: "var(--color-text-muted)",
+              margin: 0,
+              lineHeight: 1.6,
+            }}>
+              {tier.description}
+            </p>
+
+            {/* Features */}
+            <ul style={{ margin: "var(--space-2) 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
               {tier.features.map((feature) => (
-                <li key={feature} style={{ marginBottom: "2px" }}>{feature}</li>
+                <li key={feature} style={{
+                  fontFamily: "var(--font-body)",
+                  fontSize: "0.85rem",
+                  color: "var(--color-text-muted)",
+                  display: "flex",
+                  gap: "8px",
+                  alignItems: "flex-start",
+                }}>
+                  <span style={{ color: "#C9973A", flexShrink: 0 }}>·</span>
+                  {feature}
+                </li>
               ))}
             </ul>
-            <div>{getButton(tier.key)}</div>
+
+            {/* CTA */}
+            <div style={{ marginTop: "var(--space-2)" }}>
+              {getButton(tier.key)}
+            </div>
           </div>
         ))}
       </div>
+
+      {/* Footer note */}
+      <p style={{
+        fontFamily: "var(--font-body)",
+        fontSize: "0.8rem",
+        color: "var(--color-text-muted)",
+        textAlign: "center",
+        marginTop: "var(--space-5)",
+        fontStyle: "italic",
+      }}>
+        All plans include a free tier to get started. Cancel anytime.
+      </p>
     </div>
   );
 }
