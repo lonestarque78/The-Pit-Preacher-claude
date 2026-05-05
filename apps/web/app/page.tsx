@@ -1095,9 +1095,28 @@ if (!user) {
       <div style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(201,151,58,0.12) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(180,80,20,0.18) 0%, transparent 50%), linear-gradient(180deg, #0e0b07 0%, #1c1108 35%, #0e0b07 100%)", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(4rem, 10vw, 7rem) var(--space-4)", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.25em", margin: "0 0 var(--space-2)" }}>✦ Lone Star Que ✦</p>
         <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.95rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.3em", margin: "0 0 var(--space-3)" }}>The Pit Preacher</p>
-        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(2.2rem, 6vw, 4.5rem)", color: "#F5E6C8", fontWeight: 900, lineHeight: 1.08, margin: "0 0 var(--space-4)", maxWidth: "760px" }}>
-          Your Pitmaster<br /><span style={{ color: "transparent", WebkitTextStroke: "2px #C9973A" }}>in Your Pocket</span>
-        </h1>
+        <h1
+  style={{
+    fontFamily: "var(--font-heading)",
+    fontSize: "clamp(2.2rem, 6vw, 4.5rem)",
+    color: "#F5E6C8",
+    fontWeight: 900,
+    lineHeight: 1.08,
+    margin: "0 0 var(--space-4)",
+    maxWidth: "760px"
+  }}
+>
+  BBQ Guidance<br />
+  <span
+    style={{
+      color: "transparent",
+      WebkitTextStroke: "2px #C9973A"
+    }}
+  >
+    Made Simple
+  </span>
+</h1>
+
         <p style={{ fontFamily: "var(--font-body)", fontSize: "clamp(1rem, 2.5vw, 1.2rem)", color: "#A89070", lineHeight: 1.7, maxWidth: "520px", margin: "0 auto var(--space-5)" }}>Cook with confidence. Learn your pit. Understand your meat. Get guidance that fits the way you cook.</p>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-3)" }}>
           <Link href="/auth/login?tab=signup" style={{ display: "inline-block", background: "#C9973A", color: "#111", fontFamily: "var(--font-ui)", fontSize: "1rem", fontWeight: 700, padding: "14px 36px", borderRadius: "var(--radius-md)", textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.08em" }}>Start a Cook</Link>
