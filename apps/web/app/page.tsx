@@ -96,11 +96,6 @@ const STYLE_SUB_OPTIONS: Record<string, { key: string; label: string }[]> = {
   memphis:  [{ key: "memphis_dry", label: "Dry Rub" }, { key: "memphis_wet", label: "Wet" }],
 };
 
-const VERSES = [
-  "The stall is not failure. The stall is patience being tested.",
-  "Low and slow is not a temperature. It is a way of life.",
-  "If you tend to the pit with pride, the meat will preach on its own.",
-];
 
 const DAY_ABBRS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_ABBRS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
