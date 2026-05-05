@@ -1117,7 +1117,19 @@ if (!user) {
   </span>
 </h1>
 
-        <p style={{ fontFamily: "var(--font-body)", fontSize: "clamp(1rem, 2.5vw, 1.2rem)", color: "#A89070", lineHeight: 1.7, maxWidth: "520px", margin: "0 auto var(--space-5)" }}>Cook with confidence. Learn your pit. Understand your meat. Get guidance that fits the way you cook.</p>
+    <p
+  style={{
+    fontFamily: "var(--font-body)",
+    fontSize: "clamp(1rem, 2.5vw, 1.2rem)",
+    color: "#A89070",
+    lineHeight: 1.7,
+    maxWidth: "520px",
+    margin: "0 auto var(--space-5)"
+  }}
+>
+  Know your pit. Trust your cook. Own the fire.
+</p>
+
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-3)" }}>
           <Link href="/auth/login?tab=signup" style={{ display: "inline-block", background: "#C9973A", color: "#111", fontFamily: "var(--font-ui)", fontSize: "1rem", fontWeight: 700, padding: "14px 36px", borderRadius: "var(--radius-md)", textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.08em" }}>Start a Cook</Link>
           <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", justifyContent: "center" }}>
