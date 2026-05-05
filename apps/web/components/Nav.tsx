@@ -207,6 +207,8 @@ export default function Nav() {
             </>
           ) : (
             <div className="nav-desktop-links">
+              <Link href="/how-it-works" style={linkStyle}>How It Works</Link>
+              <Link href="/features" style={linkStyle}>Features</Link>
               <Link href="/about" style={linkStyle}>About</Link>
               <Link href="/auth/login" style={linkStyle}>Log In</Link>
             </div>
@@ -305,6 +307,8 @@ export default function Nav() {
                 {/* Account */}
                 <div className="slide-menu-label">Account</div>
                 <Link href="/premium" className="slide-menu-link">Plans & Pricing</Link>
+                <Link href="/how-it-works" className="slide-menu-link">How It Works</Link>
+                <Link href="/features" className="slide-menu-link">Features</Link>
                 <Link href="/about" className="slide-menu-link">About</Link>
                 <button
                   onClick={handleLogout}
@@ -328,6 +332,8 @@ export default function Nav() {
               <>
                 <div className="slide-menu-label">Get Started</div>
                 <Link href="/auth/login" className="slide-menu-link">Log In</Link>
+                <Link href="/how-it-works" className="slide-menu-link">How It Works</Link>
+                <Link href="/features" className="slide-menu-link">Features</Link>
                 <Link href="/about" className="slide-menu-link">About</Link>
                 <Link href="/premium" className="slide-menu-link">Plans & Pricing</Link>
               </>
