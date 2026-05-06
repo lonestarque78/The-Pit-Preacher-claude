@@ -3,7 +3,11 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase-server'
-import type { ExperienceLevel } from '@/types/account'
+import type {
+  ExperienceLevel,
+  TemperatureUnit,
+  PreacherVoiceMode,
+} from '@/types/account'
 import {
   updateProfile,
   updatePreferences,
@@ -58,8 +62,8 @@ export async function updateSettingsAction(
   try {
     const user = await getAuthUser()
     const payload = {
-      units:                 (formData.get('units') as string) || 'F',
-      preacher_voice_mode:   (formData.get('preacher_voice_mode') as string) || 'normal',
+      units:                 (formData.get('units') as TemperatureUnit) || 'F',
+      preacher_voice_mode:   (formData.get('preacher_voice_mode') as PreacherVoiceMode) || 'normal',
       notifications_enabled: formData.get('notifications_enabled') === 'on',
       beta_features_enabled: formData.get('beta_features_enabled') === 'on',
       default_pit_id:        (formData.get('default_pit_id') as string) || null,
