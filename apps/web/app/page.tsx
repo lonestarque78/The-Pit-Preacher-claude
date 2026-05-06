@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
-import { VERSES } from "@/lib/verses";
+import { VERSES, type Verse } from "@/lib/verses";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -225,7 +225,7 @@ export default function Home() {
   const [next7Days, setNext7Days] = useState<Date[]>([]);
   const [pickerDate, setPickerDate] = useState<Date | null>(null);
   const [pickerTime, setPickerTime] = useState("18:00");
-  const [dailyVerse, setDailyVerse] = useState(null);
+  const [dailyVerse, setDailyVerse] = useState<Verse | null>(null);
 
   const [flavorSmoke, setFlavorSmoke] = useState(7);
   const [flavorBark, setFlavorBark] = useState(8);
