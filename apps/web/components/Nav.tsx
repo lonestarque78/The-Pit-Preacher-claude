@@ -5,26 +5,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
+import { Sidebar } from "./Sidebar";
 
 export default function Nav() {
   const [user, setUser] = useState<User | null>(null);
-  const [tier, setTier] = useState<string>("free");
   const [loading, setLoading] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data }) => {
+    supabase.auth.getUser().then(({ data }) => {
       setUser(data?.user || null);
-      if (data?.user) {
-        const { data: subData } = await supabase
-          .from("subscriptions")
-          .select("tier")
-          .eq("user_id", data.user.id)
-          .single();
-        setTier(subData?.tier ?? "free");
-      }
       setLoading(false);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -33,9 +26,10 @@ export default function Nav() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Close menu on route change
+  // Close menus on route change
   useEffect(() => {
-    setMenuOpen(false);
+    setUserMenuOpen(false);
+    setSidebarOpen(false);
   }, [pathname]);
 
   const handleLogout = async () => {
@@ -44,307 +38,244 @@ export default function Nav() {
     window.location.href = "/";
   };
 
-  const isPitmaster = tier === "pitmaster";
-  const isBackyardPlus = tier === "backyard" || tier === "pitmaster";
-  const isBasicPlus = tier === "basic" || tier === "backyard" || tier === "pitmaster";
-
-  const linkStyle = {
-    fontFamily: "var(--font-ui)",
-    fontSize: "0.875rem",
-    color: "var(--color-text)" as const,
-    textDecoration: "none" as const,
-    whiteSpace: "nowrap" as const,
-  };
-
-  const accentLinkStyle = {
-    ...linkStyle,
-    color: "#C9973A" as const,
-  };
-
   return (
     <>
       <style>{`
-        .nav-desktop-links {
+        .nav-bar {
+          background: var(--color-bg-alt);
+          border-bottom: 1px solid rgba(201, 151, 58, 0.12);
+          padding: 0 var(--space-4);
+          height: 64px;
           display: flex;
           align-items: center;
-          gap: var(--space-4);
-        }
-        .nav-hamburger {
-          display: none;
-        }
-        @media (max-width: 768px) {
-          .nav-desktop-links {
-            display: none;
-          }
-          .nav-hamburger {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-        }
-        .slide-menu-backdrop {
-          position: fixed;
-          inset: 0;
-          background: rgba(10, 8, 6, 0.7);
-          z-index: 90;
-          animation: fadeIn 0.2s ease;
-        }
-        .slide-menu-panel {
-          position: fixed;
+          justify-content: space-between;
+          position: sticky;
           top: 0;
-          right: 0;
-          bottom: 0;
-          width: min(320px, 85vw);
-          background: var(--color-bg-alt);
-          border-left: 1px solid rgba(201,151,58,0.2);
-          z-index: 91;
+          z-index: 40;
+        }
+
+        .nav-left {
           display: flex;
-          flex-direction: column;
-          padding: var(--space-4);
-          animation: slideIn 0.25s ease;
-          overflow-y: auto;
+          align-items: center;
+          gap: var(--space-6);
         }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+
+        .nav-logo {
+          font-family: var(--font-heading);
+          font-size: 1.25rem;
+          color: var(--color-accent);
+          text-decoration: none;
+          font-weight: 600;
+          letter-spacing: 0.04em;
         }
-        @keyframes slideIn {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
+
+        .nav-center {
+          display: flex;
+          gap: var(--space-5);
+          align-items: center;
+          list-style: none;
+          margin: 0;
+          padding: 0;
         }
-        .slide-menu-link {
+
+        .nav-center a {
           font-family: var(--font-ui);
-          font-size: 1rem;
+          font-size: 0.875rem;
           color: var(--color-text);
           text-decoration: none;
-          padding: var(--space-2) 0;
-          border-bottom: 1px solid rgba(201,151,58,0.08);
-          display: block;
-          letter-spacing: 0.03em;
-        }
-        .slide-menu-link:last-of-type {
-          border-bottom: none;
-        }
-        .slide-menu-link.accent {
-          color: #C9973A;
-        }
-        .slide-menu-label {
-          font-family: var(--font-ui);
-          font-size: 0.65rem;
-          color: var(--color-text-muted);
+          letter-spacing: 0.02em;
+          transition: color 0.2s;
           text-transform: uppercase;
-          letter-spacing: 0.15em;
-          margin: var(--space-3) 0 var(--space-1);
+        }
+
+        .nav-center a:hover {
+          color: var(--color-accent);
+        }
+
+        .nav-right {
+          display: flex;
+          align-items: center;
+          gap: var(--space-3);
+        }
+
+        .user-button {
+          background: none;
+          border: 1px solid rgba(201, 151, 58, 0.3);
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--color-accent);
+          font-family: var(--font-ui);
+          font-size: 0.875rem;
+          transition: all 0.2s;
+        }
+
+        .user-button:hover {
+          border-color: var(--color-accent);
+          background: rgba(201, 151, 58, 0.08);
+        }
+
+        .user-menu {
+          position: absolute;
+          top: 64px;
+          right: var(--space-4);
+          background: var(--color-bg-alt);
+          border: 1px solid rgba(201, 151, 58, 0.2);
+          border-radius: var(--radius-lg);
+          min-width: 180px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+          z-index: 50;
+          animation: slideDown 0.2s ease;
+        }
+
+        .user-menu ul {
+          list-style: none;
+          margin: 0;
+          padding: var(--space-2) 0;
+        }
+
+        .user-menu li {
+          margin: 0;
+        }
+
+        .user-menu a,
+        .user-menu button {
+          display: block;
+          width: 100%;
+          padding: var(--space-2) var(--space-4);
+          text-align: left;
+          background: none;
+          border: none;
+          color: var(--color-text);
+          font-family: var(--font-ui);
+          font-size: 0.875rem;
+          cursor: pointer;
+          text-decoration: none;
+          transition: all 0.2s;
+        }
+
+        .user-menu a:hover,
+        .user-menu button:hover {
+          background: rgba(201, 151, 58, 0.1);
+          color: var(--color-accent);
+        }
+
+        .hamburger-button {
+          display: none;
+          background: none;
+          border: none;
+          color: var(--color-text);
+          font-size: 1.5rem;
+          cursor: pointer;
+          padding: 0;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+          .nav-center {
+            display: none;
+          }
+
+          .hamburger-button {
+            display: flex;
+          }
+
+          .user-button {
+            display: none;
+          }
+
+          .user-menu {
+            right: calc(var(--space-4) + 48px);
+          }
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
       `}</style>
 
-      {/* ── MAIN NAV ── */}
-      <nav style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "var(--space-3) var(--space-4)",
-        background: "var(--color-bg-alt)",
-        borderBottom: "1px solid rgba(201,151,58,0.15)",
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-      }}>
-        {/* Left */}
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
-          <Link href="/" style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "1.1rem",
-            fontWeight: 700,
-            color: "var(--color-accent)",
-            textDecoration: "none",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-          }}>
-            Pit Preacher
+      <nav className="nav-bar" role="navigation" aria-label="Main navigation">
+        <div className="nav-left">
+          <Link href="/" className="nav-logo">
+            PIT PREACHER
           </Link>
+        </div>
 
-          {/* Desktop logged-in left links */}
+        {/* Desktop center links */}
+        <ul className="nav-center">
+          <li><Link href="/cook">Start a Cook</Link></li>
+          <li><Link href="/playbook">Playbook</Link></li>
+          <li><Link href="/history">History</Link></li>
+          <li><Link href="/account/pits">Pits</Link></li>
+        </ul>
+
+        {/* Right side: user menu or hamburger */}
+        <div className="nav-right">
           {!loading && user && (
-            <div className="nav-desktop-links">
-              <Link href="/" style={linkStyle}>Start a Cook</Link>
-              <Link href="/playbook" style={linkStyle}>Playbook</Link>
-              {isBackyardPlus && (
-                <Link href="/fix" style={accentLinkStyle}>Pit Rescue</Link>
+            <div style={{ position: "relative" }}>
+              <button
+                className="user-button"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                aria-label="User menu"
+              >
+                {user.email?.[0]?.toUpperCase() || "U"}
+              </button>
+              {userMenuOpen && (
+                <div className="user-menu">
+                  <ul>
+                    <li><Link href="/account">Account</Link></li>
+                    <li>
+                      <button onClick={handleLogout}>Log Out</button>
+                    </li>
+                  </ul>
+                </div>
               )}
             </div>
           )}
-        </div>
 
-        {/* Right — desktop */}
-        <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "center" }}>
-          {loading ? null : user ? (
-            <>
-              <div className="nav-desktop-links">
-                <Link href="/dashboard" style={linkStyle}>Dashboard</Link>
-                {isBasicPlus && <Link href="/lab" style={linkStyle}>Wood Lab</Link>}
-                <Link href="/logs" style={linkStyle}>History</Link>
-                {isPitmaster && (
-                  <Link href="/pitmaster/trends" style={accentLinkStyle}>Pitmaster</Link>
-                )}
-                <Link href="/meet-the-preacher" style={linkStyle}>Meet the Preacher</Link>
-                <Link href="/about" style={linkStyle}>About</Link>
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "0.875rem",
-                    color: "var(--color-text-muted)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Log Out
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="nav-desktop-links">
-              <Link href="/how-it-works" style={linkStyle}>How It Works</Link>
-              <Link href="/features" style={linkStyle}>Features</Link>
-              <Link href="/meet-the-preacher" style={linkStyle}>Meet the Preacher</Link>
-              <Link href="/about" style={linkStyle}>About</Link>
-              <Link href="/auth/login" style={linkStyle}>Log In</Link>
-            </div>
-          )}
-
-          {/* Hamburger — mobile only */}
-          {!loading && (
-            <button
-              className="nav-hamburger"
-              onClick={() => setMenuOpen(true)}
+          {!loading && !user && (
+            <Link
+              href="/auth/login"
               style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "4px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "5px",
+                fontFamily: "var(--font-ui)",
+                fontSize: "0.875rem",
+                color: "var(--color-accent)",
+                textDecoration: "none",
+                letterSpacing: "0.02em",
               }}
-              aria-label="Open menu"
             >
-              <span style={{ display: "block", width: "22px", height: "2px", background: "#C9973A", borderRadius: "1px" }} />
-              <span style={{ display: "block", width: "22px", height: "2px", background: "#C9973A", borderRadius: "1px" }} />
-              <span style={{ display: "block", width: "16px", height: "2px", background: "#C9973A", borderRadius: "1px" }} />
-            </button>
+              Sign In
+            </Link>
           )}
+
+          <button
+            className="hamburger-button"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Menu"
+            aria-expanded={sidebarOpen}
+          >
+            ☰
+          </button>
         </div>
       </nav>
 
-      {/* ── SLIDE-IN MENU ── */}
-      {menuOpen && (
-        <>
-          <div className="slide-menu-backdrop" onClick={() => setMenuOpen(false)} />
-          <div className="slide-menu-panel">
-
-            {/* Close button */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-4)" }}>
-              <span style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "0.7rem",
-                color: "#C9973A",
-                textTransform: "uppercase",
-                letterSpacing: "0.15em",
-              }}>
-                Menu
-              </span>
-              <button
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--color-text-muted)",
-                  fontSize: "1.2rem",
-                  cursor: "pointer",
-                  padding: "4px",
-                  lineHeight: 1,
-                }}
-                aria-label="Close menu"
-              >
-                ✕
-              </button>
-            </div>
-
-            {user ? (
-              <>
-                {/* Cook */}
-                <div className="slide-menu-label">Cook</div>
-                <Link href="/" className="slide-menu-link">Start a Cook</Link>
-                <Link href="/dashboard" className="slide-menu-link">Dashboard</Link>
-                <Link href="/logs" className="slide-menu-link">History</Link>
-                <Link href="/playbook" className="slide-menu-link">Playbook</Link>
-
-                {/* Tools */}
-                {(isBackyardPlus || isBasicPlus) && (
-                  <>
-                    <div className="slide-menu-label">Tools</div>
-                    {isBackyardPlus && (
-                      <Link href="/fix" className="slide-menu-link accent">Pit Rescue</Link>
-                    )}
-                    {isBasicPlus && (
-                      <Link href="/lab" className="slide-menu-link">Wood Lab</Link>
-                    )}
-                  </>
-                )}
-
-                {/* Pitmaster */}
-                {isPitmaster && (
-                  <>
-                    <div className="slide-menu-label">Pitmaster</div>
-                    <Link href="/pitmaster/trends" className="slide-menu-link accent">Trend Analysis</Link>
-                    <Link href="/pitmaster/meat/brisket" className="slide-menu-link accent">Meat Profiles</Link>
-                    <Link href="/pitmaster/pit/pellet" className="slide-menu-link accent">Pit Profiles</Link>
-                  </>
-                )}
-
-                {/* Account */}
-                <div className="slide-menu-label">Account</div>
-                <Link href="/premium" className="slide-menu-link">Plans & Pricing</Link>
-                <Link href="/how-it-works" className="slide-menu-link">How It Works</Link>
-                <Link href="/features" className="slide-menu-link">Features</Link>
-                <Link href="/meet-the-preacher" className="slide-menu-link">Meet the Preacher</Link>
-                <Link href="/about" className="slide-menu-link">About</Link>
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "1rem",
-                    color: "var(--color-text-muted)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: "var(--space-2) 0",
-                    textAlign: "left",
-                    width: "100%",
-                    borderBottom: "1px solid rgba(201,151,58,0.08)",
-                  }}
-                >
-                  Log Out
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="slide-menu-label">Get Started</div>
-                <Link href="/auth/login" className="slide-menu-link">Log In</Link>
-                <Link href="/how-it-works" className="slide-menu-link">How It Works</Link>
-                <Link href="/features" className="slide-menu-link">Features</Link>
-                <Link href="/meet-the-preacher" className="slide-menu-link">Meet the Preacher</Link>
-                <Link href="/about" className="slide-menu-link">About</Link>
-                <Link href="/premium" className="slide-menu-link">Plans & Pricing</Link>
-              </>
-            )}
-          </div>
-        </>
-      )}
+      {/* Sidebar */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} user={user} onLogout={handleLogout} />
     </>
   );
 }
