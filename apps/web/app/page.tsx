@@ -208,13 +208,6 @@ const rowLabel: React.CSSProperties = {
   marginTop: 0,
 };
 
-function getDailyVerse() {
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-  );
-  return VERSES[dayOfYear % VERSES.length] ?? VERSES[0]!;
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -229,19 +222,10 @@ export default function Home() {
   const [cookingStyle, setCookingStyle] = useState("");
   const [styleSubOption, setStyleSubOption] = useState("");
 
-  const [next7Days] = useState<Date[]>(() =>
-    Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      return d;
-    })
-  );
-  const [pickerDate, setPickerDate] = useState<Date>(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d;
-  });
+  const [next7Days, setNext7Days] = useState<Date[]>([]);
+  const [pickerDate, setPickerDate] = useState<Date | null>(null);
   const [pickerTime, setPickerTime] = useState("18:00");
+  const [dailyVerse, setDailyVerse] = useState(() => VERSES[0]!);
 
   const [flavorSmoke, setFlavorSmoke] = useState(7);
   const [flavorBark, setFlavorBark] = useState(8);
@@ -255,6 +239,7 @@ export default function Home() {
   const [atCookLimit, setAtCookLimit] = useState(false);
 
   const eatingTime = (() => {
+    if (!pickerDate) return "";
     const d = new Date(pickerDate);
     const [hStr, mStr] = pickerTime.split(":");
     d.setHours(parseInt(hStr ?? "18", 10), parseInt(mStr ?? "0", 10), 0, 0);
@@ -262,6 +247,22 @@ export default function Home() {
   })();
 
   useEffect(() => {
+    const now = new Date();
+    setNext7Days(Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(now);
+      d.setDate(d.getDate() + i);
+      return d;
+    }));
+
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setPickerDate(tomorrow);
+
+    const dayOfYear = Math.floor(
+      (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+    );
+    setDailyVerse(VERSES[dayOfYear % VERSES.length] ?? VERSES[0]!);
+
     supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
   }, []);
 
@@ -765,7 +766,7 @@ export default function Home() {
             {stepIndicator}
             <div style={{ display: "flex", flexWrap: "nowrap", overflow: "hidden", gap: "6px", marginBottom: "var(--space-3)" }}>
               {next7Days.map((day, i) => {
-                const isSelected = isSameDay(day, pickerDate);
+                const isSelected = pickerDate ? isSameDay(day, pickerDate) : false;
                 return (
                   <button
                     key={i}
@@ -1090,7 +1091,7 @@ export default function Home() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
 if (!user) {
-    const verse = getDailyVerse();
+    const verse = dailyVerse;
     return (
       <div style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(201,151,58,0.12) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(180,80,20,0.18) 0%, transparent 50%), linear-gradient(180deg, #0e0b07 0%, #1c1108 35%, #0e0b07 100%)", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(4rem, 10vw, 7rem) var(--space-4)", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.25em", margin: "0 0 var(--space-2)" }}>✦ Lone Star Que ✦</p>
