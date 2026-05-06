@@ -64,7 +64,7 @@ export async function updateProfileAction(
     const raw = Object.fromEntries(formData.entries())
     const parsed = ProfileSchema.safeParse(raw)
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message ?? 'Invalid input' }
+      return { success: false, error: parsed.error?.errors?.[0]?.message ?? 'Invalid input' }
     }
     const { error } = await updateProfile(user.id, parsed.data)
     if (error) return { success: false, error }
@@ -89,7 +89,7 @@ export async function updateSettingsAction(
     }
     const parsed = SettingsSchema.safeParse(raw)
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message ?? 'Invalid input' }
+      return { success: false, error: parsed.error?.errors?.[0]?.message ?? 'Invalid input' }
     }
     const { error } = await updatePreferences(user.id, parsed.data)
     if (error) return { success: false, error }
@@ -113,7 +113,7 @@ export async function createPitAction(
     }
     const parsed = PitSchema.safeParse(raw)
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message ?? 'Invalid input' }
+      return { success: false, error: parsed.error?.errors?.[0]?.message ?? 'Invalid input' }
     }
     const { error } = await createPit(user.id, parsed.data as any)
     if (error) return { success: false, error }
@@ -139,7 +139,7 @@ export async function updatePitAction(
     }
     const parsed = PitSchema.safeParse(raw)
     if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message ?? 'Invalid input' }
+      return { success: false, error: parsed.error?.errors?.[0]?.message ?? 'Invalid input' }
     }
     const { error } = await updatePit(user.id, pitId, parsed.data as any)
     if (error) return { success: false, error }
