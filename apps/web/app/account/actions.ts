@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase-server'
+import type { ExperienceLevel } from '@/types/account'
 import {
   updateProfile,
   updatePreferences,
@@ -33,7 +34,7 @@ export async function updateProfileAction(
       avatar_url:       formData.get('avatar_url') as string || null,
       home_region:      formData.get('home_region') as string || null,
       timezone:         formData.get('timezone') as string || null,
-      experience_level: formData.get('experience_level') as string || null,
+      experience_level: formData.get('experience_level') as ExperienceLevel | null,
       wood_preference:  formData.get('wood_preference') as string || null,
       flavor_salt:      Number(formData.get('flavor_salt')) || 6,
       flavor_pepper:    Number(formData.get('flavor_pepper')) || 6,

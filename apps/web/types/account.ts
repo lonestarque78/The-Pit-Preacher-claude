@@ -81,11 +81,11 @@ export interface CookHistoryRow {
 
 export interface ProfileFormData {
   display_name: string
-  avatar_url: string
-  home_region: string
-  timezone: string
-  experience_level: ExperienceLevel
-  wood_preference: string
+  avatar_url: string | null
+  home_region: string | null
+  timezone: string | null
+  experience_level: ExperienceLevel | null
+  wood_preference: string | null
   flavor_salt: number
   flavor_pepper: number
   flavor_heat: number
