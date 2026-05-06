@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { z } from 'zod'
 import { createServerClient } from '@/lib/supabase-server'
 import {
   updateProfile,
@@ -12,39 +11,7 @@ import {
   deletePit,
 } from '@/lib/supabase/account'
 
-const ProfileSchema = z.object({
-  display_name:     z.string().min(1).max(60),
-  avatar_url:       z.string().url().or(z.literal('')).optional(),
-  home_region:      z.string().max(100).optional(),
-  timezone:         z.string().max(60).optional(),
-  experience_level: z.enum(['beginner', 'backyard', 'competition', 'pitmaster']).optional(),
-  wood_preference:  z.string().max(60).optional(),
-  flavor_salt:      z.coerce.number().int().min(1).max(10).optional(),
-  flavor_pepper:    z.coerce.number().int().min(1).max(10).optional(),
-  flavor_heat:      z.coerce.number().int().min(1).max(10).optional(),
-  flavor_sweetness: z.coerce.number().int().min(1).max(10).optional(),
-  flavor_smoke:     z.coerce.number().int().min(1).max(10).optional(),
-})
-
-const SettingsSchema = z.object({
-  units:                 z.enum(['F', 'C']),
-  preacher_voice_mode:   z.enum(['normal', 'softer', 'competition']),
-  notifications_enabled: z.coerce.boolean(),
-  beta_features_enabled: z.coerce.boolean(),
-  default_pit_id:        z.string().uuid().nullable().optional(),
-})
-
-const PitSchema = z.object({
-  name:         z.string().min(1).max(80),
-  type:         z.enum(['offset', 'kamado', 'pellet', 'stickburner', 'electric', 'kettle', 'drum', 'other']),
-  brand:        z.string().max(80).optional().default(''),
-  model:        z.string().max(80).optional().default(''),
-  notes:        z.string().max(500).optional().default(''),
-  default_temp: z.coerce.number().int().min(100).max(700).nullable().optional(),
-  fuel_type:    z.string().max(60).optional().default(''),
-  default_wood: z.string().max(60).optional().default(''),
-  is_default:   z.coerce.boolean().optional().default(false),
-})
+export type ActionResult = { success: boolean; error?: string }
 
 async function getAuthUser() {
   const supabase = await createServerClient()
@@ -53,20 +20,28 @@ async function getAuthUser() {
   return user
 }
 
-export type ActionResult = { success: boolean; error?: string }
-
 export async function updateProfileAction(
   _prev: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
   try {
     const user = await getAuthUser()
-    const raw = Object.fromEntries(formData.entries())
-    const parsed = ProfileSchema.safeParse(raw)
-    if (!parsed.success) {
-      return { success: false, error: parsed.error instanceof Error ? parsed.error.message : 'Invalid input' }
+    const display_name = formData.get('display_name') as string
+    if (!display_name?.trim()) return { success: false, error: 'Display name is required.' }
+    const payload = {
+      display_name:     display_name.trim(),
+      avatar_url:       formData.get('avatar_url') as string || null,
+      home_region:      formData.get('home_region') as string || null,
+      timezone:         formData.get('timezone') as string || null,
+      experience_level: formData.get('experience_level') as string || null,
+      wood_preference:  formData.get('wood_preference') as string || null,
+      flavor_salt:      Number(formData.get('flavor_salt')) || 6,
+      flavor_pepper:    Number(formData.get('flavor_pepper')) || 6,
+      flavor_heat:      Number(formData.get('flavor_heat')) || 4,
+      flavor_sweetness: Number(formData.get('flavor_sweetness')) || 5,
+      flavor_smoke:     Number(formData.get('flavor_smoke')) || 7,
     }
-    const { error } = await updateProfile(user.id, parsed.data)
+    const { error } = await updateProfile(user.id, payload)
     if (error) return { success: false, error }
     revalidatePath('/account/profile')
     return { success: true }
@@ -81,17 +56,14 @@ export async function updateSettingsAction(
 ): Promise<ActionResult> {
   try {
     const user = await getAuthUser()
-    const raw = {
-      ...Object.fromEntries(formData.entries()),
+    const payload = {
+      units:                 (formData.get('units') as string) || 'F',
+      preacher_voice_mode:   (formData.get('preacher_voice_mode') as string) || 'normal',
       notifications_enabled: formData.get('notifications_enabled') === 'on',
-      beta_features_enabled:  formData.get('beta_features_enabled') === 'on',
-      default_pit_id: formData.get('default_pit_id') || null,
+      beta_features_enabled: formData.get('beta_features_enabled') === 'on',
+      default_pit_id:        (formData.get('default_pit_id') as string) || null,
     }
-    const parsed = SettingsSchema.safeParse(raw)
-    if (!parsed.success) {
-      return { success: false, error: parsed.error instanceof Error ? parsed.error.message : 'Invalid input' }
-    }
-    const { error } = await updatePreferences(user.id, parsed.data)
+    const { error } = await updatePreferences(user.id, payload)
     if (error) return { success: false, error }
     revalidatePath('/account/settings')
     return { success: true }
@@ -106,16 +78,20 @@ export async function createPitAction(
 ): Promise<ActionResult> {
   try {
     const user = await getAuthUser()
-    const raw = {
-      ...Object.fromEntries(formData.entries()),
+    const name = formData.get('name') as string
+    if (!name?.trim()) return { success: false, error: 'Pit name is required.' }
+    const payload = {
+      name:         name.trim(),
+      type:         (formData.get('type') as string) || 'offset',
+      brand:        (formData.get('brand') as string) || '',
+      model:        (formData.get('model') as string) || '',
+      notes:        (formData.get('notes') as string) || '',
+      default_temp: formData.get('default_temp') ? Number(formData.get('default_temp')) : null,
+      fuel_type:    (formData.get('fuel_type') as string) || '',
+      default_wood: (formData.get('default_wood') as string) || '',
       is_default:   formData.get('is_default') === 'on',
-      default_temp: formData.get('default_temp') || null,
     }
-    const parsed = PitSchema.safeParse(raw)
-    if (!parsed.success) {
-      return { success: false, error: parsed.error instanceof Error ? parsed.error.message : 'Invalid input' }
-    }
-    const { error } = await createPit(user.id, parsed.data as any)
+    const { error } = await createPit(user.id, payload as any)
     if (error) return { success: false, error }
     revalidatePath('/account/pits')
     return { success: true }
@@ -132,16 +108,20 @@ export async function updatePitAction(
     const user = await getAuthUser()
     const pitId = formData.get('pit_id') as string
     if (!pitId) return { success: false, error: 'Missing pit ID.' }
-    const raw = {
-      ...Object.fromEntries(formData.entries()),
+    const name = formData.get('name') as string
+    if (!name?.trim()) return { success: false, error: 'Pit name is required.' }
+    const payload = {
+      name:         name.trim(),
+      type:         (formData.get('type') as string) || 'offset',
+      brand:        (formData.get('brand') as string) || '',
+      model:        (formData.get('model') as string) || '',
+      notes:        (formData.get('notes') as string) || '',
+      default_temp: formData.get('default_temp') ? Number(formData.get('default_temp')) : null,
+      fuel_type:    (formData.get('fuel_type') as string) || '',
+      default_wood: (formData.get('default_wood') as string) || '',
       is_default:   formData.get('is_default') === 'on',
-      default_temp: formData.get('default_temp') || null,
     }
-    const parsed = PitSchema.safeParse(raw)
-    if (!parsed.success) {
-      return { success: false, error: parsed.error instanceof Error ? parsed.error.message : 'Invalid input' }
-    }
-    const { error } = await updatePit(user.id, pitId, parsed.data as any)
+    const { error } = await updatePit(user.id, pitId, payload as any)
     if (error) return { success: false, error }
     revalidatePath('/account/pits')
     return { success: true }
