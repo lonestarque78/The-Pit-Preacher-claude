@@ -76,6 +76,7 @@ function parsePlan(text: string): { header: string; content: string }[] | null {
 export default function CookDashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: cookId } = use(params);
   const supabase = createClient();
+  const router = useRouter();
 
   const [cook, setCook] = useState<any>(null);
   const [cookItems, setCookItems] = useState<any[]>([]);
@@ -119,7 +120,7 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
       .single();
 
     if (!cookData) {
-      setLoading(false);
+      router.push('/404');
       return;
     }
 
@@ -280,17 +281,6 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
     return (
       <div style={{ padding: "var(--space-4)", fontFamily: "var(--font-body)", color: "var(--color-text-muted)" }}>
         Loading...
-      </div>
-    );
-  }
-
-  if (!cook) {
-    return (
-      <div style={{ padding: "var(--space-4)" }}>
-        <h1 style={{ fontFamily: "var(--font-heading)", marginBottom: "var(--space-3)" }}>Cook Not Found</h1>
-        <Link href="/dashboard" style={{ color: "var(--color-accent)", fontFamily: "var(--font-body)" }}>
-          Back to Dashboard
-        </Link>
       </div>
     );
   }

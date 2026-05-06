@@ -211,16 +211,16 @@ export default function Nav() {
 
       <nav className="nav-bar" role="navigation" aria-label="Main navigation">
         <div className="nav-left">
-          <Link href="/" className="nav-logo">
+          <Link href="/" className={`nav-logo${pathname === "/" ? " active" : ""}`}>
             PIT PREACHER
           </Link>
         </div>
 
         {/* Desktop center links */}
         <ul className="nav-center">
-          <li><Link href="/prep">Start a Cook</Link></li>
-          <li><Link href="/playbook">Playbook</Link></li>
-          <li><Link href="/logs">History</Link></li>
+          <li><Link href="/prep" className={pathname === "/prep" ? "active" : undefined}>Start a Cook</Link></li>
+          <li><Link href="/playbook" className={pathname === "/playbook" ? "active" : undefined}>Playbook</Link></li>
+          <li><Link href="/logs" className={pathname === "/logs" ? "active" : undefined}>History</Link></li>
         </ul>
 
         {/* Right side: user menu or hamburger */}

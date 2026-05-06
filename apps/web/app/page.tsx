@@ -225,7 +225,7 @@ export default function Home() {
   const [next7Days, setNext7Days] = useState<Date[]>([]);
   const [pickerDate, setPickerDate] = useState<Date | null>(null);
   const [pickerTime, setPickerTime] = useState("18:00");
-  const [dailyVerse, setDailyVerse] = useState(() => VERSES[0]!);
+  const [dailyVerse, setDailyVerse] = useState(null);
 
   const [flavorSmoke, setFlavorSmoke] = useState(7);
   const [flavorBark, setFlavorBark] = useState(8);
@@ -765,7 +765,7 @@ export default function Home() {
           <>
             {stepIndicator}
             <div style={{ display: "flex", flexWrap: "nowrap", overflow: "hidden", gap: "6px", marginBottom: "var(--space-3)" }}>
-              {next7Days.map((day, i) => {
+              {next7Days.length > 0 ? next7Days.map((day, i) => {
                 const isSelected = pickerDate ? isSameDay(day, pickerDate) : false;
                 return (
                   <button
@@ -806,7 +806,11 @@ export default function Home() {
                     </span>
                   </button>
                 );
-              })}
+              }) : (
+                Array.from({ length: 7 }, (_, i) => (
+                  <div key={i} className="skeleton" style={{ minWidth: "48px", flex: "1", height: "60px", borderRadius: "var(--radius-md)" }}></div>
+                ))
+              )}
             </div>
 
             <select
@@ -1091,7 +1095,6 @@ export default function Home() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
 if (!user) {
-    const verse = dailyVerse;
     return (
       <div style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(201,151,58,0.12) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(180,80,20,0.18) 0%, transparent 50%), linear-gradient(180deg, #0e0b07 0%, #1c1108 35%, #0e0b07 100%)", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "clamp(4rem, 10vw, 7rem) var(--space-4)", textAlign: "center", position: "relative", overflow: "hidden" }}>
         <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.25em", margin: "0 0 var(--space-2)" }}>✦ Lone Star Que ✦</p>
@@ -1140,8 +1143,17 @@ if (!user) {
           </div>
         </div>
         <div style={{ marginTop: "var(--space-6)", borderTop: "1px solid rgba(201,151,58,0.12)", paddingTop: "var(--space-4)", maxWidth: "480px" }}>
-          <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "rgba(201,151,58,0.55)", fontSize: "0.85rem", margin: "0 0 4px", lineHeight: 1.65 }}>&ldquo;{verse.text}&rdquo;</p>
-          <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.6rem", color: "rgba(201,151,58,0.35)", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0 }}>{verse.chapter}</p>
+          {dailyVerse ? (
+            <>
+              <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "rgba(201,151,58,0.55)", fontSize: "0.85rem", margin: "0 0 4px", lineHeight: 1.65 }}>&ldquo;{dailyVerse.text}&rdquo;</p>
+              <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.6rem", color: "rgba(201,151,58,0.35)", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0 }}>{dailyVerse.chapter}</p>
+            </>
+          ) : (
+            <>
+              <div className="skeleton" style={{ width: "80%", marginBottom: "4px" }}></div>
+              <div className="skeleton" style={{ width: "40%" }}></div>
+            </>
+          )}
         </div>
       </div>
     );
