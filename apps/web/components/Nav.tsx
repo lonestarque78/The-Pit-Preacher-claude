@@ -218,10 +218,9 @@ export default function Nav() {
 
         {/* Desktop center links */}
         <ul className="nav-center">
-          <li><Link href="/cook">Start a Cook</Link></li>
+          <li><Link href="/prep">Start a Cook</Link></li>
           <li><Link href="/playbook">Playbook</Link></li>
-          <li><Link href="/history">History</Link></li>
-          <li><Link href="/account/pits">Pits</Link></li>
+          <li><Link href="/logs">History</Link></li>
         </ul>
 
         {/* Right side: user menu or hamburger */}

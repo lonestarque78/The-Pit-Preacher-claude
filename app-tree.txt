@@ -1,0 +1,204 @@
+Folder PATH listing for volume OS
+Volume serial number is D617-5EE5
+C:\USERS\ASHLE\ONEDRIVE\DESKTOP\BRIAN\THE-PIT-PREACHER-V2\APPS\WEB\APP
+|   favicon.ico
+|   globals.css
+|   layout.tsx
+|   not-found.tsx
+|   page.module.css
+|   page.tsx
+|   
++---about
+|       page.tsx
+|       
++---account
+|   |   actions.ts
+|   |   layout.tsx
+|   |   page.tsx
+|   |   
+|   +---cooks
+|   |       page.tsx
+|   |       
+|   +---danger
+|   |       page.tsx
+|   |       
+|   +---pits
+|   |       page.tsx
+|   |       
+|   +---profile
+|   |       page.tsx
+|   |       
+|   \---settings
+|           page.tsx
+|           
++---api
+|   +---account
+|   |   \---delete
+|   |           route.ts
+|   |           
+|   +---checkout
+|   |       route.ts
+|   |       
+|   +---confidence
+|   |       route.ts
+|   |       
+|   +---fire-control
+|   |       route.ts
+|   |       
+|   +---insights
+|   |       route.ts
+|   |       
+|   +---meat-profile
+|   |       route.ts
+|   |       
+|   +---pit-profile
+|   |       route.ts
+|   |       
+|   +---preacher
+|   |       route.ts
+|   |       
+|   +---strategy
+|   |       route.ts
+|   |       
+|   +---trends
+|   |       route.ts
+|   |       
+|   +---variability
+|   |       route.ts
+|   |       
+|   \---webhook
+|           route.ts
+|           
++---auth
+|   +---callback
+|   |       route.ts
+|   |       
+|   +---login
+|   |       page.tsx
+|   |       
+|   \---reset
+|           page.tsx
+|           
++---cook
+|   |   page.tsx
+|   |   
+|   +---create
+|   |       page.tsx
+|   |       
+|   +---preacher
+|   |       action.ts
+|   |       behavior.ts
+|   |       fire.ts
+|   |       page.tsx
+|   |       voice.ts
+|   |       
+|   \---[id]
+|       |   page.tsx
+|       |   
+|       +---events
+|       |       page.tsx
+|       |       
+|       +---fire
+|       |       page.tsx
+|       |       
+|       +---guide
+|       |       page.tsx
+|       |       
+|       +---live
+|       |       page.tsx
+|       |       
+|       +---plan
+|       |       page.tsx
+|       |       PrepChecklist.tsx
+|       |       
+|       +---rubs
+|       |       page.tsx
+|       |       
+|       +---summary
+|       |       page.tsx
+|       |       
+|       +---timeline
+|       |       engine.ts
+|       |       page.tsx
+|       |       
+|       \---tracker
+|               page.tsx
+|               
++---dashboard
+|       CookList.tsx
+|       page.tsx
+|       
++---features
+|       page.tsx
+|       
++---fix
+|       layout.tsx
+|       page.tsx
+|       
++---fonts
+|       GeistMonoVF.woff
+|       GeistVF.woff
+|       
++---how-it-works
+|       page.tsx
+|       
++---lab
+|       layout.tsx
+|       page.tsx
+|       
++---logs
+|       page.tsx
+|       
++---meet-the-preacher
+|       page.tsx
+|       
++---pitmaster
+|   +---meat
+|   |   \---[meatType]
+|   |           page.tsx
+|   |           
+|   +---pit
+|   |   \---[pitType]
+|   |           page.tsx
+|   |           
+|   \---trends
+|           page.tsx
+|           
++---playbook
+|   |   page.tsx
+|   |   
+|   +---finishing-moves
+|   |       page.tsx
+|   |       
+|   +---fire-behavior
+|   |       page.tsx
+|   |       
+|   +---holy-trinity
+|   |       page.tsx
+|   |       
+|   +---meat-science
+|   |       page.tsx
+|   |       
+|   +---pit-types
+|   |       page.tsx
+|   |       
+|   +---timeline-philosophy
+|   |       page.tsx
+|   |       
+|   \---troubleshooting
+|           page.tsx
+|           
++---premium
+|       cancel.tsx
+|       page.tsx
+|       success.tsx
+|       
++---prep
+|       page.tsx
+|       
+\---setup
+    |   page.tsx
+    |   
+    \---pits
+            page.tsx
+            

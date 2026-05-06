@@ -18,7 +18,7 @@ export function Sidebar({ isOpen, onClose, user, onLogout }: SidebarProps) {
           position: fixed;
           inset: 0;
           background: rgba(10, 8, 6, 0.7);
-          z-index: 30;
+          z-index: 9998;
           animation: fadeIn 0.2s ease;
           display: none;
         }
@@ -35,7 +35,7 @@ export function Sidebar({ isOpen, onClose, user, onLogout }: SidebarProps) {
           width: 280px;
           background: var(--color-bg-alt);
           border-right: 1px solid rgba(201, 151, 58, 0.12);
-          z-index: 31;
+          z-index: 9999;
           display: flex;
           flex-direction: column;
           padding: var(--space-4);
@@ -227,25 +227,25 @@ export function Sidebar({ isOpen, onClose, user, onLogout }: SidebarProps) {
               {/* COOK */}
               <div className="sidebar-section">
                 <h3 className="sidebar-section-title">Cook</h3>
-                <Link href="/cook" className="sidebar-link">Start a Cook</Link>
+                <Link href="/prep" className="sidebar-link">Start a Cook</Link>
                 <Link href="/dashboard" className="sidebar-link">Dashboard</Link>
-                <Link href="/history" className="sidebar-link">History</Link>
+                <Link href="/logs" className="sidebar-link">History</Link>
                 <Link href="/playbook" className="sidebar-link">Playbook</Link>
               </div>
 
               {/* TOOLS */}
               <div className="sidebar-section">
                 <h3 className="sidebar-section-title">Tools</h3>
-                <Link href="/pit-rescue" className="sidebar-link">Pit Rescue</Link>
-                <Link href="/wood-lab" className="sidebar-link">Wood Lab</Link>
+                <Link href="/fix" className="sidebar-link">Pit Rescue</Link>
+                <Link href="/lab" className="sidebar-link">Wood Lab</Link>
               </div>
 
               {/* PITMASTER */}
               <div className="sidebar-section">
                 <h3 className="sidebar-section-title">Pitmaster</h3>
                 <Link href="/pitmaster/trends" className="sidebar-link">Trend Analysis</Link>
-                <Link href="/pitmaster/meats" className="sidebar-link">Meat Profiles</Link>
-                <Link href="/pitmaster/pits" className="sidebar-link">Pit Profiles</Link>
+                <Link href="/pitmaster/meat" className="sidebar-link">Meat Profiles</Link>
+                <Link href="/pitmaster/pit" className="sidebar-link">Pit Profiles</Link>
               </div>
 
               {/* ACCOUNT */}
