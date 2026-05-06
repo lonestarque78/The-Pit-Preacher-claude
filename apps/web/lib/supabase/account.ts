@@ -1,116 +1,162 @@
-// apps/web/types/account.ts
 
-export type ExperienceLevel =
-  | 'beginner'
-  | 'backyard'
-  | 'competition'
-  | 'pitmaster'
 
-export type PitType =
-  | 'offset'
-  | 'kamado'
-  | 'pellet'
-  | 'stickburner'
-  | 'electric'
-  | 'kettle'
-  | 'drum'
-  | 'other'
+import { createServerClient } from '@/lib/supabase-server'
+import type {
+  Profile,
+  Pit,
+  UserPreferences,
+  CookHistoryRow,
+  ProfileFormData,
+  SettingsFormData,
+  PitFormData,
+} from '@/types/account'
 
-export type TemperatureUnit = 'F' | 'C'
-
-export type PreacherVoiceMode = 'normal' | 'softer' | 'competition'
-
-export interface Profile {
-  id: string
-  user_id: string
-  display_name: string | null
-  avatar_url: string | null
-  home_region: string | null
-  timezone: string | null
-  experience_level: ExperienceLevel | null
-  wood_preference: string | null
-  flavor_salt: number
-  flavor_pepper: number
-  flavor_heat: number
-  flavor_sweetness: number
-  flavor_smoke: number
-  profile_complete: boolean
-  created_at: string
-  updated_at: string
+export async function getProfile(userId: string): Promise<Profile | null> {
+  const supabase = await createServerClient()
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+  if (error) return null
+  return data as Profile
 }
 
-export interface Pit {
-  id: string
-  user_id: string
-  name: string
-  type: PitType
-  brand: string | null
-  model: string | null
-  notes: string | null
-  default_temp: number | null
-  fuel_type: string | null
-  default_wood: string | null
-  is_default: boolean
-  created_at: string
-  updated_at: string
+export async function updateProfile(
+  userId: string,
+  payload: Partial<ProfileFormData>
+): Promise<{ error: string | null }> {
+  const supabase = await createServerClient()
+  const { error } = await supabase
+    .from('profiles')
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+  return { error: error?.message ?? null }
 }
 
-export interface UserPreferences {
-  user_id: string
-  default_pit_id: string | null
-  units: TemperatureUnit
-  timeline_mode: string
-  preacher_voice_mode: PreacherVoiceMode
-  notifications_enabled: boolean
-  beta_features_enabled: boolean
-  onboarding_complete: boolean
-  created_at: string
-  updated_at: string
+export async function getPreferences(userId: string): Promise<UserPreferences | null> {
+  const supabase = await createServerClient()
+  const { data, error } = await supabase
+    .from('user_preferences')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+  if (error) return null
+  return data as UserPreferences
 }
 
-export interface CookHistoryRow {
-  cook_id: string
-  user_id: string
-  started_at: string
-  last_updated_at: string
-  pit_id: string | null
-  pit_name: string | null
-  pit_type: string | null
-  summary_notes: string | null
-  rating: number | null
-  tags: string[] | null
+export async function updatePreferences(
+  userId: string,
+  payload: Partial<SettingsFormData>
+): Promise<{ error: string | null }> {
+  const supabase = await createServerClient()
+  const { error } = await supabase
+    .from('user_preferences')
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+  return { error: error?.message ?? null }
 }
 
-export interface ProfileFormData {
-  display_name: string
-  avatar_url: string
-  home_region: string
-  timezone: string
-  experience_level: ExperienceLevel
-  wood_preference: string
-  flavor_salt: number
-  flavor_pepper: number
-  flavor_heat: number
-  flavor_sweetness: number
-  flavor_smoke: number
+export async function getPits(userId: string): Promise<Pit[]> {
+  const supabase = await createServerClient()
+  const { data, error } = await supabase
+    .from('pits')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+  if (error) return []
+  return data as Pit[]
 }
 
-export interface SettingsFormData {
-  units: TemperatureUnit
-  preacher_voice_mode: PreacherVoiceMode
-  notifications_enabled: boolean
-  beta_features_enabled: boolean
-  default_pit_id: string | null
+export async function getPitCount(userId: string): Promise<number> {
+  const supabase = await createServerClient()
+  const { count } = await supabase
+    .from('pits')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+  return count ?? 0
 }
 
-export interface PitFormData {
-  name: string
-  type: PitType
-  brand: string
-  model: string
-  notes: string
-  default_temp: number | null
-  fuel_type: string
-  default_wood: string
-  is_default: boolean
+export async function createPit(
+  userId: string,
+  payload: PitFormData
+): Promise<{ data: Pit | null; error: string | null }> {
+  const count = await getPitCount(userId)
+  if (count >= 3) {
+    return { data: null, error: 'You can only save up to 3 pits.' }
+  }
+  const supabase = await createServerClient()
+  if (payload.is_default) {
+    await supabase
+      .from('pits')
+      .update({ is_default: false })
+      .eq('user_id', userId)
+  }
+  const { data, error } = await supabase
+    .from('pits')
+    .insert({ ...payload, user_id: userId })
+    .select()
+    .single()
+  return { data: data as Pit | null, error: error?.message ?? null }
 }
+
+export async function updatePit(
+  userId: string,
+  pitId: string,
+  payload: Partial<PitFormData>
+): Promise<{ error: string | null }> {
+  const supabase = await createServerClient()
+  if (payload.is_default) {
+    await supabase
+      .from('pits')
+      .update({ is_default: false })
+      .eq('user_id', userId)
+  }
+  const { error } = await supabase
+    .from('pits')
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq('id', pitId)
+    .eq('user_id', userId)
+  return { error: error?.message ?? null }
+}
+
+export async function deletePit(
+  userId: string,
+  pitId: string
+): Promise<{ error: string | null }> {
+  const supabase = await createServerClient()
+  const { error } = await supabase
+    .from('pits')
+    .delete()
+    .eq('id', pitId)
+    .eq('user_id', userId)
+  if (!error) {
+    const prefs = await getPreferences(userId)
+    if (prefs?.default_pit_id === pitId) {
+      await supabase
+        .from('user_preferences')
+        .update({ default_pit_id: null })
+        .eq('user_id', userId)
+    }
+  }
+  return { error: error?.message ?? null }
+}
+
+export async function getCookHistory(
+  userId: string,
+  filters?: { pitId?: string; tag?: string }
+): Promise<CookHistoryRow[]> {
+  const supabase = await createServerClient()
+  let query = supabase
+    .from('cook_history_view')
+    .select('*')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+  if (filters?.pitId) {
+    query = query.eq('pit_id', filters.pitId)
+  }
+  const { data, error } = await query
+  if (error) return []
+  return data as CookHistoryRow[]
+}
+
