@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase-server'
 import { getCookHistory, getPits } from '@/lib/supabase/account'
 import { CooksHistory } from '@/components/account/CooksHistory'
 
 export default async function CooksPage() {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 

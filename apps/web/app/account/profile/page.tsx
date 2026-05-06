@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase-server'
 import { getProfile, getPits, getPreferences } from '@/lib/supabase/account'
 import { ProfileForm } from '@/components/account/ProfileForm'
 
 export default async function ProfilePage() {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 

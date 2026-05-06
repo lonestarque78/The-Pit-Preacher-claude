@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase-server'
 import {
   updateProfile,
   updatePreferences,
@@ -47,7 +47,7 @@ const PitSchema = z.object({
 })
 
 async function getAuthUser() {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthenticated')
   return user
@@ -164,7 +164,7 @@ export async function deletePitAction(pitId: string): Promise<ActionResult> {
 }
 
 export async function signOutAction(): Promise<void> {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   await supabase.auth.signOut()
   redirect('/')
 }
