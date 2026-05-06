@@ -167,3 +167,16 @@ export async function getCookHistory(
   if (error) return []
   return data as CookHistoryRow[]
 }
+
+export interface CookHistoryRow {
+  cook_id: string
+  user_id: string
+  started_at: string
+  last_updated_at: string
+  pit_id: string | null
+  pit_name: string | null
+  pit_type: string | null
+  summary_notes: string | null
+  rating: number | null
+  tags: string[] | null
+}
