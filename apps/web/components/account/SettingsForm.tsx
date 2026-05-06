@@ -2,14 +2,15 @@
 
 import { useActionState } from 'react'
 import { updateSettingsAction } from '@/app/account/actions'
-import type { UserPreferences } from '@/types/account'
+import type { UserPreferences, Pit } from '@/types/account'
 import { FormCard, FormField, SaveButton, StatusMessage, selectClass } from './FormCard'
 
 interface Props {
   prefs: UserPreferences | null
+  pits: Pit[]
 }
 
-export function SettingsForm({ prefs }: Props) {
+export function SettingsForm({ prefs, pits }: Props) {
   const [result, action, pending] = useActionState(updateSettingsAction, null)
 
   return (
@@ -20,6 +21,15 @@ export function SettingsForm({ prefs }: Props) {
             <select name="units" className={selectClass} defaultValue={prefs?.units ?? 'F'}>
               <option value="F">Fahrenheit (°F)</option>
               <option value="C">Celsius (°C)</option>
+            </select>
+          </FormField>
+
+          <FormField label="Default Pit">
+            <select name="default_pit_id" className={selectClass} defaultValue={prefs?.default_pit_id ?? ''}>
+              <option value="">None (choose per cook)</option>
+              {pits.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
             </select>
           </FormField>
 

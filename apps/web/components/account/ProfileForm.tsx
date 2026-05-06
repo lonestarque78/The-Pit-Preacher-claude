@@ -32,7 +32,7 @@ interface Props {
   userEmail: string
 }
 
-export function ProfileForm({ profile, userEmail }: Props) {
+export function ProfileForm({ profile, pits, defaultPitId, userEmail }: Props) {
   const [result, action, pending] = useActionState(updateProfileAction, null)
 
   return (
@@ -103,6 +103,21 @@ export function ProfileForm({ profile, userEmail }: Props) {
               maxLength={60}
             />
           </FormField>
+
+          {pits.length > 0 && (
+            <FormField label="Default Pit" hint="Your go-to rig for new cooks">
+              <select
+                name="default_pit_id"
+                className={selectClass}
+                defaultValue={defaultPitId ?? ''}
+              >
+                <option value="">None (choose per cook)</option>
+                {pits.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </FormField>
+          )}
         </div>
       </FormCard>
 
