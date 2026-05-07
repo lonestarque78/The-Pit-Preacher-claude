@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing priceId" }, { status: 400 });
     }
 
-    // Get Supabase user from Authorization header
     const authHeader = req.headers.get("Authorization");
     const accessToken = authHeader?.replace("Bearer ", "");
 
@@ -33,7 +32,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user already has a Stripe customer
     const { data: existingCustomer } = await supabase
       .from("stripe_customers")
       .select("customer_id")
@@ -42,7 +40,6 @@ export async function POST(req: NextRequest) {
 
     let customerId = existingCustomer?.customer_id;
 
-    // Create Stripe customer if missing
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email ?? undefined,
@@ -57,7 +54,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Create Checkout Session
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,

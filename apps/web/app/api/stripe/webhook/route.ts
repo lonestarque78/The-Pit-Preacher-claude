@@ -34,7 +34,8 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
+        const subscription = event.data.object as any; // relax typings
+
         const customerId = subscription.customer as string;
 
         const { data: customerRow } = await supabase
@@ -45,14 +46,22 @@ export async function POST(req: NextRequest) {
 
         if (!customerRow?.user_id) break;
 
+        const currentPeriodStart = subscription.current_period_start
+          ? new Date(subscription.current_period_start * 1000).toISOString()
+          : null;
+
+        const currentPeriodEnd = subscription.current_period_end
+          ? new Date(subscription.current_period_end * 1000).toISOString()
+          : null;
+
         await supabase.from("stripe_subscriptions").upsert({
           id: subscription.id,
           user_id: customerRow.user_id,
           status: subscription.status,
-          price_id: subscription.items.data[0]?.price.id ?? null,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          cancel_at_period_end: subscription.cancel_at_period_end,
+          price_id: subscription.items?.data?.[0]?.price?.id ?? null,
+          current_period_start: currentPeriodStart,
+          current_period_end: currentPeriodEnd,
+          cancel_at_period_end: subscription.cancel_at_period_end ?? false,
           canceled_at: subscription.canceled_at
             ? new Date(subscription.canceled_at * 1000).toISOString()
             : null,
