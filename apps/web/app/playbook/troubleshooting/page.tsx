@@ -16,49 +16,49 @@ export default function TroubleshootingPage() {
       <PlaybookArticle
         module="Module 05 — Backyard+"
         title="Troubleshooting"
-        intro="Something is always going sideways on a long cook. The difference between a pitmaster and a beginner is knowing what's wrong before it's too late to fix it."
+        intro="Something always goes sideways on long cook. Difference between pitmaster and beginner is knowing what's wrong. Before too late to fix."
       >
 
         <SectionHeader>Temperature Spikes</SectionHeader>
         <SectionContent>
-          <p>A temperature spike means your fire got more oxygen than it needed. The most common cause is opening the lid or vents too aggressively. On a charcoal or wood pit, fresh air hits an established coal bed and the temperature jumps fast.</p>
-          <p>Don't panic and close everything down. A fully choked pit swings from too hot to too cold. Instead, close the intake vent halfway and leave the exhaust open. Give it five minutes before making another adjustment. Pits take time to respond — especially ceramic ones.</p>
-          <p>If your temp spiked because you added too much fuel at once, there's not much to do but wait it out with vents mostly closed. Next time, add smaller splits more frequently instead of loading the firebox all at once.</p>
+          <p>Temperature spike means fire got more oxygen than needed. Most common cause is opening lid or vents too aggressively. Charcoal or wood pit, fresh air hits established coal bed. Temperature jumps fast.</p>
+          <p>Don't panic. Close everything down. Fully choked pit swings too hot to too cold. Close intake vent halfway. Leave exhaust open. Give five minutes before another adjustment. Pits take time to respond. Especially ceramic.</p>
+          <p>If temp spiked because added too much fuel at once, wait it out with vents mostly closed. Next time, add smaller splits more frequently. Not load firebox all at once.</p>
         </SectionContent>
 
         <SectionHeader>Temperature Drops</SectionHeader>
         <SectionContent>
-          <p>A temp drop means your fire is starving — for oxygen, for fuel, or both. Check your intake vent first. If it's choked down, open it. If the fire has died down to ash with no active coals, you need to rebuild.</p>
-          <p>On a pellet grill, a temp drop usually means an empty hopper, a jammed auger, or a dirty firepot. Check the hopper first — it's always the hopper. If the hopper is full, look at the firepot for ash buildup blocking the pellets from igniting.</p>
-          <p>Don't crank the target temp to compensate for a drop. Let the fire recover at the actual target temp. Overcorrecting creates a spike on the other side and you spend the next hour chasing temperature instead of cooking.</p>
+          <p>Temp drop means fire starving. For oxygen. For fuel. Both. Check intake vent first. If choked down, open it. If fire died to ash no active coals, rebuild.</p>
+          <p>Pellet grill, temp drop usually empty hopper. Jammed auger. Dirty firepot. Check hopper first. Always hopper. If full, look firepot for ash buildup blocking pellets igniting.</p>
+          <p>Don't crank target temp to compensate drop. Let fire recover at actual target. Overcorrecting creates spike other side. Spend next hour chasing temperature. Not cooking.</p>
         </SectionContent>
 
         <SectionHeader>Stall That Won't Break</SectionHeader>
         <SectionContent>
-          <p>The stall is normal. A stall that lasts five or six hours is still normal on a large brisket in dry heat. But if you're running out of time and the meat hasn't moved in three hours, you have options.</p>
-          <p>Wrap it. Butcher paper slows the evaporative cooling that causes the stall without trapping as much steam as foil. Foil pushes through the stall faster but softens the bark. Either works — choose based on how much time you have and how much bark you want to preserve.</p>
-          <p>Bump your pit temp by 25°F. Not 50, not 75. Twenty-five degrees gives the heat enough edge to push through the stall without drying out the exterior or rushing the collagen conversion.</p>
+          <p>Stall is normal. Lasts five six hours still normal on large brisket. If running out of time meat hasn't moved three hours, options.</p>
+          <p>Wrap it. Butcher paper slows evaporative cooling causes stall. Without trapping much steam as foil. Foil pushes through faster. Softens bark. Either works. Choose based on time. How much bark preserve.</p>
+          <p>Bump pit temp by 25°F. Not 50. Not 75. Twenty-five gives heat enough edge to push through stall. Without drying exterior. Rushing collagen conversion.</p>
         </SectionContent>
 
         <SectionHeader>Bark Won't Set</SectionHeader>
         <SectionContent>
-          <p>Bark needs dry surface heat to form. If your cooking environment is too humid or your temperature is too low, the surface stays moist and the rub never crisps up into a proper crust.</p>
-          <p>If you wrapped in foil, unwrap for the last hour and bump the temp to 275°F. The dry heat will set the bark. If you're cooking in a high-humidity environment like a drum or electric smoker, crack the vent or door slightly to let moisture escape.</p>
-          <p>Sugar-heavy rubs burn before bark sets at high temps. If your rub has a lot of brown sugar, keep temps under 275°F and give it more time at lower heat rather than trying to force it with high heat.</p>
+          <p>Bark needs dry surface heat to form. Cooking environment too humid. Temperature too low. Surface stays moist. Rub never crisps into proper crust.</p>
+          <p>If wrapped in foil, unwrap last hour. Bump temp to 275°F. Dry heat sets bark. High-humidity environment like drum electric smoker, crack vent or door slightly. Let moisture escape.</p>
+          <p>Sugar-heavy rubs burn before bark sets at high temps. Rub has lot brown sugar, keep temps under 275°F. Give more time at lower heat. Not force with high heat.</p>
         </SectionContent>
 
         <SectionHeader>Meat Is Tough After Hitting Temp</SectionHeader>
         <SectionContent>
-          <p>This is almost always a time problem, not a temperature problem. The meat hit the target temperature but didn't spend enough time in the collagen conversion zone. You can't fix this with more heat after the fact.</p>
-          <p>If the meat is still on the pit, wrap it and hold it at 250°F for another hour or two. Collagen conversion continues as long as the meat is in the right temperature range. Probe it again — you're looking for that butter-soft feel, not a number.</p>
-          <p>If it's already off the pit and you're slicing, serve what you have. For next time, plan a longer cook with a two-hour buffer built in. You can always hold a finished brisket in a cooler for four hours. You can't un-rush a tough one.</p>
+          <p>This is almost always time problem. Not temperature problem. Meat hit target temperature. Didn't spend enough time in collagen conversion zone. Can't fix with more heat after fact.</p>
+          <p>If meat still on pit, wrap it. Hold at 250°F another hour or two. Collagen conversion continues as long as in right temperature range. Probe again. Looking for butter-soft feel. Not number.</p>
+          <p>If already off pit slicing, serve what you have. Next time, plan longer cook with two-hour buffer built in. Hold finished brisket in cooler four hours. Can't un-rush tough one.</p>
         </SectionContent>
 
         <SectionHeader>Bitter or Acrid Flavor</SectionHeader>
         <SectionContent>
-          <p>Bitter flavor is a smoke problem. Specifically, it's a dirty fire problem. Thick white or black smoke deposits creosote on the meat surface. Once it's there, it's there. You can't cook it off.</p>
-          <p>If you catch it early — within the first hour — pull the meat, wipe the surface down, fix your fire, and put it back on once you have clean smoke. If it's been on for several hours, the flavor is already in the meat. Serve it with a sauce that can cut through the bitterness.</p>
-          <p>For next time: let your fire fully establish with clean blue smoke before putting meat on. Never put cold meat on a smoky, smoldering fire that hasn't found its rhythm yet.</p>
+          <p>Bitter flavor is smoke problem. Specifically dirty fire problem. Thick white black smoke deposits creosote on meat surface. Once there, there. Can't cook it off.</p>
+          <p>If catch early within first hour, pull meat. Wipe surface down. Fix fire. Put back on once clean smoke. If been on several hours, flavor already in meat. Serve with sauce cuts through bitterness.</p>
+          <p>Next time: let fire fully establish with clean blue smoke before meat on. Never put cold meat on smoky smoldering fire hasn't found rhythm.</p>
         </SectionContent>
 
         <CommonMistakes

@@ -1,3 +1,5 @@
+import { preacherVoice, getDirectCommand, getScriptureLine } from "@/lib/preacher/voice";
+
 export function preacherLine(context: {
   meat?: string;
   pit?: string;
@@ -8,7 +10,7 @@ export function preacherLine(context: {
 }) {
   const { meat, pit, event, stall } = context;
 
-  // Core personality
+  // Core personality - using unified voice
   const base = [
     "Trust your fire",
     "Let the smoke do the preaching",
@@ -18,7 +20,7 @@ export function preacherLine(context: {
     "Patience makes legends",
   ];
 
-  // Meat-specific lines
+  // Meat-specific lines - simplified to match voice rules
   const brisket = [
     "Brisket rewards the patient",
     "Let that bark earn its glory",
@@ -43,41 +45,45 @@ export function preacherLine(context: {
     "Don't let that bird dry out",
   ];
 
-  // Pit-specific lines
+  // Pit-specific lines - direct and simple
   const offset = [
-    "Offset fires need a calm hand",
-    "Feed the fire, not your fear",
-    "Clean smoke wins championships",
+    "Feed the fire small and steady",
+    "Clean smoke wins",
+    "Let the wood catch before you close the door",
+    "Ease the intake, not the exhaust",
   ];
 
   const pellet = [
-    "Pellet pits stay steady, so should you",
-    "Let the auger work while you think",
-    "Consistency is your advantage",
+    "Let the auger work",
+    "Pellet pits stay steady if you do",
+    "Don't chase the temp",
+    "Keep the hopper full and trust the cycle",
   ];
 
   const kamado = [
-    "Kamados reward discipline",
-    "Small vents, big flavor",
-    "Ceramic patience wins the day",
+    "Ease the vents, not the fire",
+    "Ceramic holds heat longer than you think",
+    "Small vent changes go a long way",
+    "Let the dome do the work",
   ];
 
   const drum = [
     "Drums run hot, stay ahead of it",
-    "Let that vortex work for you",
-    "Drum cooking is a dance, not a march",
+    "Let the vortex work for you",
+    "Don't suffocate the fire",
+    "Keep the lid closed unless you mean it",
   ];
 
-  // Stall lines
+  // Stall lines - using scripture style
   const stallLines = [
     "The stall is a test of faith",
-    "Hold steady, the breakthrough is coming",
+    "Hold steady through the stall",
     "Every pitmaster earns their stripes in the stall",
   ];
 
-  // Event-specific lines
+  // Event-specific lines - direct commands
   const spritzLines = [
-    "Easy on the spritz, you're building bark not soup",
+    "Spritz quick and close the lid",
     "A little spritz goes a long way",
     "Moisture helps the bark shine",
   ];

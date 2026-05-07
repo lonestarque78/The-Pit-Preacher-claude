@@ -16,42 +16,42 @@ export default function TimelinePhilosophyPage() {
       <PlaybookArticle
         module="Module 07 — Backyard+"
         title="Timeline Philosophy"
-        intro="BBQ doesn't run on a clock. The meat decides when it's done. Your job is to build a timeline that gives it room to get there without leaving your guests standing around at 10pm."
+        intro="BBQ doesn't run on clock. Meat decides when done. Your job is build timeline gives room to get there. Without leaving guests standing around at 10pm."
       >
 
         <SectionHeader>Work Backwards From the Table</SectionHeader>
         <SectionContent>
-          <p>Start with when you want to eat. That's your anchor. Everything else builds backward from that moment.</p>
-          <p>If you want to eat at 6pm, and your brisket needs a one-hour rest, it needs to come off the pit by 5pm. If it's a 14-hour cook at 225°F, the fire needs to be lit at 3am. That's your start time. Not the time you feel like waking up — the time the math requires.</p>
-          <p>Most timeline problems are planning problems. The cook didn't run long — the plan didn't account for reality. Build the timeline before the cook, not during it.</p>
+          <p>Start with when you want to eat. That's anchor. Everything else builds backward from that moment.</p>
+          <p>If want eat at 6pm, brisket needs one-hour rest, comes off pit by 5pm. 14-hour cook at 225°F, fire lit at 3am. That's start time. Not time feel like waking. Time math requires.</p>
+          <p>Most timeline problems are planning problems. Cook didn't run long. Plan didn't account for reality. Build timeline before cook. Not during.</p>
         </SectionContent>
 
         <SectionHeader>The Buffer Is Not Optional</SectionHeader>
         <SectionContent>
-          <p>Every serious cook needs a buffer built in. Two hours minimum for large cuts. The buffer is not wasted time — it's insurance.</p>
-          <p>If the cook finishes early, the meat goes into a cooler wrapped in towels. It holds at safe temperature for four hours without losing quality. A brisket that finished two hours early and rested in a cooler is often better than one carved right off the pit. The extended rest does real work.</p>
-          <p>If the cook runs long, the buffer absorbs it. No scrambling. No cranking the heat. No serving tough meat because you ran out of time. The buffer is what separates a calm cook from a stressful one.</p>
+          <p>Every serious cook needs buffer built in. Two hours minimum for large cuts. Buffer is not wasted time. It's insurance.</p>
+          <p>If cook finishes early, meat goes into cooler wrapped in towels. Holds at safe temperature four hours without losing quality. Brisket finished two hours early rested in cooler often better than carved right off pit. Extended rest does real work.</p>
+          <p>If cook runs long, buffer absorbs it. No scrambling. No cranking heat. No serving tough meat because ran out of time. Buffer separates calm cook from stressful one.</p>
         </SectionContent>
 
         <SectionHeader>Estimated Cook Times Are Starting Points</SectionHeader>
         <SectionContent>
-          <p>Every cook time estimate you've ever read is a range, not a guarantee. A 12-pound brisket at 225°F might take 14 hours. It might take 18. The variables — meat quality, fat content, pit consistency, weather, humidity — all affect how long the biology takes to run its course.</p>
-          <p>Use estimates to build your plan. Don't use them to set your serving time. The estimate gets you in the ballpark. The buffer and the cooler handle the rest.</p>
-          <p>Per-pound estimates are useful for planning but unreliable for precision. A 14-pound brisket does not take exactly 1.5 hours per pound. Use them as a rough starting point, build in the buffer, and let probe tenderness tell you when it's actually done.</p>
+          <p>Every cook time estimate you've read is range. Not guarantee. 12-pound brisket at 225°F might take 14 hours. Might take 18. Variables. Meat quality. Fat content. Pit consistency. Weather. Humidity. All affect how long biology takes to run course.</p>
+          <p>Use estimates to build plan. Don't use to set serving time. Estimate gets in ballpark. Buffer and cooler handle rest.</p>
+          <p>Per-pound estimates useful for planning. Unreliable for precision. 14-pound brisket does not take exactly 1.5 hours per pound. Use as rough starting point. Build in buffer. Let probe tenderness tell when actually done.</p>
         </SectionContent>
 
         <SectionHeader>Managing Multiple Proteins</SectionHeader>
         <SectionContent>
-          <p>Cooking multiple proteins at once is a timeline problem as much as a cooking problem. Everything needs to finish around the same time without any one item suffering for the others.</p>
-          <p>Anchor your timeline to the longest cook. Brisket takes longest — build everything else around it. Pork shoulder goes on with the brisket or slightly after. Ribs go on in the afternoon. Chicken goes on in the last two hours. Everything lands in the window.</p>
-          <p>Use the cooler as a staging tool. Brisket finishes first and goes into the cooler. Pork shoulder finishes next and joins it. Ribs come off last and rest briefly. Everything hits the table together. The cooler is not just for holding — it's part of your service strategy.</p>
+          <p>Cooking multiple proteins at once is timeline problem as much as cooking problem. Everything needs finish around same time without any item suffering for others.</p>
+          <p>Anchor timeline to longest cook. Brisket takes longest. Build everything else around it. Pork shoulder goes on with brisket or slightly after. Ribs go on afternoon. Chicken goes on last two hours. Everything lands in window.</p>
+          <p>Use cooler as staging tool. Brisket finishes first goes into cooler. Pork shoulder finishes next joins it. Ribs come off last rest briefly. Everything hits table together. Cooler not just for holding. Part of service strategy.</p>
         </SectionContent>
 
         <SectionHeader>Weather and Environment</SectionHeader>
         <SectionContent>
-          <p>Cold weather extends cook times. Wind pulls heat from the pit and makes temperature management harder. Rain affects airflow and fire behavior on charcoal and wood pits. These are not excuses — they are variables you need to account for.</p>
-          <p>In cold weather, add 20 to 30 percent to your estimated cook time. Shield your pit from wind if possible. Start your fire earlier. The meat doesn't know it's cold outside — it just knows it's not getting enough heat to move through the process at the expected pace.</p>
-          <p>Hot weather works the other way. A pit in direct Texas summer sun runs hotter than the same pit in the shade in March. Know your environment and adjust your estimates accordingly.</p>
+          <p>Cold weather extends cook times. Wind pulls heat from pit. Makes temperature management harder. Rain affects airflow fire behavior on charcoal wood pits. Not excuses. Variables you need account for.</p>
+          <p>Cold weather, add 20 to 30 percent to estimated cook time. Shield pit from wind if possible. Start fire earlier. Meat doesn't know cold outside. Just knows not getting enough heat to move through process at expected pace.</p>
+          <p>Hot weather works other way. Pit in direct Texas summer sun runs hotter than same pit in shade in March. Know environment. Adjust estimates accordingly.</p>
         </SectionContent>
 
         <CommonMistakes

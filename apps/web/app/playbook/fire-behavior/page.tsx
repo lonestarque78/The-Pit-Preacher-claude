@@ -16,36 +16,36 @@ export default function FireBehaviorPage() {
       <PlaybookArticle
         module="Module 02 — Basic+"
         title="Fire Behavior"
-        intro="Your pit is only as good as the fire inside it. Understanding how heat moves, where it concentrates, and how airflow controls it is the difference between a cook you manage and one that manages you."
+        intro="Your pit is only as good as the fire inside it. Learn how heat moves. Where it concentrates. How airflow controls it. That's the difference between a cook you manage and one that manages you."
       >
 
         <SectionHeader>How Heat Moves</SectionHeader>
         <SectionContent>
-          <p>Heat moves through your pit three ways: convection, conduction, and radiation. All three are happening at once. The ratio between them depends on your pit type and how you run it.</p>
-          <p>Convection is hot air moving. It's the primary cook mechanism in most pits. Hot air rises from the fire, circulates through the cooking chamber, and transfers heat to the meat. The faster the airflow, the more aggressive the convective heat.</p>
-          <p>Conduction is direct contact heat transfer — grates to meat. It's a smaller factor in low and slow cooking but matters for searing and when meat sits directly on a surface for a long time.</p>
-          <p>Radiation is infrared heat coming off the fire, coals, or hot surfaces. In an offset with a big coal bed or a kamado running hot, radiant heat is significant. It browns surfaces fast and can create hot spots if your meat is too close to the source.</p>
+          <p>Heat moves three ways. Convection. Conduction. Radiation. All happen at once. The ratio depends on your pit type. How you run it.</p>
+          <p>Convection is hot air moving. It's the main cook in most pits. Hot air rises from the fire. Circulates through the chamber. Transfers heat to the meat. Faster airflow means more aggressive heat.</p>
+          <p>Conduction is direct contact. Grates to meat. Smaller factor in low and slow. Matters for searing. When meat sits on a surface long.</p>
+          <p>Radiation is infrared heat. Off the fire, coals, hot surfaces. Significant in offset with big coal bed. Kamado running hot. Browns surfaces fast. Creates hot spots if meat is too close.</p>
         </SectionContent>
 
         <SectionHeader>Airflow is the Throttle</SectionHeader>
         <SectionContent>
-          <p>Fire needs oxygen to burn. Airflow controls how hot your fire burns and how efficiently it burns. Your intake vents feed oxygen to the fire. Your exhaust vents pull air through the system. Together they create the draft that keeps your fire alive.</p>
-          <p>More airflow means a hotter, more active fire. Less airflow means a cooler, slower burn. This is how you dial in your temperature — not by adding or removing fuel, but by controlling how much air your fire gets.</p>
-          <p>A common mistake is chasing temperature with fuel. If your pit is running cool, the instinct is to add more wood or charcoal. But if your vents are choked down, more fuel just smothers the fire. Open your intake first. Let the fire breathe before you add anything.</p>
+          <p>Airflow controls how hot your fire burns. How efficiently it burns. Intake vents feed oxygen to the fire. Exhaust vents pull air through. Together they create the draft. Keeps your fire alive.</p>
+          <p>More airflow means hotter fire. More active. Less airflow means cooler. Slower burn. This is how you dial temperature. Not by adding fuel. By controlling air.</p>
+          <p>Don't chase temperature with fuel. If pit is cool, instinct is add wood or charcoal. But if vents are choked, more fuel smothers the fire. Open intake first. Let fire breathe. Then add fuel.</p>
         </SectionContent>
 
         <SectionHeader>Hot Spots and Cold Zones</SectionHeader>
         <SectionContent>
-          <p>Every pit has hot spots and cold zones. The area closest to the firebox in an offset runs hotter. The far end of the cooking chamber runs cooler. On a kettle, the area directly over the coals is a hot zone. The indirect side is your cooking zone.</p>
-          <p>Knowing your pit's heat map is one of the most valuable things you can learn. A cheap oven thermometer placed at grate level at different positions will tell you more about your pit than any gauge mounted in the lid. Lid thermometers measure air temperature at lid height — often 50°F or more hotter than what the meat is actually experiencing at grate level.</p>
-          <p>Use hot spots intentionally. Finish a brisket flat in the hot zone for bark development. Start a pork shoulder in the cooler zone for a longer, slower render. Work the heat map, don't fight it.</p>
+          <p>Every pit has hot spots. Cold zones. Closest to firebox in offset runs hotter. Far end runs cooler. On kettle, over coals is hot zone. Indirect side is cooking zone.</p>
+          <p>Know your pit's heat map. Cheap oven thermometer at grate level. Different positions. Tells you more than lid gauge. Lid measures air at lid height. Often 50°F hotter than grate level.</p>
+          <p>Use hot spots intentionally. Finish brisket flat in hot zone for bark. Start pork shoulder in cooler zone for longer render. Work the heat map. Don't fight it.</p>
         </SectionContent>
 
         <SectionHeader>Clean Fire vs Dirty Fire</SectionHeader>
         <SectionContent>
-          <p>Clean fire burns hot and produces thin, blue-gray smoke. That's the smoke you want on your meat. It carries the flavor compounds that make BBQ taste like BBQ.</p>
-          <p>Dirty fire smolders. It produces thick, white or black smoke loaded with creosote and particulates. Meat cooked in dirty smoke tastes bitter and acrid. A thick white smoke cloud pouring out of your pit is a warning, not a feature.</p>
-          <p>Clean fire comes from dry, seasoned wood and enough airflow to keep combustion complete. Wet wood, green wood, and starved airflow all produce dirty fire. If your smoke looks wrong, fix the fire before you worry about anything else.</p>
+          <p>Clean fire burns hot. Produces thin blue-gray smoke. That's the smoke you want. Carries flavor compounds. Makes BBQ taste like BBQ.</p>
+          <p>Dirty fire smolders. Produces thick white or black smoke. Loaded with creosote. Particulates. Meat tastes bitter. Acrid. Thick white cloud is warning. Not feature.</p>
+          <p>Clean fire from dry seasoned wood. Enough airflow for complete combustion. Wet wood. Green wood. Starved airflow produce dirty fire. If smoke looks wrong, fix fire first.</p>
         </SectionContent>
 
         <CommonMistakes

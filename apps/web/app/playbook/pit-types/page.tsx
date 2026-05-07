@@ -15,64 +15,64 @@ const PITS = [
     key: "offset",
     label: "Offset Smoker",
     aliases: ["offset", "stick burner", "stick-burner"],
-    description: "The gold standard for traditional BBQ. Fire lives in a separate firebox. Heat and smoke travel through the cooking chamber via convection. Demands active fire management but rewards you with unmatched smoke flavor and bark.",
+    description: "Gold standard for traditional BBQ. Fire in separate firebox. Heat and smoke travel through chamber via convection. Demands active fire management. Rewards with unmatched smoke flavor. Bark.",
     strengths: ["Deep smoke penetration", "Superior bark development", "High capacity for large cooks"],
     watch: ["Hot spots near the firebox", "Requires consistent fire tending", "Steep learning curve on fire management"],
-    tips: "Rotate meat every hour if you don't have a baffle plate. Keep a coal bed going and add splits on top. Chase blue smoke, not white.",
+    tips: "Rotate meat every hour if no baffle. Keep coal bed going. Add splits on top. Chase blue smoke. Not white.",
   },
   {
     key: "pellet",
     label: "Pellet Grill",
     aliases: ["pellet", "pellet grill", "pellet smoker", "smokefire", "traeger", "weber smokefire", "recteq", "pit boss"],
-    description: "Set-it-and-nearly-forget-it cooking. An auger feeds wood pellets into a firepot. A fan circulates heat. Temperature is electronically controlled. Smoke flavor is milder than a stick burner but consistency is hard to beat.",
+    description: "Set-it-and-nearly-forget-it cooking. Auger feeds wood pellets into firepot. Fan circulates heat. Temperature electronically controlled. Smoke flavor milder than stick burner. Consistency hard to beat.",
     strengths: ["Precise temperature control", "Even heat distribution", "Low active management required"],
     watch: ["Milder smoke flavor than offset", "Pellet quality affects everything", "Firepot needs regular cleaning"],
-    tips: "Use a smoke tube in the first two hours for added smoke exposure. Keep your hopper full and your firepot clean. High-quality pellets make a real difference.",
+    tips: "Use smoke tube first two hours for added smoke. Keep hopper full. Firepot clean. High-quality pellets make difference.",
   },
   {
     key: "kamado",
     label: "Kamado",
     aliases: ["kamado", "big green egg", "bge", "vision", "primo", "ceramic"],
-    description: "Ceramic walls retain heat with extraordinary efficiency. Burns lump charcoal. Holds temperature for hours on a small amount of fuel. Capable of both low and slow smoking and high-heat searing.",
+    description: "Ceramic walls retain heat with extraordinary efficiency. Burns lump charcoal. Holds temperature hours on small fuel. Capable of low slow smoking. High-heat searing.",
     strengths: ["Exceptional heat retention", "Very fuel efficient", "Versatile — smoke to sear"],
     watch: ["Small vent adjustments have big effects", "Limited cooking capacity", "Slow to cool down if you overshoot temp"],
-    tips: "Make small vent adjustments and wait five minutes before making another. Stabilize temperature before putting meat on. Add wood chunks directly into the lump for smoke.",
+    tips: "Make small vent adjustments. Wait five minutes before another. Stabilize temperature before meat on. Add wood chunks directly into lump for smoke.",
   },
   {
     key: "kettle",
     label: "Kettle Grill",
     aliases: ["kettle", "weber kettle", "charcoal grill"],
-    description: "The backyard classic. Two-zone charcoal setup turns a simple grill into a capable smoker. Indirect heat on one side, coal bed on the other. Limited capacity but highly capable in the right hands.",
+    description: "Backyard classic. Two-zone charcoal setup turns simple grill into capable smoker. Indirect heat one side. Coal bed other. Limited capacity. Highly capable in right hands.",
     strengths: ["Affordable and accessible", "Great bark development", "Two-zone setup is versatile"],
     watch: ["Limited cook capacity", "More active management than set-and-forget pits", "Temperature swings if you're not watching vents"],
-    tips: "Snake method or charcoal baskets on one side give you better temperature control for long cooks. Top vent stays open. Control temp with the bottom vent only.",
+    tips: "Snake method or charcoal baskets on one side for better temp control long cooks. Top vent stays open. Control temp with bottom vent only.",
   },
   {
     key: "drum",
     label: "Ugly Drum Smoker",
     aliases: ["drum", "uds", "ugly drum", "barrel smoker"],
-    description: "Simple, efficient, and effective. A steel drum with a charcoal basket at the bottom and grates at the top. High humidity from meat drippings keeps things moist. Runs hotter than most pits for its size.",
+    description: "Simple. Efficient. Effective. Steel drum with charcoal basket bottom. Grates top. High humidity from drippings keeps moist. Runs hotter than most pits for size.",
     strengths: ["Very moist cooking environment", "Fuel efficient", "Excellent for large cuts"],
     watch: ["Runs hotter than expected", "Less smoke flavor than offset", "Vent response is fast — don't over-adjust"],
-    tips: "Don't overload with wood — the enclosed environment amplifies smoke. Start with less than you think you need. Vent adjustments take effect quickly.",
+    tips: "Don't overload with wood. Enclosed environment amplifies smoke. Start with less than you think. Vent adjustments take effect quickly.",
   },
   {
     key: "cabinet",
     label: "Cabinet / Vertical Smoker",
     aliases: ["cabinet", "vertical", "cabinet smoker", "vertical smoker", "vault", "assassin", "lone star grillz vertical"],
-    description: "Heat rises from a firebox at the bottom through multiple cooking racks. Even heat distribution across all levels. High capacity. Popular for competition teams and serious backyard cooks.",
+    description: "Heat rises from firebox bottom through multiple racks. Even heat distribution all levels. High capacity. Popular for competition teams. Serious backyard cooks.",
     strengths: ["High cooking capacity", "Even heat top to bottom", "Great smoke circulation"],
     watch: ["Bottom rack runs hotter", "Large fuel consumption on charcoal models", "Takes time to dial in"],
-    tips: "Rotate racks if cooking multiple items. Bottom rack is best for items that need more heat. Keep the water pan full if your model has one.",
+    tips: "Rotate racks if cooking multiple items. Bottom rack best for items need more heat. Keep water pan full if model has one.",
   },
   {
     key: "electric",
     label: "Electric Smoker",
     aliases: ["electric", "electric smoker", "masterbuilt"],
-    description: "Heat comes from an electric element. Smoke comes from a wood chip tray. The most beginner-friendly option. Temperature holds steady with no fire management. Smoke flavor is the lightest of any pit type.",
+    description: "Heat from electric element. Smoke from wood chip tray. Most beginner-friendly option. Temperature holds steady. No fire management. Smoke flavor lightest of any pit type.",
     strengths: ["Easiest temperature control", "Great for beginners", "Consistent results"],
     watch: ["Lightest smoke flavor of any pit", "Bark development is difficult", "Limited chip tray capacity"],
-    tips: "Add chips only in the first two hours. Crack the vent slightly to let moisture escape and help bark develop. Finish at higher heat if bark is a priority.",
+    tips: "Add chips only first two hours. Crack vent slightly to let moisture escape. Help bark develop. Finish at higher heat if bark priority.",
   },
 ];
 
@@ -116,7 +116,7 @@ export default async function KnowYourPitPage() {
       <PlaybookArticle
         module="Module 04 — Basic+"
         title="Know Your Pit"
-        intro="Every pit has a personality. The way it holds heat, moves air, and takes smoke is different. The sooner you understand yours, the sooner you stop fighting it and start working with it."
+        intro="Every pit has a personality. How it holds heat. Moves air. Takes smoke. Different. Sooner you understand yours, sooner you stop fighting. Start working with it."
       >
 
         {/* Personalized pit — shown first if profile has smoker_type */}

@@ -16,36 +16,36 @@ export default function HolyTrinityPage() {
       <PlaybookArticle
         module="Module 03 — Basic+"
         title="The Holy Trinity"
-        intro="Salt, smoke, and heat. Every great cook comes down to these three. Get any one of them wrong and the other two can't save you."
+        intro="Salt. Smoke. Heat. Every great cook comes down to these three. Get one wrong. The other two can't save you."
       >
 
         <SectionHeader>Salt</SectionHeader>
         <SectionContent>
-          <p>Salt is the foundation. It penetrates the meat, seasons it from the inside out, and draws moisture to the surface where it mixes with the rub and forms the bark. Without salt, everything else is surface level.</p>
-          <p>Kosher salt is the standard. It's coarse enough to control, dissolves evenly, and has no additives that affect flavor. Table salt is too fine — it over-seasons fast and is hard to apply evenly. Sea salt works but costs more for no meaningful difference on a big cut.</p>
-          <p>Apply salt early. For brisket and pork shoulder, salting the night before and letting it rest uncovered in the fridge gives the salt time to penetrate deep into the muscle. For ribs and chicken, a few hours is enough. The longer the salt has to work, the more evenly seasoned the finished product.</p>
-          <p>Don't be shy. Large cuts of meat need more salt than you think. A properly salted brisket should look well coated, not lightly dusted. If you're second-guessing whether you've added enough, you probably haven't.</p>
+          <p>Salt is the foundation. Penetrates the meat. Seasons from inside out. Draws moisture to surface. Mixes with rub. Forms bark. Without salt, everything is surface level.</p>
+          <p>Kosher salt is standard. Coarse enough to control. Dissolves evenly. No additives. Table salt too fine. Over-seasons fast. Hard to apply evenly. Sea salt works. Costs more. No difference on big cut.</p>
+          <p>Apply salt early. Brisket and pork shoulder, salt night before. Rest uncovered in fridge. Gives salt time to penetrate deep. Ribs and chicken, few hours enough. Longer salt works, more even seasoning.</p>
+          <p>Don't be shy. Large cuts need more salt than you think. Properly salted brisket looks well coated. Not lightly dusted. If second-guessing, you haven't added enough.</p>
         </SectionContent>
 
         <SectionHeader>Smoke</SectionHeader>
         <SectionContent>
-          <p>Smoke is flavor, but it's also a tool that can ruin a cook if you misuse it. The goal is smoke ring penetration and surface flavor — not a bitter, acrid crust that tastes like an ashtray.</p>
-          <p>Smoke penetration happens early in the cook, before the surface dries out and the bark sets. The first two to three hours on the pit are when smoke does most of its work. After that, the surface is largely sealed and new smoke flavor has diminishing returns.</p>
-          <p>Wood choice matters. Fruit woods like apple and cherry are mild and sweet — good for poultry and pork. Oak and hickory are stronger and work well on beef. Mesquite burns hot and bold — use it sparingly or it dominates everything. Match the wood to the protein and the intensity you want.</p>
-          <p>The smoke ring — that pink band just under the surface — is a chemical reaction between myoglobin in the meat and nitrogen dioxide in the smoke. It's a visual indicator of smoke exposure but doesn't directly equal flavor. Don't chase the ring. Chase the taste.</p>
+          <p>Smoke is flavor. Also a tool that can ruin a cook. Goal is smoke ring penetration. Surface flavor. Not bitter acrid crust. Tastes like ashtray.</p>
+          <p>Smoke penetration happens early. Before surface dries. Bark sets. First two three hours on pit. Smoke does most work. After, surface sealed. New smoke has diminishing returns.</p>
+          <p>Wood choice matters. Fruit woods like apple cherry mild sweet. Good for poultry pork. Oak hickory stronger. Work well on beef. Mesquite burns hot bold. Use sparingly. Dominates everything. Match wood to protein. Intensity you want.</p>
+          <p>Smoke ring is pink band under surface. Chemical reaction between myoglobin and nitrogen dioxide. Visual indicator of smoke exposure. Doesn't equal flavor. Don't chase ring. Chase taste.</p>
         </SectionContent>
 
         <SectionHeader>Heat</SectionHeader>
         <SectionContent>
-          <p>Heat is the engine. It drives every process — salt penetration, smoke absorption, collagen breakdown, fat render, bark formation, and moisture loss. Too much heat and you outrun the biology. Too little and you never get there.</p>
-          <p>225°F to 275°F is the low and slow range for most BBQ. 225°F gives you maximum time for collagen conversion and smoke exposure. 275°F moves things along faster and can produce better bark on cuts like brisket. Neither is wrong. Both require understanding what's happening inside the meat at those temperatures.</p>
-          <p>Consistency matters more than hitting a precise number. A pit that holds 250°F steady all day beats one that swings between 200°F and 300°F chasing a target. Stable heat produces predictable results. Erratic heat produces erratic results.</p>
+          <p>Heat is the engine. Drives every process. Salt penetration. Smoke absorption. Collagen breakdown. Fat render. Bark formation. Moisture loss. Too much heat, outrun biology. Too little, never get there.</p>
+          <p>225°F to 275°F is low and slow range for most BBQ. 225°F gives maximum time for collagen conversion. Smoke exposure. 275°F moves faster. Better bark on brisket. Neither wrong. Both require understanding meat at those temperatures.</p>
+          <p>Consistency matters more than precise number. Pit holds 250°F steady all day beats swings between 200°F 300°F. Stable heat produces predictable results. Erratic heat produces erratic results.</p>
         </SectionContent>
 
         <SectionHeader>How They Work Together</SectionHeader>
         <SectionContent>
-          <p>The trinity is a system, not three independent variables. Salt pulls moisture to the surface, which helps smoke adhere and form bark. Heat drives smoke into the meat while the surface is still moist. As the cook progresses, heat dries the surface and sets the bark while continuing to break down the interior.</p>
-          <p>When something goes wrong in a cook, it's usually one of these three out of balance. Bland meat is a salt problem. Bitter or acrid flavor is a smoke problem. Tough texture or undercooked fat is a heat and time problem. Diagnose the trinity before you blame the cut.</p>
+          <p>Trinity is system. Not three independent variables. Salt pulls moisture to surface. Helps smoke adhere. Form bark. Heat drives smoke into meat while surface moist. Cook progresses, heat dries surface. Sets bark. Breaks down interior.</p>
+          <p>When something wrong in cook, usually one out of balance. Bland meat is salt problem. Bitter acrid flavor is smoke problem. Tough texture undercooked fat is heat time problem. Diagnose trinity before blame cut.</p>
         </SectionContent>
 
         <CommonMistakes

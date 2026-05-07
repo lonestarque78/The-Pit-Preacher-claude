@@ -66,12 +66,12 @@ export function generatePhases(cook: any, items: any[], session?: any): Phase[] 
 
   const fireNote =
     pit === "pellet"
-      ? "Let the auger do its job. Run the startup cycle and walk away for 15 minutes. The pit knows what it needs."
+      ? "Let the auger work. The pit knows what it needs."
       : pit === "offset"
-      ? "Build your coal bed first. One good split at a time. Don't rush the fire — it'll tell you when it's ready."
+      ? "Build your coal bed. One split at a time. The fire will tell you when it's ready."
       : pit === "kamado"
-      ? "Light the lump in two spots and leave the lid open until ash forms. Dial in your vents and wait. Patience before the meat is how you earn patience during the cook."
-      : "Give the pit time to breathe and settle. A stable fire before the meat goes on is the difference between a good cook and a great one.";
+      ? "Light the lump and wait. Patience before the meat earns patience during the cook."
+      : "Give the pit time to settle. A stable fire before the meat makes the difference.";
 
   phases.push({
     id: "fire",
@@ -139,7 +139,7 @@ export function generatePhases(cook: any, items: any[], session?: any): Phase[] 
     watchFor: onPitWatchFor,
     commonMistakes: "Lifting the lid too early or too often. The cook needs to stabilize with meat in it. Let it run.",
     preacherNote: slow
-      ? "Close that lid and walk away. The smoke is doing its work. Every peek you take is a minute you add to this cook."
+      ? "Close that lid and walk away. The smoke is doing its work."
       : "Watch it, don't hover it. High heat forgives curiosity less than low and slow does.",
     completionPrompt: slow
       ? "Bark is starting to form. Time to start watching the color. The surface will tell you when to move to the next phase."
@@ -170,7 +170,7 @@ export function generatePhases(cook: any, items: any[], session?: any): Phase[] 
       commonMistakes:
         "Wrapping too early before bark has fully set. A soft or tacky bark will steam inside the wrap and turn mushy.",
       preacherNote:
-        "When the bark bounces back under your finger and looks like dark leather — that is your sign. Not the clock. Not the temperature. The bark tells you.",
+        "When the bark bounces back under your finger and looks like dark leather — that is your sign. Not the clock. The bark tells you.",
       completionPrompt:
         "Bark is set. Time to make the call — wrap or no wrap. Check your internal temp and look at that surface one more time before you decide.",
       requiresTempEntry: false,

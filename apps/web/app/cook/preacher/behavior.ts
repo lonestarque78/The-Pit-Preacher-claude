@@ -1,3 +1,5 @@
+import { preacherVoice } from "@/lib/preacher/voice";
+
 interface CookEvent {
   type: string;
   note?: string;

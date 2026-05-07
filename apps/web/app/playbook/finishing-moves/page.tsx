@@ -16,43 +16,43 @@ export default function FinishingMovesPage() {
       <PlaybookArticle
         module="Module 06 — Backyard+"
         title="Finishing Moves"
-        intro="The last hour of a cook is where most people lose what they spent all day building. The meat is done. Now you have to finish it right."
+        intro="Last hour of cook is where most lose what spent all day building. Meat is done. Now finish it right."
       >
 
         <SectionHeader>The Rest</SectionHeader>
         <SectionContent>
-          <p>Resting is not optional. It is part of the cook. When meat comes off the pit, the muscle fibers are contracted and the internal juices are pushed toward the center. Cutting into it immediately sends those juices onto the cutting board instead of staying in the meat.</p>
-          <p>During the rest, the fibers relax, the gelatin that formed during collagen conversion redistributes, and the internal temperature equalizes from edge to center. A brisket that rests properly slices cleaner, holds its juice better, and tastes more consistent from flat to point.</p>
-          <p>Minimum rest times: chicken and ribs get at least 15 minutes. Pork shoulder gets 45 minutes to an hour. Brisket gets at least one hour — two is better. Wrap in butcher paper or foil, then in a towel, and put it in a cooler. It will hold safely for four hours. This is your buffer. Use it.</p>
+          <p>Resting is not optional. It is part of the cook. Meat comes off pit, muscle fibers contracted. Internal juices pushed toward center. Cutting immediately sends juices onto cutting board. Not staying in meat.</p>
+          <p>During rest, fibers relax. Gelatin formed during collagen conversion redistributes. Internal temperature equalizes edge to center. Brisket rests properly slices cleaner. Holds juice better. Tastes more consistent flat to point.</p>
+          <p>Minimum rest times: chicken ribs at least 15 minutes. Pork shoulder 45 minutes to hour. Brisket at least one hour. Two better. Wrap in butcher paper or foil. Then towel. Put in cooler. Holds safely four hours. This is buffer. Use it.</p>
         </SectionContent>
 
         <SectionHeader>Wrapping for the Rest</SectionHeader>
         <SectionContent>
-          <p>How you wrap affects the rest. Foil traps steam and keeps the bark softer — acceptable for pulled pork where bark gets mixed in anyway, less ideal for brisket where the crust is part of the experience. Butcher paper breathes slightly and preserves more bark texture.</p>
-          <p>Unwrapped resting is an option for shorter rests on smaller cuts. A rack of ribs resting uncovered for 15 minutes on a cutting board loses minimal heat and keeps the bark intact. For large cuts resting over an hour, wrap to retain heat.</p>
-          <p>Don't rest on a cold surface. A cold sheet pan pulls heat out of the bottom of the meat faster than the rest of it cools. Rest on a wooden cutting board or a rack over a sheet pan.</p>
+          <p>How you wrap affects rest. Foil traps steam. Keeps bark softer. Acceptable for pulled pork where bark mixed in. Less ideal for brisket where crust part of experience. Butcher paper breathes slightly. Preserves more bark texture.</p>
+          <p>Unwrapped resting option for shorter rests smaller cuts. Rack ribs resting uncovered 15 minutes cutting board loses minimal heat. Keeps bark intact. Large cuts resting over hour, wrap to retain heat.</p>
+          <p>Don't rest on cold surface. Cold sheet pan pulls heat out bottom meat faster than rest cools. Rest on wooden cutting board or rack over sheet pan.</p>
         </SectionContent>
 
         <SectionHeader>Slicing</SectionHeader>
         <SectionContent>
-          <p>Slicing against the grain is not a suggestion. Muscle fibers run in a direction. Cutting with the grain leaves long fibers that are chewy regardless of how well the meat cooked. Cutting against the grain shortens those fibers and makes every bite tender.</p>
-          <p>Brisket has two muscles — the flat and the point — and they run in different directions. Separate them before slicing or adjust your angle as you cross from one to the other. Slicing the whole brisket in one direction is one of the most common mistakes at the cutting board.</p>
-          <p>Slice thickness matters. Brisket at a quarter inch is the standard. Too thin and it falls apart. Too thick and the texture suffers. Pork shoulder gets pulled or chopped — not sliced. Ribs get cut between every bone, not every other one.</p>
-          <p>Use a sharp knife. A dull blade drags and tears instead of cutting clean. A sharp slicing knife or carving knife makes a real difference on the final presentation.</p>
+          <p>Slicing against grain is not suggestion. Muscle fibers run in direction. Cutting with grain leaves long fibers chewy regardless how well meat cooked. Cutting against grain shortens fibers. Makes every bite tender.</p>
+          <p>Brisket has two muscles. Flat and point. Run in different directions. Separate before slicing or adjust angle as cross from one to other. Slicing whole brisket one direction is common mistake at cutting board.</p>
+          <p>Slice thickness matters. Brisket quarter inch standard. Too thin falls apart. Too thick texture suffers. Pork shoulder gets pulled or chopped. Not sliced. Ribs cut between every bone. Not every other.</p>
+          <p>Use sharp knife. Dull blade drags tears instead cutting clean. Sharp slicing knife or carving knife makes difference on final presentation.</p>
         </SectionContent>
 
         <SectionHeader>Sauce</SectionHeader>
         <SectionContent>
-          <p>Great BBQ doesn't need sauce. Sauce is a finishing tool, not a cover-up. If you're reaching for sauce to save a cook, the problem was earlier in the process.</p>
-          <p>When sauce is appropriate, apply it at the right time. Saucing during the cook works on ribs — brush on in the last 30 minutes and let it tack up into a glaze. Saucing brisket during the cook softens bark. Serve brisket sauce on the side.</p>
-          <p>Temperature matters for sauce. Cold sauce on hot meat cools the surface fast and doesn't adhere well. Warm your sauce before serving or applying. It spreads better and tastes better.</p>
+          <p>Great BBQ doesn't need sauce. Sauce is finishing tool. Not cover-up. If reaching for sauce to save cook, problem was earlier in process.</p>
+          <p>When sauce appropriate, apply at right time. Saucing during cook works on ribs. Brush on last 30 minutes. Let tack up into glaze. Saucing brisket during cook softens bark. Serve brisket sauce on side.</p>
+          <p>Temperature matters for sauce. Cold sauce on hot meat cools surface fast. Doesn't adhere well. Warm sauce before serving or applying. Spreads better. Tastes better.</p>
         </SectionContent>
 
         <SectionHeader>Serving</SectionHeader>
         <SectionContent>
-          <p>Serve on a warm surface. A cold plate pulls heat from the meat the moment it lands. Warm your plates or serving trays in the oven at 170°F for a few minutes before service.</p>
-          <p>Don't pile everything on top of each other. Stacked meat steams itself and softens bark. Lay it out in a single layer or serve directly from the cutting board.</p>
-          <p>Slice to order when possible. Sliced brisket dries out faster than whole. If you're feeding a crowd over time, keep the brisket whole and wrapped until people are ready to eat, then slice in batches.</p>
+          <p>Serve on warm surface. Cold plate pulls heat from meat moment it lands. Warm plates or serving trays in oven at 170°F few minutes before service.</p>
+          <p>Don't pile everything on top each other. Stacked meat steams itself. Softens bark. Lay out in single layer or serve directly from cutting board.</p>
+          <p>Slice to order when possible. Sliced brisket dries out faster than whole. Feeding crowd over time, keep brisket whole wrapped until people ready eat. Then slice in batches.</p>
         </SectionContent>
 
         <CommonMistakes

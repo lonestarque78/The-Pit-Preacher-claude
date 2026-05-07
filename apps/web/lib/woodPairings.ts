@@ -29,7 +29,7 @@ export const PAIRINGS: PairingsMap = {
   post_oak_beef: {
     rating: 'Classic',
     tags: ['Traditional', 'Medium Smoke', 'Bark-Friendly', 'Earthy'],
-    preacher: "Post Oak on beef is the Central Texas sacrament. Medium smoke, clean burn, lets the beef speak. This is the pairing that built a religion.",
+    preacher: "Post oak on beef is the Central Texas sacrament. Medium smoke, clean burn, lets the beef speak. This is the pairing that built a religion.",
     notes: [
       "Smoke penetration peaks at hour 4 — after that bark development takes over",
       "Watch for deep mahogany color — that is your signal",
@@ -39,7 +39,7 @@ export const PAIRINGS: PairingsMap = {
   post_oak_pork: {
     rating: 'Excellent',
     tags: ['Versatile', 'Medium Smoke', 'Clean Finish'],
-    preacher: "Post oak works on pork without overwhelming it. The smoke complements rather than competes. Hill Country pitmasters have been doing this for generations.",
+    preacher: "Post oak works on pork without overwhelming it. The smoke complements rather than competes.",
     notes: [
       "Works especially well on pork butt for the first 4-6 hours",
       "Pairs well with simple salt and pepper or SPG rub",
@@ -49,7 +49,7 @@ export const PAIRINGS: PairingsMap = {
   post_oak_poultry: {
     rating: 'Good',
     tags: ['Medium Smoke', 'Clean'],
-    preacher: "Post oak on poultry is solid but not the first choice. The smoke is present without being aggressive. A reliable option when that is all you have.",
+    preacher: "Post oak on poultry is solid but not the first choice. The smoke is present without being aggressive.",
     notes: [
       "Keep cook times short enough that smoke does not overwhelm",
       "Works better on dark meat than white meat",
@@ -59,7 +59,7 @@ export const PAIRINGS: PairingsMap = {
   post_oak_seafood: {
     rating: 'Use Caution',
     tags: ['Can Overpower', 'Use Sparingly'],
-    preacher: "Post oak on seafood is asking the wood to do too much. The smoke can overpower delicate fish in under an hour. Use very little or choose a lighter wood.",
+    preacher: "Post oak on seafood is asking the wood to do too much. The smoke can overpower delicate fish in under an hour.",
     notes: [
       "Never more than 30-45 minutes for salmon or fish",
       "Works better on heartier seafood like swordfish",
