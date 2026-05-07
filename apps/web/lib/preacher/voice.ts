@@ -96,7 +96,8 @@ export function getScriptureLine(): string {
   if (lines.length === 0) {
     return "Walk steady and keep your fire clean.";
   }
-  return lines[Math.floor(Math.random() * lines.length)];
+  const line = lines[Math.floor(Math.random() * lines.length)];
+  return line ?? "Walk steady and keep your fire clean.";
 }
 
 export function getPushbackResponse(issue: string): string {
