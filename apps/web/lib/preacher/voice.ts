@@ -3,13 +3,13 @@
 
 export interface PreacherVoice {
   coreTone: string;
-  sentencePatterns: string[];
+  sentencePatterns: readonly string[];
   vocabulary: {
-    preferred: string[];
-    scripture: string[];
-    avoid: string[];
+    preferred: readonly string[];
+    scripture: readonly string[];
+    avoid: readonly string[];
   };
-  doNotUse: string[];
+  doNotUse: readonly string[];
   modeOverrides: {
     plan: string;
     live: string;
@@ -17,9 +17,9 @@ export interface PreacherVoice {
     rescue: string;
   };
   exampleLines: {
-    direct: string[];
-    scripture: string[];
-    pushback: string[];
+    direct: readonly string[];
+    scripture: readonly string[];
+    pushback: readonly string[];
   };
 }
 
@@ -92,7 +92,7 @@ export function getDirectCommand(action: string): string {
 }
 
 export function getScriptureLine(): string {
-  const lines = preacherVoice.exampleLines?.scripture || [];
+  const lines = (preacherVoice.exampleLines?.scripture ?? []) as string[];
   if (lines.length === 0) {
     return "Walk steady and keep your fire clean.";
   }
