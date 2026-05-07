@@ -92,7 +92,10 @@ export function getDirectCommand(action: string): string {
 }
 
 export function getScriptureLine(): string {
-  const lines = preacherVoice.exampleLines.scripture;
+  const lines = preacherVoice.exampleLines?.scripture || [];
+  if (lines.length === 0) {
+    return "Walk steady and keep your fire clean.";
+  }
   return lines[Math.floor(Math.random() * lines.length)];
 }
 
@@ -102,13 +105,15 @@ export function getPushbackResponse(issue: string): string {
 
 export function validateVoice(text: string): boolean {
   // Check for forbidden words
-  const forbidden = preacherVoice.doNotUse.some(word =>
+  const forbiddenWords = preacherVoice.doNotUse || [];
+  const forbidden = forbiddenWords.some(word =>
     text.toLowerCase().includes(word.toLowerCase())
   );
   if (forbidden) return false;
 
   // Check sentence length (rough heuristic)
   const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  if (sentences.length === 0) return true;
   const avgLength = sentences.reduce((sum, s) => sum + s.trim().split(' ').length, 0) / sentences.length;
   return avgLength <= 15; // Average 15 words or less per sentence
 }
