@@ -21,6 +21,35 @@ type CookPlan = {
   preacherPlan?: string;
 };
 
+type CookRow = {
+  id: string;
+  user_id: string;
+  label: string;
+  status: string;
+  created_at: string;
+  actual_start: string | null;
+  completed_at: string | null;
+  eat_time: string | null;
+  smoker_type: string | null;
+  wood_type: string | null;
+  cooking_style: string | null;
+  prep_session_id: string | null;
+  plan: Record<string, unknown> | null;
+};
+type SessionRow = {
+  id: string;
+  flavor_smoke: number | null;
+  flavor_bark: number | null;
+  flavor_tenderness: number | null;
+};
+type CookItemRow = {
+  id: string;
+  cook_id: string;
+  name: string;
+  weight?: string | number | null;
+  notes?: string;
+};
+
 const SECTION_HEADERS = [
   "THE NIGHT BEFORE",
   "FIRE & TIMING",
@@ -78,9 +107,9 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
   const supabase = createClient();
   const router = useRouter();
 
-  const [cook, setCook] = useState<any>(null);
-  const [cookItems, setCookItems] = useState<any[]>([]);
-  const [session, setSession] = useState<any>(null);
+  const [cook, setCook] = useState<CookRow | null>(null);
+  const [cookItems, setCookItems] = useState<CookItemRow[]>([]);
+  const [session, setSession] = useState<SessionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [planText, setPlanText] = useState<string | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
@@ -218,6 +247,7 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
   }
 
   const handleEditSave = async () => {
+    if (!cook) return;
     const updatedPlan = cook.plan ? JSON.parse(JSON.stringify(cook.plan)) : null;
     if (updatedPlan?.tools?.[0]) {
       updatedPlan.tools[0].name = editSmokerType;
@@ -232,13 +262,14 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
     if (updatedPlan) updates.plan = updatedPlan;
     const { error } = await supabase.from("cooks").update(updates).eq("id", cook.id);
     if (error) { console.error(error); return; }
-    setCook((prev: any) => ({ ...prev, ...updates }));
+    setCook(prev => prev ? { ...prev, ...updates } as CookRow : prev);
     setIsEditing(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2000);
   };
 
   const handleComplete = async () => {
+    if (!cook) return;
     await supabase
       .from("cooks")
       .update({ status: "completed", completed_at: new Date().toISOString() })
@@ -284,6 +315,8 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
       </div>
     );
   }
+
+  if (!cook) return null;
 
   const cardStyle: React.CSSProperties = {
     background: "var(--color-bg-alt)",
@@ -526,7 +559,7 @@ export default function CookDashboardPage({ params }: { params: Promise<{ id: st
               const smokerName = planTools[0]?.name || cook.smoker_type;
               const wood = planTools[0]?.wood || cook.wood_type;
               const items: { name: string; weight?: string | number | null }[] =
-                planItemsList.length > 0 ? planItemsList : cookItems.map((i: any) => ({ name: i.name, weight: i.weight }));
+                planItemsList.length > 0 ? planItemsList : cookItems.map(i => ({ name: i.name, weight: i.weight }));
               const parts: string[] = [];
               if (smokerName) parts.push(smokerName);
               if (wood) parts.push(wood);

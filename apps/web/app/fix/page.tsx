@@ -27,6 +27,14 @@ const HOURS_OPTIONS = [
   "Almost done",
 ];
 
+type ActiveCookRow = {
+  id: string;
+  label: string;
+  smoker_type: string | null;
+  wood_type: string | null;
+  eat_time: string | null;
+};
+
 function parseDiagnosis(text: string): { header: string; content: string }[] {
   const headers = ["WHAT IS HAPPENING", "WHAT TO DO RIGHT NOW", "WHAT TO WATCH FOR"]
   const result: { header: string; content: string }[] = []
@@ -63,7 +71,7 @@ export default function FixPage() {
   const supabase = createClient();
 
   const [tier, setTier] = useState("free");
-  const [activeCook, setActiveCook] = useState<any>(null);
+  const [activeCook, setActiveCook] = useState<ActiveCookRow | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
 
   const [selectedIssue, setSelectedIssue] = useState("");

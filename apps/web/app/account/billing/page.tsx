@@ -1,15 +1,43 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createBrowserClient } from "@supabase/ssr";
 
 export default function BillingPage() {
-  const supabase = createClientComponentClient();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
+  // -----------------------------
+  // Local Types (Safe + Minimal)
+  // -----------------------------
+  type SubscriptionRow = {
+    id: string;
+    user_id: string;
+    price_id: string;
+    status: string;
+    current_period_end: string | null;
+  };
+
+  type CustomerRow = {
+    id: string;
+    user_id: string;
+    stripe_customer_id: string;
+  };
+
+  type UserRow = {
+    id: string;
+    email?: string;
+  };
+
+  // -----------------------------
+  // State
+  // -----------------------------
   const [loading, setLoading] = useState(true);
-  const [subscription, setSubscription] = useState<any>(null);
-  const [customer, setCustomer] = useState<any>(null);
-  const [user, setUser] = useState<any>(null);
+  const [subscription, setSubscription] = useState<SubscriptionRow | null>(null);
+  const [customer, setCustomer] = useState<CustomerRow | null>(null);
+  const [user, setUser] = useState<UserRow | null>(null);
 
   const priceMap: Record<string, string> = {
     [process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID!]: "Basic (Monthly)",
@@ -20,6 +48,9 @@ export default function BillingPage() {
     [process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID!]: "Pitmaster (Annual)",
   };
 
+  // -----------------------------
+  // Load Billing Data
+  // -----------------------------
   useEffect(() => {
     async function load() {
       const {
@@ -31,7 +62,7 @@ export default function BillingPage() {
         return;
       }
 
-      setUser(user);
+      setUser({ id: user.id, email: user.email ?? undefined });
 
       const { data: sub } = await supabase
         .from("stripe_subscriptions")
@@ -39,7 +70,7 @@ export default function BillingPage() {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      setSubscription(sub);
+      setSubscription(sub as SubscriptionRow | null);
 
       const { data: cust } = await supabase
         .from("stripe_customers")
@@ -47,7 +78,7 @@ export default function BillingPage() {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      setCustomer(cust);
+      setCustomer(cust as CustomerRow | null);
 
       setLoading(false);
     }
@@ -55,6 +86,9 @@ export default function BillingPage() {
     load();
   }, []);
 
+  // -----------------------------
+  // Checkout
+  // -----------------------------
   async function startCheckout(priceId: string) {
     const token = (await supabase.auth.getSession()).data.session?.access_token;
 
@@ -70,6 +104,9 @@ export default function BillingPage() {
     if (data.url) window.location.href = data.url;
   }
 
+  // -----------------------------
+  // Portal
+  // -----------------------------
   async function openPortal() {
     const token = (await supabase.auth.getSession()).data.session?.access_token;
 
@@ -84,11 +121,20 @@ export default function BillingPage() {
     if (data.url) window.location.href = data.url;
   }
 
+  // -----------------------------
+  // Loading
+  // -----------------------------
   if (loading) return <div className="p-6">Loading billing...</div>;
 
+  // -----------------------------
+  // Subscription Status
+  // -----------------------------
   const isSubscribed =
-    subscription && subscription.status && subscription.status !== "canceled";
+    subscription?.status && subscription.status !== "canceled";
 
+  // -----------------------------
+  // Render
+  // -----------------------------
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-8">
       <h1 className="text-3xl font-bold">Billing</h1>
@@ -103,7 +149,7 @@ export default function BillingPage() {
           </p>
         )}
 
-        {isSubscribed && (
+        {isSubscribed && subscription && (
           <>
             <p className="text-gray-700">
               <strong>Plan:</strong>{" "}

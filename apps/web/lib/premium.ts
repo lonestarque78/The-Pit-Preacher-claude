@@ -1,5 +1,7 @@
 // apps/web/lib/premium.ts
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 const TIER_RANK: Record<string, number> = {
   free: 0,
   basic: 1,
@@ -7,7 +9,7 @@ const TIER_RANK: Record<string, number> = {
   pitmaster: 3,
 };
 
-export async function getTier(userId: string | undefined, supabase: any): Promise<string> {
+export async function getTier(userId: string | undefined, supabase: SupabaseClient): Promise<string> {
   if (!userId) return "free";
 
   const { data, error } = await supabase
@@ -22,7 +24,7 @@ export async function getTier(userId: string | undefined, supabase: any): Promis
   return data.tier || "free";
 }
 
-export async function isPremium(userId: string | undefined, supabase: any): Promise<boolean> {
+export async function isPremium(userId: string | undefined, supabase: SupabaseClient): Promise<boolean> {
   const tier = await getTier(userId, supabase);
   return (TIER_RANK[tier] ?? 0) >= (TIER_RANK["basic"] ?? 1);
 }

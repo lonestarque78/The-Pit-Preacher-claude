@@ -20,6 +20,31 @@ type DisplayItem = {
   defaultWeight: string;
 };
 
+type CookRow = {
+  id: string;
+  label: string;
+  status: string;
+  eat_time: string | null;
+  smoker_type: string | null;
+  wood_type: string | null;
+  cooking_style: string | null;
+  prep_session_id: string | null;
+  plan: Record<string, unknown> | null;
+};
+type SessionRow = {
+  id: string;
+  flavor_smoke: number | null;
+  flavor_bark: number | null;
+  flavor_tenderness: number | null;
+};
+type CookItemRow = {
+  id: string;
+  cook_id: string;
+  name: string;
+  weight?: string | number | null;
+  notes?: string;
+};
+
 function capitalize(str: string): string {
   return str.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
@@ -342,9 +367,9 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const { id: cookId } = use(params);
   const supabase = createClient();
 
-  const [cook, setCook] = useState<any>(null);
-  const [items, setItems] = useState<any[]>([]);
-  const [session, setSession] = useState<any>(null);
+  const [cook, setCook] = useState<CookRow | null>(null);
+  const [items, setItems] = useState<CookItemRow[]>([]);
+  const [session, setSession] = useState<SessionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"fire" | "seasoning">("fire");
   const [openTroubleCard, setOpenTroubleCard] = useState<number | null>(null);
@@ -406,7 +431,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const woodProfile = woodType ? getWoodProfile(woodType) : "";
   const troubleCards = getTroubleCards(smokerType);
 
-  const styleId = inferStyleId(cook.cooking_style);
+  const styleId = inferStyleId(cook.cooking_style ?? "");
   const displayItems = buildDisplayItems(planItems, items);
 
   const smokerSubtitle = [

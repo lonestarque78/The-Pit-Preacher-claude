@@ -9,6 +9,16 @@ import { VERSES, type Verse } from "@/lib/verses";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type SavedPit = {
+  id: string;
+  name: string;
+  default_wood?: string | null;
+};
+type AuthUser = {
+  id: string;
+  email?: string;
+};
+
 type SelectedItem = {
   name: string;
   category: string;
@@ -231,8 +241,8 @@ export default function Home() {
   const [flavorBark, setFlavorBark] = useState(8);
   const [flavorTenderness, setFlavorTenderness] = useState(7);
   const [smokers, setSmokers] = useState<Smoker[]>([{ id: "s1", name: "", wood: "" }]);
-  const [savedPits, setSavedPits] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [savedPits, setSavedPits] = useState<SavedPit[]>([]);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [saving, setSaving] = useState(false);
   const [authError, setAuthError] = useState(false);
   const [buildError, setBuildError] = useState("");

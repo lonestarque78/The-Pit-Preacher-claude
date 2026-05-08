@@ -25,6 +25,24 @@ type PlanItem = {
 
 type CannedQuestion = string | { label: string; action: () => void };
 
+type CookRow = {
+  id: string;
+  label: string;
+  status: string;
+  eat_time: string | null;
+  smoker_type: string | null;
+  wood_type: string | null;
+  cooking_style: string | null;
+  prep_session_id: string | null;
+  plan: Record<string, unknown> | null;
+};
+type SessionRow = {
+  id: string;
+  flavor_smoke: number | null;
+  flavor_bark: number | null;
+  flavor_tenderness: number | null;
+};
+
 function getDailyVerse() {
   const dayOfYear = Math.floor(
     (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
@@ -142,8 +160,8 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   const { id: cookId } = use(params);
   const supabase = createClient();
 
-  const [cook, setCook] = useState<any>(null);
-  const [session, setSession] = useState<any>(null);
+  const [cook, setCook] = useState<CookRow | null>(null);
+  const [session, setSession] = useState<SessionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([]);

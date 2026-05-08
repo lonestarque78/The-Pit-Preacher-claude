@@ -21,6 +21,76 @@ type CookPlan = {
   preacherReflection?: string;
 };
 
+type CookRow = {
+  id: string;
+  label: string;
+  status: string;
+  created_at: string;
+  actual_start: string | null;
+  completed_at: string | null;
+  eat_time: string | null;
+  smoker_type: string | null;
+  wood_type: string | null;
+  cooking_style: string | null;
+  prep_session_id: string | null;
+  plan: Record<string, unknown> | null;
+};
+type CookItemRow = {
+  id: string;
+  cook_id: string;
+  name: string;
+};
+type CookEventRow = {
+  id: string;
+  cook_id: string;
+  event_type: string;
+  created_at: string;
+};
+type CookLogRow = {
+  id: string;
+  cook_id: string;
+  rating: number;
+  summary: string;
+  lessons: string | null;
+};
+type OutcomeRow = {
+  id: string;
+  cook_id: string;
+  start_time_actual: string | null;
+  finish_time_actual: string | null;
+  rest_time_minutes: number | null;
+  pit_temp_low: number | null;
+  pit_temp_high: number | null;
+  wood_used: string | null;
+  stall_time_minutes: number | null;
+  final_internal_temp: number | null;
+  weather_impact: string | null;
+  fire_issues: string | null;
+  adjustments_made: string | null;
+  tenderness: number | null;
+  bark_quality: number | null;
+  moisture_level: number | null;
+  smoke_profile: number | null;
+  flavor_balance: number | null;
+  overall_success: number | null;
+  wrap_time: string | null;
+};
+type TrackerNotesRow = {
+  id: string;
+  cook_id: string;
+  note_1: string | null;
+  note_2: string | null;
+  note_3: string | null;
+  note_4: string | null;
+  note_5: string | null;
+};
+type SessionRow = {
+  id: string;
+  flavor_smoke: number | null;
+  flavor_bark: number | null;
+  flavor_tenderness: number | null;
+};
+
 function capitalize(str: string): string {
   return str.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
@@ -52,13 +122,13 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
   const { id: cookId } = use(params);
   const supabase = createClient();
 
-  const [cook, setCook] = useState<any>(null);
-  const [items, setItems] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
-  const [cookLog, setCookLog] = useState<any>(null);
-  const [session, setSession] = useState<any>(null);
-  const [outcome, setOutcome] = useState<any>(null);
-  const [trackerNotes, setTrackerNotes] = useState<any>(null);
+  const [cook, setCook] = useState<CookRow | null>(null);
+  const [items, setItems] = useState<CookItemRow[]>([]);
+  const [events, setEvents] = useState<CookEventRow[]>([]);
+  const [cookLog, setCookLog] = useState<CookLogRow | null>(null);
+  const [session, setSession] = useState<SessionRow | null>(null);
+  const [outcome, setOutcome] = useState<OutcomeRow | null>(null);
+  const [trackerNotes, setTrackerNotes] = useState<TrackerNotesRow | null>(null);
   const [userTier, setUserTier] = useState<string>("free");
   const [insights, setInsights] = useState<{
     patternInsights: string[];
@@ -490,7 +560,7 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
             </div>
 
             {[
-              { label: "Items", value: items.map((i: any) => i.name).join(" · ") || "—" },
+              { label: "Items", value: items.map(i => i.name).join(" · ") || "—" },
               { label: "Smoker", value: cook.smoker_type || "—" },
               { label: "Wood", value: cook.wood_type || "—" },
               { label: "Completed", value: cook.completed_at ? new Date(cook.completed_at).toLocaleString() : "—" },
@@ -631,10 +701,10 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
                       <span style={statLabelStyle}>{label}</span>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <span style={{ color: "#C9973A", fontSize: "0.9rem" }}>
-                          {"★".repeat(value)}{"☆".repeat(5 - value)}
+                          {"★".repeat(value!)}{"☆".repeat(5 - value!)}
                         </span>
                         <span style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
-                          {RATING_LABELS[value]}
+                          {RATING_LABELS[value!]}
                         </span>
                       </div>
                     </div>
@@ -648,8 +718,8 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
                   <div style={trackerLabelStyle}>Next Time</div>
                   <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
                     {[trackerNotes.note_1, trackerNotes.note_2, trackerNotes.note_3, trackerNotes.note_4, trackerNotes.note_5]
-                      .filter(Boolean)
-                      .map((note: string, i: number) => (
+                      .filter((n): n is string => Boolean(n))
+                      .map((note, i: number) => (
                         <li key={i} style={{
                           display: "flex", gap: "var(--space-2)",
                           fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text)",
@@ -893,8 +963,8 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
                         }}>
                           <div style={{
                             height: "100%",
-                            width: `${(value / 5) * 100}%`,
-                            background: value >= 4 ? "#2D6A4F" : value >= 3 ? "#C9973A" : "#8B1A1A",
+                            width: `${(value! / 5) * 100}%`,
+                            background: value! >= 4 ? "#2D6A4F" : value! >= 3 ? "#C9973A" : "#8B1A1A",
                             borderRadius: "2px",
                           }} />
                         </div>
@@ -921,8 +991,8 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
               <div style={cardStyle}>
                 <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
                   {[trackerNotes.note_1, trackerNotes.note_2, trackerNotes.note_3, trackerNotes.note_4, trackerNotes.note_5]
-                    .filter(Boolean)
-                    .map((note: string, i: number) => (
+                    .filter((n): n is string => Boolean(n))
+                    .map((note, i: number) => (
                       <li key={i} style={{
                         display: "flex", gap: "var(--space-2)",
                         fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "var(--color-text)",

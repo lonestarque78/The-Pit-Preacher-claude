@@ -31,7 +31,7 @@ export async function checkUsage(userId: string, feature: string) {
     .maybeSingle();
 
   const used = data?.count ?? 0;
-  const limit = limits[feature] ?? Infinity;
+  const limit = (limits as Record<string, number>)[feature] ?? Infinity;
 
   return {
     used,

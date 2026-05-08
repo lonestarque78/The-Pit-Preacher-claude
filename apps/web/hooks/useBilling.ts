@@ -1,57 +1,71 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase";
+import { createBrowserClient } from "@supabase/ssr";
 
-type BillingState = {
+export interface BillingState {
   isPremium: boolean;
   plan: string | null;
   status: string | null;
   renewalDate: string | null;
-};
+}
 
-const initialState: BillingState = {
-  isPremium: false,
-  plan: null,
-  status: null,
-  renewalDate: null,
-};
-
-export function useBilling() {
-  const [billing, setBilling] = useState<BillingState>(initialState);
+export function useBilling(): BillingState {
+  const [billingState, setBillingState] = useState<BillingState>({
+    isPremium: false,
+    plan: null,
+    status: null,
+    renewalDate: null,
+  });
 
   useEffect(() => {
-    async function loadBilling() {
-      const supabase = createClient();
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData?.data?.user?.id;
+    async function loadBillingStatus() {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
 
-      if (!userId) {
-        setBilling(initialState);
+      // Get the current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const userId = userData?.user?.id ?? null;
+
+      if (userError || !userId) {
+        setBillingState({
+          isPremium: false,
+          plan: null,
+          status: null,
+          renewalDate: null,
+        });
         return;
       }
 
+      // Fetch billing information
       const { data, error } = await supabase
-        .from("stripe_subscriptions")
-        .select("status, price_id, current_period_end")
+        .from("billing")
+        .select("plan, status, renewal_date")
         .eq("user_id", userId)
         .maybeSingle();
 
       if (error || !data) {
-        setBilling(initialState);
+        setBillingState({
+          isPremium: false,
+          plan: null,
+          status: null,
+          renewalDate: null,
+        });
         return;
       }
 
-      setBilling({
-        isPremium: data.status === "active" || data.status === "trialing",
-        plan: data.price_id ?? null,
-        status: data.status,
-        renewalDate: data.current_period_end ?? null,
+      setBillingState({
+        isPremium: data.plan === "premium" || data.plan === "pro",
+        plan: data.plan ?? null,
+        status: data.status ?? null,
+        renewalDate: data.renewal_date ?? null,
       });
     }
 
-    loadBilling();
+    loadBillingStatus();
   }, []);
 
-  return billing;
+  return billingState;
 }

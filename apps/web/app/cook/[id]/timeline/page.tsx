@@ -17,6 +17,27 @@ type PlanItem = {
 
 type CompletionDetail = { completedAt: string; tempEntered: string | null };
 
+type CookRow = {
+  id: string;
+  label: string;
+  status: string;
+  created_at: string;
+  actual_start: string | null;
+  completed_at: string | null;
+  eat_time: string | null;
+  smoker_type: string | null;
+  wood_type: string | null;
+  cooking_style: string | null;
+  prep_session_id: string | null;
+  plan: Record<string, unknown> | null;
+};
+type SessionRow = {
+  id: string;
+  flavor_smoke: number | null;
+  flavor_bark: number | null;
+  flavor_tenderness: number | null;
+};
+
 function capitalize(str: string): string {
   return str.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
@@ -60,8 +81,8 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
   const supabase = createClient();
 
   // Data state
-  const [cook, setCook] = useState<any>(null);
-  const [session, setSession] = useState<any>(null);
+  const [cook, setCook] = useState<CookRow | null>(null);
+  const [session, setSession] = useState<SessionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [phases, setPhases] = useState<Phase[]>([]);
   const [completedPhaseIds, setCompletedPhaseIds] = useState<string[]>([]);
@@ -165,6 +186,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
   };
 
   const handleJustNow = async () => {
+    if (!cook) return;
     setSavingStart(true);
     const iso = new Date().toISOString();
     await supabase.from("cooks").update({ actual_start: iso }).eq("id", cook.id);
@@ -174,6 +196,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
   };
 
   const handleConfirmTime = async () => {
+    if (!cook) return;
     setSavingStart(true);
     const h = parseInt(pickerHour);
     const mn = parseInt(pickerMinute);
@@ -196,6 +219,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
   };
 
   const handleSaveCompletedTemp = async (phase: Phase) => {
+    if (!cook) return;
     const newTemp = editCompletedTemps[phase.id] ?? "";
 
     const { data: events } = await supabase
@@ -227,6 +251,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
   };
 
   const handleMarkComplete = async (phase: Phase) => {
+    if (!cook) return;
     const tempVal = tempInputs[phase.id] || null;
 
     await supabase.from("cook_events").insert({
@@ -254,7 +279,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
         .from("cooks")
         .update({ status: "completed", completed_at: completedAt })
         .eq("id", cook.id);
-      setCook((prev: any) => ({ ...prev, status: "completed", completed_at: completedAt }));
+      setCook(prev => prev ? { ...prev, status: "completed", completed_at: completedAt } : prev);
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
       setToast("The cook is complete. The congregation has been fed. Head to your Summary to record this cook for history.");
       toastTimeoutRef.current = setTimeout(() => {
