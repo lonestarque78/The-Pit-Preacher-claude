@@ -172,15 +172,16 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const shouldScrollRef = useRef(false);
 
   useEffect(() => {
     loadData();
   }, [cookId]);
 
   useEffect(() => {
-    if (messages.length > 0) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    if (!shouldScrollRef.current) return;
+    shouldScrollRef.current = false;
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const loadData = async () => {
@@ -318,6 +319,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     };
     const historyForContext = messages;
 
+    shouldScrollRef.current = true;
     setMessages(prev => [...prev, userMsg]);
     setInputValue("");
     setSuggestedPrompts([]);
@@ -347,6 +349,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       if (res.status === 403) {
         const errData = await res.json();
         if (errData.error === "MESSAGE_LIMIT_REACHED") {
+          shouldScrollRef.current = true;
           setMessages(prev => [...prev, {
             role: "preacher" as const,
             content: "You have reached the free plan limit for this cook. Upgrade to keep the conversation going.",
@@ -367,6 +370,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         content: preacherResponse,
         timestamp: new Date(),
       };
+      shouldScrollRef.current = true;
       setMessages(prev => [...prev, preacherMsg]);
 
       await supabase.from("cook_events").insert({
@@ -409,6 +413,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
       }
     } catch (err) {
       console.error("Send message failed:", err);
+      shouldScrollRef.current = true;
       setMessages(prev => [...prev, {
         role: "preacher" as const,
         content: "Lost the signal at the pit. Try again.",

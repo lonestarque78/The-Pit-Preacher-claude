@@ -204,7 +204,7 @@ export default function CookList({ cooks, logsMap }: Props) {
                           ⚠ Inactive 36+ hrs — complete or it will be archived
                         </p>
                       )}
-                      <Link href="/fix" style={{ fontFamily: "var(--font-ui)", fontSize: "0.78rem", color: "#8B6914", textDecoration: "none", display: "inline-block", marginTop: "2px", opacity: 0.9 }}>
+                      <Link href="/fix" style={{ fontFamily: "var(--font-ui)", fontSize: "0.85rem", color: "#C9973A", textDecoration: "none", display: "inline-block", marginTop: "4px", paddingLeft: "8px", borderLeft: "3px solid #C0392B", lineHeight: 1.4 }}>
                         Pit Rescue →
                       </Link>
                     </>
