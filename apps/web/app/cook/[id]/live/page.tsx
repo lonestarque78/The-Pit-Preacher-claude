@@ -2,7 +2,7 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase";
-import { VERSES } from "@/lib/verses";
+import PreacherOrnament from "@/components/gospel/PreacherOrnament";
 import Link from "next/link";
 
 type Message = {
@@ -10,7 +10,6 @@ type Message = {
   content: string;
   timestamp: Date;
   imagePreview?: string;
-  verse?: { text: string; chapter: string };
 };
 
 type PlanTool = { id: string; name: string; wood: string };
@@ -42,13 +41,6 @@ type SessionRow = {
   flavor_bark: number | null;
   flavor_tenderness: number | null;
 };
-
-function getDailyVerse() {
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-  );
-  return VERSES[dayOfYear % VERSES.length] ?? VERSES[0]!;
-}
 
 function capitalize(str: string): string {
   return str.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
@@ -264,7 +256,6 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
           role: "preacher",
           content: "The pit is lit. Ask me anything about this cook. Free plan includes 5 messages — upgrade anytime for unlimited coaching.",
           timestamp: new Date(),
-          verse: getDailyVerse(),
         }]);
       } else {
         fetchOpeningMessage(cookData, sessionData);
@@ -297,7 +288,6 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         role: "preacher",
         content: opening,
         timestamp: new Date(),
-        verse: getDailyVerse(),
       }]);
       setSuggestedPrompts(prompts);
     } catch (err) {
@@ -306,7 +296,6 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         role: "preacher",
         content: "The pit is lit. What do you need to know?",
         timestamp: new Date(),
-        verse: getDailyVerse(),
       }]);
     } finally {
       setIsThinking(false);
@@ -360,7 +349,6 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
             role: "preacher" as const,
             content: "You have reached the free plan limit for this cook. Upgrade to keep the conversation going.",
             timestamp: new Date(),
-            verse: getDailyVerse(),
           }]);
           setInputDisabled(true);
           return;
@@ -376,7 +364,6 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         role: "preacher",
         content: preacherResponse,
         timestamp: new Date(),
-        verse: getDailyVerse(),
       };
       setMessages(prev => [...prev, preacherMsg]);
 
@@ -991,39 +978,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
                     {msg.content}
 
                     {/* ── GOSPEL ORNAMENT ── */}
-                    {msg.role === "preacher" && msg.verse && (
-                      <div style={{
-                        marginTop: "var(--space-2)",
-                        paddingTop: "var(--space-1)",
-                        borderTop: "1px solid rgba(201,151,58,0.12)",
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "6px",
-                      }}>
-                        <span style={{ color: "rgba(201,151,58,0.4)", fontSize: "0.75rem", flexShrink: 0 }}>✦</span>
-                        <p style={{
-                          fontFamily: "var(--font-body)",
-                          fontStyle: "italic",
-                          fontSize: "0.72rem",
-                          color: "rgba(201,151,58,0.55)",
-                          margin: 0,
-                          lineHeight: 1.5,
-                        }}>
-                          {msg.verse.text}
-                          <span style={{
-                            display: "inline-block",
-                            marginLeft: "6px",
-                            fontFamily: "var(--font-ui)",
-                            fontSize: "0.6rem",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.1em",
-                            color: "rgba(201,151,58,0.35)",
-                          }}>
-                            — {msg.verse.chapter}
-                          </span>
-                        </p>
-                      </div>
-                    )}
+                    {msg.role === "preacher" && <PreacherOrnament />}
                   </div>
                   <div style={{
                     fontFamily: "var(--font-ui)",

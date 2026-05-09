@@ -32,31 +32,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid tier or price not configured" }, { status: 400 });
   }
 
-  // Check if user already has a subscription
-  const { data: existingSub } = await supabase
-    .from("subscriptions")
-    .select("stripe_customer_id")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .maybeSingle();
+  const customer = await stripe.customers.create({
+    email: user.email,
+    metadata: { userId: user.id },
+  });
+  const customerId = customer.id;
 
-  let customerId = existingSub?.stripe_customer_id;
-
-  // Create Stripe customer if not exists
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: user.email,
-      metadata: { userId: user.id },
-    });
-    customerId = customer.id;
-
-    await supabase.from("subscriptions").insert({
-      user_id: user.id,
-      tier: "free",
-      status: "active",
-      stripe_customer_id: customerId,
-    });
-  }
+  await supabase.from("subscriptions").upsert(
+    { user_id: user.id, tier: "free", status: "active", stripe_customer_id: customerId },
+    { onConflict: "user_id", ignoreDuplicates: false }
+  );
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 

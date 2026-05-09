@@ -195,7 +195,15 @@ export default function BillingPage() {
               }
               className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
             >
-              Basic — $X/mo
+              Basic — $3.99/mo
+            </button>
+            <button
+              onClick={() =>
+                startCheckout(process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID!)
+              }
+              className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
+            >
+              Basic — $29.99/yr (save ~37%)
             </button>
 
             {/* Backyard */}
@@ -205,7 +213,15 @@ export default function BillingPage() {
               }
               className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
             >
-              Backyard — $X/mo
+              Backyard — $7.99/mo
+            </button>
+            <button
+              onClick={() =>
+                startCheckout(process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID!)
+              }
+              className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
+            >
+              Backyard — $79.99/yr (save ~16%)
             </button>
 
             {/* Pitmaster */}
@@ -215,7 +231,15 @@ export default function BillingPage() {
               }
               className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
             >
-              Pitmaster — $X/mo
+              Pitmaster — $11.99/mo
+            </button>
+            <button
+              onClick={() =>
+                startCheckout(process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID!)
+              }
+              className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
+            >
+              Pitmaster — $119.99/yr (save ~17%)
             </button>
           </div>
         </div>

@@ -5,16 +5,9 @@ export const metadata = {
 
 import { createServerClient } from "@/lib/supabase-server";
 import { getTier } from "@/lib/premium";
-import { VERSES } from "@/lib/verses";
+import DailyVerse from "@/components/gospel/DailyVerse";
 import Link from "next/link";
 import CookList from "./CookList";
-
-function getDailyVerse() {
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-  );
-  return VERSES[dayOfYear % VERSES.length] ?? VERSES[0]!;
-}
 
 function tierBadgeStyle(tier: string): { bg: string; border: string; label: string } {
   if (tier === "basic")     return { bg: "rgba(201,151,58,0.1)", border: "1px solid rgba(201,151,58,0.3)", label: "Basic" };
@@ -26,7 +19,6 @@ function tierBadgeStyle(tier: string): { bg: string; border: string; label: stri
 export default async function DashboardPage() {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const verse = getDailyVerse();
 
   const heroSection = (
     <div style={{
@@ -181,26 +173,7 @@ export default async function DashboardPage() {
         marginRight: "auto",
         position: "relative",
       }}>
-        <p style={{
-          fontFamily: "var(--font-body)",
-          fontStyle: "italic",
-          color: "rgba(201,151,58,0.55)",
-          fontSize: "0.85rem",
-          margin: "0 0 4px",
-          lineHeight: 1.65,
-        }}>
-          &ldquo;{verse.text}&rdquo;
-        </p>
-        <p style={{
-          fontFamily: "var(--font-ui)",
-          fontSize: "0.6rem",
-          color: "rgba(201,151,58,0.35)",
-          textTransform: "uppercase",
-          letterSpacing: "0.15em",
-          margin: 0,
-        }}>
-          {verse.chapter}
-        </p>
+        <DailyVerse />
       </div>
     </div>
   );
@@ -286,10 +259,7 @@ export default async function DashboardPage() {
           <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.3rem", color: "#F5E6C8", margin: 0, fontWeight: 400 }}>The Pit Preacher</h1>
         </div>
         <div style={{ textAlign: "right", maxWidth: "280px" }}>
-          <p style={{ fontFamily: "var(--font-body)", fontStyle: "italic", color: "#D9C9A8", fontSize: "0.75rem", margin: "0 0 2px", lineHeight: 1.4 }}>
-            &ldquo;{verse.text.length > 80 ? verse.text.slice(0, 80) + "\u2026" : verse.text}&rdquo;
-          </p>
-          <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.6rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.15em", margin: 0 }}>{verse.chapter}</p>
+          <DailyVerse />
         </div>
       </div>
 

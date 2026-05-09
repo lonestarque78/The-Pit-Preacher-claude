@@ -175,11 +175,10 @@ export default function LoginPage() {
       profile_complete: false,
     });
 
-    await supabase.from("subscriptions").insert({
-      user_id: userId,
-      tier: "free",
-      status: "inactive",
-    });
+    await supabase.from("subscriptions").upsert(
+      { user_id: userId, tier: "free", status: "inactive" },
+      { onConflict: "user_id" }
+    );
 
     for (const smoker of smokers) {
       if (smoker.name.trim()) {
