@@ -1,5 +1,6 @@
 // app/playbook/meat-science/page.tsx
 
+import type { Metadata } from "next";
 import PlaybookLayout from "@/components/playbook/PlaybookLayout";
 import PlaybookArticle from "@/components/playbook/PlaybookArticle";
 import SectionHeader from "@/components/playbook/SectionHeader";
@@ -9,6 +10,11 @@ import Fixes from "@/components/playbook/Fixes";
 import PitVariations from "@/components/playbook/PitVariations";
 import PreacherNote from "@/components/playbook/PreacherNote";
 import RelatedLinks from "@/components/playbook/RelatedLinks";
+
+export const metadata: Metadata = {
+  title: "Meat Science | The Pit Preacher Playbook",
+  description: "Why brisket stalls, how collagen breaks down, and what actually happens inside the meat. Know your cut.",
+};
 
 export default function MeatSciencePage() {
   return (

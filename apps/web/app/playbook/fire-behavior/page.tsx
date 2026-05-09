@@ -1,5 +1,6 @@
 // app/playbook/fire-behavior/page.tsx
 
+import type { Metadata } from "next";
 import PlaybookLayout from "@/components/playbook/PlaybookLayout";
 import PlaybookArticle from "@/components/playbook/PlaybookArticle";
 import SectionHeader from "@/components/playbook/SectionHeader";
@@ -9,6 +10,11 @@ import Fixes from "@/components/playbook/Fixes";
 import PitVariations from "@/components/playbook/PitVariations";
 import PreacherNote from "@/components/playbook/PreacherNote";
 import RelatedLinks from "@/components/playbook/RelatedLinks";
+
+export const metadata: Metadata = {
+  title: "Fire Behavior | The Pit Preacher Playbook",
+  description: "Learn how fire moves, how to read your pit, and how to hold a clean burn for hours.",
+};
 
 export default function FireBehaviorPage() {
   return (

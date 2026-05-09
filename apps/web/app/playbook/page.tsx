@@ -1,10 +1,16 @@
 // app/playbook/page.tsx
 
+import type { Metadata } from "next";
 import PlaybookLayout from "@/components/playbook/PlaybookLayout";
 import PlaybookCard from "@/components/playbook/PlaybookCard";
 import { createServerClient } from "@/lib/supabase-server";
 import { tierMeetsRequirement, getTier } from "@/lib/premium";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "The Playbook | BBQ Knowledge from The Pit Preacher",
+  description: "Fire behavior, meat science, the holy trinity of BBQ. Everything a serious pitmaster needs to know.",
+};
 
 const MODULES = [
   {

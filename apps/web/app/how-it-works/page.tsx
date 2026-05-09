@@ -1,6 +1,12 @@
 // app/how-it-works/page.tsx
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "How The Pit Preacher Works | BBQ Cook Planner",
+  description: "No manuals. No guesswork. Tell us what you are smoking and when you need to eat. Get a real cook plan built around your pit.",
+};
 
 export default function HowItWorksPage() {
   return (

@@ -1,6 +1,12 @@
 // app/features/page.tsx
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Features | The Pit Preacher BBQ App",
+  description: "Smart cook planning, live fire tracking, and a 25-year pitmaster coach in your pocket. Every feature built for serious backyard cooks.",
+};
 
 export default function FeaturesPage() {
   return (

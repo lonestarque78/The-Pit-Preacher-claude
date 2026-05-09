@@ -1,6 +1,12 @@
 // app/about/page.tsx
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "About | The Pit Preacher",
+  description: "Built by a pitmaster for pitmasters. The Pit Preacher is a BBQ coaching app born from 25 years at the pit.",
+};
 
 export default function AboutPage() {
   return (

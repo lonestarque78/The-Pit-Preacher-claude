@@ -165,6 +165,14 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
   const [showVerseOverlay, setShowVerseOverlay] = useState(false);
   const [completionVerse] = useState(() => getRandomVerse());
 
+  const [copied, setCopied] = useState(false);
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   useEffect(() => { loadData(); }, [cookId]);
 
   const loadData = async () => {
@@ -461,12 +469,31 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
 
       {/* ── PAGE TITLE ── */}
       <div style={{
-        fontFamily: "var(--font-heading)",
-        fontSize: "clamp(1.4rem, 3vw, 2rem)",
-        color: "#F5E6C8",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "var(--space-2) var(--space-4) 0",
       }}>
-        The Verdict
+        <span style={{
+          fontFamily: "var(--font-heading)",
+          fontSize: "clamp(1.4rem, 3vw, 2rem)",
+          color: "#F5E6C8",
+        }}>
+          The Verdict
+        </span>
+        <button
+          onClick={handleCopyLink}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "5px",
+            color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.75rem",
+            padding: "4px 0", opacity: 0.85,
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+          {copied ? "Link copied" : "Share Cook"}
+        </button>
       </div>
 
       {/* ── MISSION CARD ── */}

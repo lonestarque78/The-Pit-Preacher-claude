@@ -1,6 +1,12 @@
 // app/meet-the-preacher/page.tsx
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Meet The Pit Preacher | Your BBQ Coach",
+  description: "The Pit Preacher has been cooking BBQ for 25 years. He knows your cut, your pit, and exactly what to do when things go wrong.",
+};
 
 export default function MeetThePreacherPage() {
   return (
