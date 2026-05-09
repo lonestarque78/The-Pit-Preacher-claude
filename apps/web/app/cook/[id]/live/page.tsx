@@ -542,7 +542,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     <div style={{
       display: "flex",
       flexDirection: "column",
-      height: "100vh",
+      height: "calc(100vh - 64px)",
       overflow: "hidden",
     }}>
       <style>{`

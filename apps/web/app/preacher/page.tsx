@@ -202,7 +202,7 @@ export default function PreacherPage() {
     <div style={{
       display: "flex",
       flexDirection: "column",
-      height: "100vh",
+      height: "calc(100vh - 64px)",
       overflow: "hidden",
     }}>
       <style>{`

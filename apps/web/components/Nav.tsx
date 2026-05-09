@@ -216,15 +216,13 @@ export default function Nav() {
           </Link>
         </div>
 
-        {/* Desktop center links */}
-        <ul className="nav-center">
-          <li><Link href="/prep" className={pathname === "/prep" ? "active" : undefined}>Start a Cook</Link></li>
-          <li><Link href="/playbook" className={pathname === "/playbook" ? "active" : undefined}>Playbook</Link></li>
-          <li><Link href="/logs" className={pathname === "/logs" ? "active" : undefined}>History</Link></li>
-        </ul>
-
-        {/* Right side: user menu or hamburger */}
+        {/* Right side: nav links + user menu or hamburger */}
         <div className="nav-right">
+          <ul className="nav-center">
+            <li><Link href="/prep" className={pathname === "/prep" ? "active" : undefined}>Start a Cook</Link></li>
+            <li><Link href="/playbook" className={pathname === "/playbook" ? "active" : undefined}>Playbook</Link></li>
+            <li><Link href="/dashboard" className={pathname === "/dashboard" ? "active" : undefined}>Dashboard</Link></li>
+          </ul>
           {!loading && user && (
             <div style={{ position: "relative" }}>
               <button
