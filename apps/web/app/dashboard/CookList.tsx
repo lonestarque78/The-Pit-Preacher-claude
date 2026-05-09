@@ -79,7 +79,7 @@ export default function CookList({ cooks, logsMap }: Props) {
     <div style={{ padding: "var(--space-3) var(--space-4) var(--space-4)" }}>
 
       {/* Filter stat cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--space-2)", marginBottom: "var(--space-3)" }}>
         {filterCards.map(card => {
           const isActive = activeFilter === card.key;
           return (
@@ -105,6 +105,29 @@ export default function CookList({ cooks, logsMap }: Props) {
             </button>
           );
         })}
+        <Link
+          href="/preacher"
+          style={{
+            display:        "flex",
+            flexDirection:  "column",
+            alignItems:     "center",
+            justifyContent: "center",
+            background:     "rgba(201,151,58,0.08)",
+            border:         "1px solid #C9973A",
+            borderRadius:   "var(--radius-md)",
+            padding:        "var(--space-2) var(--space-3)",
+            textAlign:      "center",
+            textDecoration: "none",
+            gap:            "4px",
+          }}
+        >
+          <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.85rem", fontWeight: 700, color: "#C9973A", margin: 0, lineHeight: 1.2 }}>
+            Ask the<br />Preacher
+          </p>
+          <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.65rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0, opacity: 0.7 }}>
+            →
+          </p>
+        </Link>
       </div>
 
       {/* Cook list */}

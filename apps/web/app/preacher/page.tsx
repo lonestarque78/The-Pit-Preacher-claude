@@ -43,7 +43,7 @@ export default function PreacherPage() {
   }, []);
 
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > 1) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);

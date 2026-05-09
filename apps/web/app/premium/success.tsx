@@ -16,7 +16,7 @@ export default function PremiumSuccess() {
         await supabase
           .from("profiles")
           .update({ is_premium: true })
-          .eq("id", user.id);
+          .eq("user_id", user.id);
       }
     }
 

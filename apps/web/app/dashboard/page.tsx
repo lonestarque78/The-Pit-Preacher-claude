@@ -208,7 +208,7 @@ export default async function DashboardPage() {
   // ── LOGGED IN — data ───────────────────────────────────────────────────────
 
   const [profileRes, tier, allCooksRes] = await Promise.all([
-    supabase.from("profiles").select("display_name, profile_complete").eq("id", user.id).single(),
+    supabase.from("profiles").select("display_name, profile_complete").eq("user_id", user.id).single(),
     getTier(user.id, supabase),
     supabase.from("cooks").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
   ]);
@@ -253,7 +253,7 @@ export default async function DashboardPage() {
     <div>
 
       {/* Compact header bar */}
-      <div style={{ background: "var(--color-bg-alt)", borderBottom: "1px solid rgba(201,151,58,0.15)", padding: "var(--space-2) var(--space-4)", minHeight: "72px", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "var(--space-4)", flexWrap: "wrap" }}>
+      <div style={{ background: "var(--color-bg-alt)", borderBottom: "1px solid rgba(201,151,58,0.15)", padding: "var(--space-2) var(--space-4)", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "var(--space-4)", flexWrap: "wrap" }}>
         <div style={{ textAlign: "right", maxWidth: "280px" }}>
           <DailyVerse />
         </div>
@@ -269,27 +269,6 @@ export default async function DashboardPage() {
 
       {/* Cook list */}
       <CookList cooks={finalCooks} logsMap={cookLogMap} />
-
-      {/* Ask the Preacher */}
-      <div style={{ padding: "0 var(--space-4) var(--space-3)" }}>
-        <Link
-          href="/preacher"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            fontFamily: "var(--font-ui)",
-            fontSize: "0.8rem",
-            color: "#A89070",
-            textDecoration: "none",
-            border: "1px solid rgba(201,151,58,0.2)",
-            borderRadius: "var(--radius-md)",
-            padding: "8px 16px",
-          }}
-        >
-          Ask the Preacher &rarr;
-        </Link>
-      </div>
 
       {/* Tier-aware marketing */}
       {tier !== "pitmaster" && (
