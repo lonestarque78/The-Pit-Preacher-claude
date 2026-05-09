@@ -193,13 +193,25 @@ export default function LogsPage() {
   return (
     <div style={{ padding: "40px", maxWidth: "800px" }}>
 
+      {/* ── BACK LINK ── */}
+      <Link href="/dashboard" style={{
+        fontFamily:     "var(--font-ui)",
+        fontSize:       "0.8rem",
+        color:          "var(--color-text-muted)",
+        textDecoration: "none",
+        display:        "inline-block",
+        marginBottom:   "var(--space-3)",
+      }}>
+        ← Back to Dashboard
+      </Link>
+
       {/* ── HEADER ── */}
       <h1 style={{
         fontFamily:   "var(--font-heading)",
         marginTop:    0,
         marginBottom: "var(--space-1)",
       }}>
-        Cook History
+        Full Cook History
       </h1>
       <p style={{
         fontFamily:   "var(--font-body)",

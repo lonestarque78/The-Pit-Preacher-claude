@@ -11,7 +11,7 @@ export default function AboutPage() {
     }}>
       <style>{`
         .about-section {
-          max-width: 680px;
+          max-width: 960px;
           margin: 0 auto;
           padding: 0 var(--space-4);
         }
@@ -82,7 +82,7 @@ export default function AboutPage() {
       {/* Hero */}
       <div style={{
         borderBottom: "1px solid rgba(201,151,58,0.15)",
-        padding: "var(--space-7) var(--space-4) var(--space-5)",
+        padding: "calc(var(--space-7) * 0.6) var(--space-4) calc(var(--space-5) * 0.6)",
         textAlign: "center",
         background: "radial-gradient(ellipse at 50% 0%, rgba(201,151,58,0.08) 0%, transparent 70%)",
       }}>

@@ -104,8 +104,7 @@ export function Sidebar({ isOpen, onClose, user, onLogout }: SidebarProps) {
                 <h3 className="sidebar-section-title">Cook</h3>
                 <Link href="/prep" className={linkClass("/prep")}>Start a Cook</Link>
                 <Link href="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link>
-                <Link href="/logs" className={linkClass("/logs")}>History</Link>
-                <Link href="/playbook" className={linkClass("/playbook")}>Playbook</Link>
+<Link href="/playbook" className={linkClass("/playbook")}>Playbook</Link>
               </div>
 
               <div className="sidebar-section">
