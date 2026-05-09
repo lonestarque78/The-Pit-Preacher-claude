@@ -1451,7 +1451,7 @@ if (!user) {
         </div>
 
         {/* BUILD BUTTON */}
-        <div style={{ marginBottom: "var(--space-3)" }}>
+        <div style={{ marginBottom: "var(--space-2)" }}>
           {atCookLimit ? (
             <div style={{ background: "var(--color-bg-alt)", border: "2px solid #C9973A", borderRadius: "var(--radius-lg)", padding: "var(--space-4)" }}>
               <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "1.1rem", color: "#F5E6C8", margin: "0 0 var(--space-2)" }}>
@@ -1533,6 +1533,19 @@ if (!user) {
               )}
             </>
           )}
+        </div>
+
+        {/* Just have a question? */}
+        <div style={{ textAlign: "center", marginTop: "var(--space-2)", marginBottom: "var(--space-3)" }}>
+          <Link href="/preacher" style={{
+            fontFamily: "var(--font-body)",
+            fontSize: "0.8rem",
+            color: "var(--color-text-muted)",
+            textDecoration: "none",
+            opacity: 0.7,
+          }}>
+            Just have a question? Ask the Preacher
+          </Link>
         </div>
 
       </div>

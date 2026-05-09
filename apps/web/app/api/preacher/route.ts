@@ -334,6 +334,10 @@ Recent events: ${recentEventsText}`;
     maxTokens = imageBase64 ? 800 : 500;
     const recentEventsText = buildRecentEvents(recentEvents ?? []);
 
+    const standaloneNote = label === "standalone"
+      ? "\nThis is a standalone question, not an active cook session. Answer directly and briefly. One clear answer, one clear action. No cook plan. No timeline.\n"
+      : "";
+
     let historySection: string;
     if (conversationHistory && conversationHistory.length > 0) {
       const historyText = (conversationHistory as ConvTurn[])
@@ -354,7 +358,7 @@ COOK DETAILS:
 Cook: ${label || "Unnamed cook"}
 Style: ${cooking_style || "Not specified"}
 Eating at: ${eatTimeFormatted}
-
+${standaloneNote}
 ${historySection}
 
 Remember to return your response as valid JSON with reply and logEvent fields.`;

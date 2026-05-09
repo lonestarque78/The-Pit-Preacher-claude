@@ -122,6 +122,10 @@ export function Sidebar({ isOpen, onClose, user, onLogout }: SidebarProps) {
               </div>
 
               <div className="sidebar-section">
+                <Link href="/preacher" className={linkClass("/preacher")}>Ask the Preacher</Link>
+              </div>
+
+              <div className="sidebar-section">
                 <h3 className="sidebar-section-title">Account</h3>
                 <Link href="/account" className={linkClass("/account")}>Account</Link>
                 <Link href="/premium" className={linkClass("/premium")}>Plans & Pricing</Link>

@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PROTECTED_PATHS = ['/dashboard', '/cook', '/account', '/setup']
+const PROTECTED_PATHS = ['/dashboard', '/cook', '/account', '/setup', '/preacher']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -46,5 +46,7 @@ export const config = {
     '/cook/:path*',
     '/account/:path*',
     '/setup/:path*',
+    '/preacher/:path*',
+    '/preacher',
   ],
 }
