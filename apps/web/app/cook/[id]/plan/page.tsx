@@ -523,6 +523,17 @@ export default async function CookPlanPage({ params }: { params: Promise<{ id: s
             </p>
           )
         )}
+        <div style={{ textAlign: "right", marginTop: "var(--space-3)" }}>
+          <Link href="/fix" style={{
+            fontFamily: "var(--font-body)",
+            fontSize: "0.82rem",
+            color: "#8B6914",
+            textDecoration: "none",
+            opacity: 0.85,
+          }}>
+            Something not going to plan?{" "}<span style={{ color: "#C9973A" }}>→ Pit Rescue</span>
+          </Link>
+        </div>
       </div>
 
       {/* ── SECTION 3: PREP CHECKLIST ── */}

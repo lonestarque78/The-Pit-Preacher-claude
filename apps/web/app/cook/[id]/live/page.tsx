@@ -619,7 +619,12 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         borderBottom: "1px solid rgba(201,151,58,0.2)",
         padding: "var(--space-3) var(--space-4)",
         flexShrink: 0,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        gap: "var(--space-2)",
       }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
         <h1 style={{
           fontFamily: "var(--font-heading)",
           fontSize: "clamp(1.4rem, 3vw, 2rem)",
@@ -683,6 +688,24 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
             </span>
           )}
         </div>
+        </div>
+        <Link href="/fix" style={{
+          flexShrink: 0,
+          display: "inline-block",
+          background: "rgba(180,30,20,0.12)",
+          border: "1px solid rgba(220,50,30,0.4)",
+          color: "#D04020",
+          fontFamily: "var(--font-ui)",
+          fontSize: "0.75rem",
+          padding: "5px 11px",
+          borderRadius: "var(--radius-md)",
+          textDecoration: "none",
+          whiteSpace: "nowrap",
+          letterSpacing: "0.02em",
+          marginTop: "2px",
+        }}>
+          🚨 Pit Rescue
+        </Link>
       </div>
 
       {/* ── TOPIC SELECTOR ── */}

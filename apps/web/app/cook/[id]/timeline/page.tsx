@@ -971,6 +971,12 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
                   </p>
                 </div>
 
+                <div style={{ marginBottom: "var(--space-3)", textAlign: "right" }}>
+                  <Link href="/fix" style={{ fontFamily: "var(--font-ui)", fontSize: "0.78rem", color: "#8B6914", textDecoration: "none", opacity: 0.9 }}>
+                    Pit Rescue →
+                  </Link>
+                </div>
+
                 {/* Temp entry */}
                 {phase.requiresTempEntry && (
                   <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-3)", flexWrap: "wrap" }}>
