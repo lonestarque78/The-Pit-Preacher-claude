@@ -20,26 +20,31 @@ export default function AboutPage() {
           font-size: 1.05rem;
           line-height: 1.85;
           color: #C8B89A;
-          margin: 0 0 var(--space-3);
+          margin: 0;
         }
         .about-h2 {
           font-family: var(--font-heading);
           font-size: clamp(1.3rem, 2.5vw, 1.6rem);
           color: #F5E6C8;
-          margin: var(--space-6) 0 var(--space-3);
+          margin: 0;
           font-weight: 700;
         }
         .about-rule {
           border: none;
           border-top: 1px solid rgba(201,151,58,0.2);
-          margin: var(--space-5) 0;
+          margin: var(--space-3) 0;
+        }
+        .about-row {
+          display: grid;
+          grid-template-columns: 1fr 1.6fr;
+          gap: 0 var(--space-4);
+          align-items: start;
         }
         .about-dedication {
           border-left: 3px solid #C9973A;
           padding: var(--space-3) var(--space-4);
           background: rgba(201,151,58,0.05);
           border-radius: 0 var(--radius-md) var(--radius-md) 0;
-          margin: var(--space-4) 0;
         }
         .about-dedication p {
           font-family: var(--font-body);
@@ -47,9 +52,6 @@ export default function AboutPage() {
           font-style: italic;
           line-height: 1.85;
           color: #D9C9A8;
-          margin: 0 0 var(--space-2);
-        }
-        .about-dedication p:last-child {
           margin: 0;
         }
         .about-cta {
@@ -70,6 +72,10 @@ export default function AboutPage() {
           margin-top: var(--space-5);
           padding-top: var(--space-4);
           border-top: 1px solid rgba(201,151,58,0.15);
+        }
+        @media (max-width: 560px) {
+          .about-row { display: block; }
+          .about-h2 { margin-bottom: var(--space-2); }
         }
       `}</style>
 
@@ -114,73 +120,54 @@ export default function AboutPage() {
       </div>
 
       {/* Body */}
-      <div style={{ padding: "var(--space-6) 0 var(--space-7)" }}>
+      <div style={{ padding: "var(--space-4) 0 var(--space-5)" }}>
         <div className="about-section">
 
-          {/* Origin */}
+          {/* Origin — no heading, full width */}
           <p className="about-p">
-            I grew up in the Dallas area and fell in love with barbecue in my early twenties. My first smoker was an ugly drum I welded together in the driveway. It wasn't pretty, but it taught me everything I needed to know about fire, patience, and how stubborn a piece of meat can be when it wants to be.
-          </p>
-          <p className="about-p">
-            After that came a used offset stick burner that I cooked on until the firebox rusted through. That pit taught me how to read smoke instead of staring at a thermometer. These days I use a pellet cooker because life gets busy, but I'll always have a soft spot for a stick burner and the honest smoke it produces.
-          </p>
-          <p className="about-p">
-            I'm not a competition cook. I'm a backyard pitmaster who likes feeding people. Pork butt is my favorite thing to smoke because it's forgiving, flavorful, and fun to experiment with. Every Sunday night I throw a ribeye on for date night with my wife. She says she prefers my cooking over restaurants. I choose to believe her.
-          </p>
-          <p className="about-p">
-            Barbecue has always been my quiet place. It slows me down. It gives me something to focus on that isn't work or stress or noise. It's where I find peace.
+            I grew up in the Dallas area and fell in love with barbecue in my early twenties. My first smoker was an ugly drum I welded together in the driveway — it wasn't pretty, but it taught me everything I needed to know about fire, patience, and how stubborn a piece of meat can be. I'm a backyard pitmaster who likes feeding people, and barbecue has always been my quiet place.
           </p>
 
           <hr className="about-rule" />
 
           {/* Why */}
-          <h2 className="about-h2">Why I Built This</h2>
-          <p className="about-p">
-            I got tired of generic barbecue advice. Search engines repeat the same answers. Chatbots give you textbook responses that don't know your smoker, your wood, your habits, or your style.
-          </p>
-          <p className="about-p">
-            I wanted something that actually understood me as a cook. Something that could look at my setup, my past cooks, my tendencies, and give me advice that mattered. Not just "run your pit at this temperature," but why. Not just "wrap at this point," but how that choice interacts with your smoker and your meat.
-          </p>
-          <p className="about-p">
-            I also needed a place to keep track of my cooks. When you nail a pork butt or a brisket, you want to be able to repeat it. I wanted a journal that captured the whole story, not just a recipe.
-          </p>
-          <p className="about-p">
-            So I built it.
-          </p>
+          <div className="about-row">
+            <h2 className="about-h2">Why I Built This</h2>
+            <p className="about-p">
+              I got tired of generic barbecue advice that doesn't know your smoker, your wood, your habits, or your style. I wanted something that could look at my past cooks and my tendencies and give me advice that actually mattered — not just what temperature, but why. So I built it.
+            </p>
+          </div>
 
           <hr className="about-rule" />
 
           {/* What it is */}
-          <h2 className="about-h2">What The Pit Preacher Is</h2>
-          <p className="about-p">
-            The Pit Preacher is a pitmaster in your pocket. It learns your rig, your wood, your style, and gives you advice that fits the way you cook. You can ask it anything. Why your brisket is stalling. How to build better bark. What wood pairs best with ribs. What bourbon belongs next to your plate.
-          </p>
-          <p className="about-p">
-            You can log your cooks, track your temps, timing, notes, and photos, and get personalized insights before and after each smoke. When you nail a cook, you can save it, repeat it, or share it.
-          </p>
-          <p className="about-p">
-            This app is built for real people who love barbecue. Not for competitions. Not for clout. Just for the joy of cooking good food for people you care about.
-          </p>
+          <div className="about-row">
+            <h2 className="about-h2">What The Pit Preacher Is</h2>
+            <p className="about-p">
+              The Pit Preacher is a pitmaster in your pocket — it learns your rig, your wood, your style, and gives you advice that fits the way you cook. You can log your cooks, track your numbers, and get personalized insights before and after each smoke. This app is built for real people who love barbecue, not for competitions or clout.
+            </p>
+          </div>
 
           <hr className="about-rule" />
 
           {/* Built in Texas */}
-          <h2 className="about-h2">Built in Texas</h2>
-          <p className="about-p">
-            The Pit Preacher is built and run by Lone Star Que, LLC. It was designed, coded, and launched by one guy with a full time job, a family, and a smoker in the backyard.
-          </p>
+          <div className="about-row">
+            <h2 className="about-h2">Built in Texas</h2>
+            <p className="about-p">
+              The Pit Preacher is built and run by Lone Star Que, LLC — designed, coded, and launched by one guy with a full time job, a family, and a smoker in the backyard.
+            </p>
+          </div>
 
           <hr className="about-rule" />
 
           {/* Dedication */}
-          <h2 className="about-h2">Dedicated To a Good Man</h2>
-          <div className="about-dedication">
-            <p>
-              This project is dedicated to my father in law. He loved good food, good company, and the kind of meals that bring people together. He ran a barbecue ministry at his church and fed more people than I can count. He preached the Word with the same heart he put into his cooks.
-            </p>
-            <p>
-              Building this app gave me something steady to hold onto during a hard season. Finishing it became a way to honor him. Every cook someone logs, every brisket saved at two in the morning, every person who joins the congregation — it is all in his honor.
-            </p>
+          <div className="about-row">
+            <h2 className="about-h2">Dedicated To a Good Man</h2>
+            <div className="about-dedication">
+              <p>
+                This project is dedicated to my father in law. He ran a barbecue ministry at his church, fed more people than I can count, and preached the Word with the same heart he put into his cooks. Finishing this app became a way to honor him — every cook someone logs, every brisket saved at two in the morning, is all in his honor.
+              </p>
+            </div>
           </div>
 
           <hr className="about-rule" />

@@ -122,6 +122,27 @@ function capitalize(str: string): string {
   return str.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function formatPhaseCompleteMessage(message: string): string {
+  try {
+    const parsed = JSON.parse(message);
+    const phaseName = parsed.phaseName ?? "Phase";
+    const completedAt = parsed.completedAt
+      ? new Date(parsed.completedAt).toLocaleTimeString(undefined, {
+          hour: "numeric",
+          minute: "2-digit",
+        })
+      : null;
+    const temp = parsed.tempEntered ?? null;
+
+    const parts = [phaseName];
+    if (temp) parts.push(temp);
+    if (completedAt) parts.push(`completed at ${completedAt}`);
+    return parts.join(" — ");
+  } catch {
+    return message;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────
 // COMPONENT
 // ─────────────────────────────────────────────────────────────
@@ -626,7 +647,9 @@ export default function CookJournalPage({
                   </p>
                   {e.message && (
                     <p style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", color: "#F5E6C8", margin: 0 }}>
-                      {e.message}
+                      {e.event_type === "phase_complete"
+                        ? formatPhaseCompleteMessage(e.message)
+                        : e.message}
                     </p>
                   )}
                 </div>

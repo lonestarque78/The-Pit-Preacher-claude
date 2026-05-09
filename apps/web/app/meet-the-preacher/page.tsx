@@ -20,24 +20,30 @@ export default function MeetThePreacherPage() {
           font-size: 1.05rem;
           line-height: 1.85;
           color: #C8B89A;
-          margin: 0 0 var(--space-3);
+          margin: 0;
         }
         .mtp-h2 {
           font-family: var(--font-heading);
           font-size: clamp(1.2rem, 2.5vw, 1.5rem);
           color: #F5E6C8;
-          margin: var(--space-6) 0 var(--space-3);
+          margin: 0;
           font-weight: 700;
         }
         .mtp-rule {
           border: none;
           border-top: 1px solid rgba(201,151,58,0.2);
-          margin: var(--space-5) 0;
+          margin: var(--space-3) 0;
+        }
+        .mtp-row {
+          display: grid;
+          grid-template-columns: 1fr 1.6fr;
+          gap: 0 var(--space-4);
+          align-items: start;
         }
         .mtp-quote {
           border-left: 3px solid rgba(201,151,58,0.5);
           padding: var(--space-3) var(--space-4);
-          margin: var(--space-4) 0;
+          margin: var(--space-3) 0;
         }
         .mtp-quote p {
           font-family: var(--font-body);
@@ -53,6 +59,10 @@ export default function MeetThePreacherPage() {
           color: #C9973A;
           text-transform: uppercase;
           letter-spacing: 0.15em;
+        }
+        @media (max-width: 560px) {
+          .mtp-row { display: block; }
+          .mtp-h2 { margin-bottom: var(--space-2); }
         }
       `}</style>
 
@@ -112,28 +122,26 @@ export default function MeetThePreacherPage() {
       </div>
 
       {/* Body */}
-      <div style={{ padding: "var(--space-6) 0 var(--space-7)" }}>
+      <div style={{ padding: "var(--space-4) 0 var(--space-5)" }}>
         <div className="mtp-section">
 
-          {/* 1 — Who He Is */}
-          <h2 className="mtp-h2">Who He Is</h2>
-          <p className="mtp-p">
-            The Pit Preacher is the voice of experience. The steady hand in the middle of a long cook when you are not sure if the stall is going to break or if you made a mistake three hours ago that you cannot take back. He is the kind of cook who has smoked a thousand briskets and still remembers the ones he ruined. Not because they embarrassed him, but because they taught him something he never forgot.
-          </p>
-          <p className="mtp-p">
-            He knows fire. He knows patience. He knows the rhythm of a cook that has been running since before sunrise and still has hours to go. He knows what it feels like to stand at the pit at two in the morning, fighting the urge to open the lid, and he knows how to talk you down from that ledge.
-          </p>
+          {/* 1 */}
+          <div className="mtp-row">
+            <h2 className="mtp-h2">Who He Is</h2>
+            <p className="mtp-p">
+              The Pit Preacher is the voice of experience — the steady hand in the middle of a long cook when you are not sure if the stall is going to break. He has smoked a thousand briskets and still remembers the ones he ruined, because they taught him something he never forgot.
+            </p>
+          </div>
 
           <hr className="mtp-rule" />
 
-          {/* 2 — Where He Comes From */}
-          <h2 className="mtp-h2">Where He Comes From</h2>
-          <p className="mtp-p">
-            He was not born in a test kitchen or assembled from a manual. He was shaped by real backyard cooks. Long days in the Texas heat with a stick burner that had a mind of its own. Late nights waiting on a pork shoulder that refused to finish on schedule. Fires that ran too hot and fires that kept dying and every lesson that came from working through both.
-          </p>
-          <p className="mtp-p">
-            He comes from the people who taught themselves how to cook by making mistakes and paying attention. The pitmasters who never went to culinary school but could read smoke better than most people can read a book. That is the tradition he comes from. That is the well he draws from every time he gives advice.
-          </p>
+          {/* 2 */}
+          <div className="mtp-row">
+            <h2 className="mtp-h2">Where He Comes From</h2>
+            <p className="mtp-p">
+              He was shaped by real backyard cooks — long days in the Texas heat with a stick burner that had a mind of its own, late nights waiting on a pork shoulder that refused to finish. He comes from the people who taught themselves to cook by making mistakes and paying attention, and that is the well he draws from every time he gives advice.
+            </p>
+          </div>
 
           <div className="mtp-quote">
             <p>Every great cook begins before the fire does. It begins in the mind.</p>
@@ -142,58 +150,53 @@ export default function MeetThePreacherPage() {
 
           <hr className="mtp-rule" />
 
-          {/* 3 — How He Talks */}
-          <h2 className="mtp-h2">How He Talks</h2>
-          <p className="mtp-p">
-            He is not loud. He does not ramble. He does not show off what he knows by telling you everything at once. When you ask him a question, he answers it. When you need more, he gives you more. When you need less, he pulls back.
-          </p>
-          <p className="mtp-p">
-            His voice is calm and direct. Simple sentences. No jargon. No fluff. He says what needs to be said and then stops. If your bark is not setting, he tells you why and tells you what to do about it. If you are in the middle of a stall and starting to panic, he reminds you why the stall is not a problem and why patience is the answer. He has the right words at the right time, and he knows when to stay quiet.
-          </p>
+          {/* 3 */}
+          <div className="mtp-row">
+            <h2 className="mtp-h2">How He Talks</h2>
+            <p className="mtp-p">
+              He is not loud. He does not ramble. When you ask him a question, he answers it — calm, direct, simple sentences, no jargon. If your bark is not setting, he tells you why and tells you what to do about it.
+            </p>
+          </div>
 
           <hr className="mtp-rule" />
 
-          {/* 4 — What He Believes */}
-          <h2 className="mtp-h2">What He Believes</h2>
-          <p className="mtp-p">
-            He believes barbecue brings people together in a way that most things do not. That sitting around a pit with people you care about, waiting on something that smells like smoke and promise, is one of the better things a person can do with a day. He believes good food takes time and that the time is part of what makes it good.
-          </p>
-          <p className="mtp-p">
-            He believes fire teaches patience better than almost anything else. That standing at a pit and learning to trust a process you cannot fully control makes you a better cook and probably a better person. And he believes that anyone who wants to learn can get there. It does not matter what pit you have or how long you have been cooking. It just takes attention and a willingness to learn from what the fire tells you.
-          </p>
+          {/* 4 */}
+          <div className="mtp-row">
+            <h2 className="mtp-h2">What He Believes</h2>
+            <p className="mtp-p">
+              He believes barbecue brings people together in a way that most things do not. He believes fire teaches patience better than almost anything else, and that anyone who wants to learn can get there — it does not matter what pit you have or how long you have been cooking.
+            </p>
+          </div>
 
           <hr className="mtp-rule" />
 
-          {/* 5 — Why He Is Here */}
-          <h2 className="mtp-h2">Why He Is Here</h2>
-          <p className="mtp-p">
-            He is here because most people who love barbecue do not have a mentor standing next to their pit. They are figuring it out alone, searching for answers online, and getting generic advice that does not know anything about their smoker, their wood, or the way they tend to cook. That is a frustrating way to learn.
-          </p>
-          <p className="mtp-p">
-            The Preacher exists to fill that gap. To be the experienced voice that helps you understand your pit, learn your tendencies, cook with confidence, and actually enjoy the process instead of worrying through it. He is not trying to take over your cook. He is trying to help you own it.
-          </p>
+          {/* 5 */}
+          <div className="mtp-row">
+            <h2 className="mtp-h2">Why He Is Here</h2>
+            <p className="mtp-p">
+              Most people who love barbecue do not have a mentor standing next to their pit — they are figuring it out alone, getting generic advice that does not know their smoker or the way they tend to cook. The Preacher exists to fill that gap, to help you understand your pit, learn your tendencies, and actually enjoy the process instead of worrying through it.
+            </p>
+          </div>
 
           <hr className="mtp-rule" />
 
-          {/* 6 — What He Is Not */}
-          <h2 className="mtp-h2">What He Is Not</h2>
-          <p className="mtp-p">
-            He is not a competition judge. He is not interested in scoring your cook against some standard you did not sign up for. He is not a know-it-all who corrects everything you do before you even finish asking the question. He is not going to give you a lecture when you ask something simple.
-          </p>
-          <p className="mtp-p">
-            He is also not the kind of voice that gives you the same answer it would give anybody. He pays attention to you specifically. Your pit. Your history. Your patterns. The advice he gives you is not pulled from a database of general barbecue tips. It comes from what he knows about the way you cook.
-          </p>
+          {/* 6 */}
+          <div className="mtp-row">
+            <h2 className="mtp-h2">What He Is Not</h2>
+            <p className="mtp-p">
+              He is not a competition judge, and he is not a know-it-all who corrects everything you do before you finish asking. He pays attention to you specifically — your pit, your history, your patterns — and the advice he gives you comes from what he knows about the way you cook.
+            </p>
+          </div>
 
           <hr className="mtp-rule" />
 
-          {/* 7 — Closing */}
-          <h2 className="mtp-h2">He Is Here When You Need Him</h2>
-          <p className="mtp-p">
-            Whether you have been cooking for twenty years or you just lit your first fire, the Preacher has something to offer you. He meets you where you are. He does not talk down to beginners or bore experienced cooks with basics they already know. He reads the situation and responds to it.
-          </p>
-          <p className="mtp-p">
-            If you love barbecue, or you want to, the Preacher is in your corner. Ask him anything. He will be straight with you, he will not waste your time, and he will be there at two in the morning when the brisket is stalling and you just need someone to tell you to leave it alone.
-          </p>
+          {/* 7 */}
+          <div className="mtp-row">
+            <h2 className="mtp-h2">He Is Here When You Need Him</h2>
+            <p className="mtp-p">
+              Whether you have been cooking for twenty years or you just lit your first fire, the Preacher meets you where you are. If you love barbecue, ask him anything — he will be straight with you and he will be there at two in the morning when the brisket is stalling.
+            </p>
+          </div>
 
           <div className="mtp-quote">
             <p>Do not open the lid and question the pit. Trust what you have built.</p>

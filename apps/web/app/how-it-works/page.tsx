@@ -20,19 +20,19 @@ export default function HowItWorksPage() {
           font-size: 1.05rem;
           line-height: 1.85;
           color: #C8B89A;
-          margin: 0 0 var(--space-3);
+          margin: 0;
         }
         .hiw-h2 {
           font-family: var(--font-heading);
           font-size: clamp(1.2rem, 2.5vw, 1.5rem);
           color: #F5E6C8;
-          margin: var(--space-6) 0 var(--space-3);
+          margin: 0 0 var(--space-1);
           font-weight: 700;
         }
         .hiw-rule {
           border: none;
           border-top: 1px solid rgba(201,151,58,0.2);
-          margin: var(--space-5) 0;
+          margin: var(--space-3) 0;
         }
         .hiw-number {
           font-family: var(--font-ui);
@@ -42,6 +42,16 @@ export default function HowItWorksPage() {
           letter-spacing: 0.2em;
           display: block;
           margin-bottom: 6px;
+        }
+        .hiw-row {
+          display: grid;
+          grid-template-columns: 1fr 1.6fr;
+          gap: 0 var(--space-4);
+          align-items: start;
+        }
+        @media (max-width: 560px) {
+          .hiw-row { display: block; }
+          .hiw-h2 { margin-top: var(--space-2); }
         }
       `}</style>
 
@@ -86,102 +96,110 @@ export default function HowItWorksPage() {
       </div>
 
       {/* Body */}
-      <div style={{ padding: "var(--space-6) 0 var(--space-7)" }}>
+      <div style={{ padding: "var(--space-4) 0 var(--space-5)" }}>
         <div className="hiw-section">
 
           {/* 1 */}
-          <span className="hiw-number">01</span>
-          <h2 className="hiw-h2">Plan Your Cook</h2>
-          <p className="hiw-p">
-            Before anything goes on the pit, the app helps you think through the cook. You tell it what you're smoking, how much it weighs, what pit you're using, and when you need to eat. From there it works backward and gives you a timeline that tells you exactly when to light the fire, when to expect the stall, when to wrap, and when to pull. It is not a recipe. It is a real plan built around your specific cook.
-          </p>
-          <p className="hiw-p">
-            If you have cooked this meat before, the app already knows things about how your cooks tend to go. It will factor that in and adjust the plan before you even ask.
-          </p>
+          <div className="hiw-row">
+            <div>
+              <span className="hiw-number">01</span>
+              <h2 className="hiw-h2">Plan Your Cook</h2>
+            </div>
+            <p className="hiw-p">
+              You tell it what you are smoking, how much it weighs, what pit you are using, and when you need to eat. From there it works backward and gives you a timeline — when to light the fire, when to expect the stall, when to wrap, and when to pull. It is a real plan built around your specific cook.
+            </p>
+          </div>
 
           <hr className="hiw-rule" />
 
           {/* 2 */}
-          <span className="hiw-number">02</span>
-          <h2 className="hiw-h2">Cook With Confidence</h2>
-          <p className="hiw-p">
-            Once the fire is going, you have a dashboard that keeps everything in one place. Your plan is right there. Your timeline is right there. And the Preacher is right there if you have a question. You can ask anything, and it will give you a straight answer based on what is actually on your pit right now, not a generic response that could apply to anybody.
-          </p>
-          <p className="hiw-p">
-            The dashboard is not complicated. It does not throw a wall of information at you. It just keeps you organized so you can focus on the cook instead of trying to remember everything in your head.
-          </p>
+          <div className="hiw-row">
+            <div>
+              <span className="hiw-number">02</span>
+              <h2 className="hiw-h2">Cook With Confidence</h2>
+            </div>
+            <p className="hiw-p">
+              Once the fire is going, your dashboard keeps everything in one place — your plan, your timeline, and the Preacher if you have a question. It will give you a straight answer based on what is actually on your pit right now, not a generic response that could apply to anybody.
+            </p>
+          </div>
 
           <hr className="hiw-rule" />
 
           {/* 3 */}
-          <span className="hiw-number">03</span>
-          <h2 className="hiw-h2">Track What Matters</h2>
-          <p className="hiw-p">
-            When the cook is done, the app walks you through a quick reflection. You log what actually happened. How long did it really take. Where did the pit run hot or cold. When did the stall hit. How long did you rest it. How did it turn out.
-          </p>
-          <p className="hiw-p">
-            This part takes about five minutes and it is the whole reason the app gets better the more you use it. Every time you log a cook, you are building a record of how you cook. Not how some pitmaster on the internet cooks. How you cook. That distinction matters more than most people realize.
-          </p>
+          <div className="hiw-row">
+            <div>
+              <span className="hiw-number">03</span>
+              <h2 className="hiw-h2">Track What Matters</h2>
+            </div>
+            <p className="hiw-p">
+              When the cook is done, the app walks you through a quick reflection. You log what actually happened — how long it took, where the pit ran hot or cold, when the stall hit, how it turned out. Every time you log a cook, you are building a record of how you cook.
+            </p>
+          </div>
 
           <hr className="hiw-rule" />
 
           {/* 4 */}
-          <span className="hiw-number">04</span>
-          <h2 className="hiw-h2">Get a Real Summary</h2>
-          <p className="hiw-p">
-            After you log the cook, the app puts together a summary that shows you what happened. Planned versus actual. How the pit behaved. How the meat turned out. What you would do differently. It is all in one place, and it reads like a debrief, not a spreadsheet.
-          </p>
-          <p className="hiw-p">
-            The Preacher also adds its own read on the cook. A short reflection on what it saw in your data. Sometimes that reflection will confirm what you already know. Sometimes it will point out something you missed.
-          </p>
+          <div className="hiw-row">
+            <div>
+              <span className="hiw-number">04</span>
+              <h2 className="hiw-h2">Get a Real Summary</h2>
+            </div>
+            <p className="hiw-p">
+              After you log the cook, the app puts together a summary — planned versus actual, how the pit behaved, what you would do differently. The Preacher also adds its own read on the cook, a short reflection on what it saw in your data.
+            </p>
+          </div>
 
           <hr className="hiw-rule" />
 
           {/* 5 */}
-          <span className="hiw-number">05</span>
-          <h2 className="hiw-h2">Learn From Your Patterns</h2>
-          <p className="hiw-p">
-            Most people cook the same way every time without realizing it. They wrap too early or too late. Their pit spikes in the first hour. Their briskets always finish behind schedule. These are patterns, and patterns are fixable once you can see them.
-          </p>
-          <p className="hiw-p">
-            After a handful of tracked cooks, the app starts to surface those patterns for you. It looks across your history and tells you what it notices. Not in a lecture. Just a straight observation. Your ribs dry out when your pit runs above this temperature. Your pork shoulders stall longer than most. Your rest times have been short and your tenderness scores show it. That kind of thing.
-          </p>
+          <div className="hiw-row">
+            <div>
+              <span className="hiw-number">05</span>
+              <h2 className="hiw-h2">Learn From Your Patterns</h2>
+            </div>
+            <p className="hiw-p">
+              After a handful of tracked cooks, the app starts to surface your patterns. Your ribs dry out when your pit runs above a certain temperature. Your rest times have been short and your tenderness scores show it. These are patterns, and patterns are fixable once you can see them.
+            </p>
+          </div>
 
           <hr className="hiw-rule" />
 
           {/* 6 */}
-          <span className="hiw-number">06</span>
-          <h2 className="hiw-h2">Get a Strategy for Your Next Cook</h2>
-          <p className="hiw-p">
-            Before your next cook starts, the app puts together a strategy based on everything it knows about you. Your pit. Your tendencies. What has worked. What has not. It gives you a specific game plan for that cook, not a general one copied from a barbecue forum.
-          </p>
-          <p className="hiw-p">
-            If your bark has been soft across your last few cooks, it will tell you to wrap later. If your pit dips during the stall, it will remind you to watch for it and tell you what to do when it happens. It is the kind of advice you would get from someone who has watched you cook a dozen times.
-          </p>
+          <div className="hiw-row">
+            <div>
+              <span className="hiw-number">06</span>
+              <h2 className="hiw-h2">Get a Strategy for Your Next Cook</h2>
+            </div>
+            <p className="hiw-p">
+              Before your next cook starts, the app puts together a strategy based on everything it knows about you — your pit, your tendencies, what has worked and what has not. It is the kind of advice you would get from someone who has watched you cook a dozen times.
+            </p>
+          </div>
 
           <hr className="hiw-rule" />
 
           {/* 7 */}
-          <span className="hiw-number">07</span>
-          <h2 className="hiw-h2">Grow as a Pitmaster</h2>
-          <p className="hiw-p">
-            The goal of all of this is not to make you dependent on the app. It is to make you a better cook. Every piece of feedback is pointed at something you can actually change. Every insight is connected to your real data. Over time, the things that used to trip you up stop tripping you up because you understand why they were happening.
-          </p>
-          <p className="hiw-p">
-            That is how good pitmasters are made. Not by reading more forums. By cooking, paying attention, and learning from what the pit tells you. The app just helps you hear it more clearly.
-          </p>
+          <div className="hiw-row">
+            <div>
+              <span className="hiw-number">07</span>
+              <h2 className="hiw-h2">Grow as a Pitmaster</h2>
+            </div>
+            <p className="hiw-p">
+              The goal of all of this is not to make you dependent on the app. Every piece of feedback is pointed at something you can actually change, and over time the things that used to trip you up stop tripping you up.
+            </p>
+          </div>
 
           <hr className="hiw-rule" />
 
           {/* 8 */}
-          <span className="hiw-number">08</span>
-          <h2 className="hiw-h2">Built for Real Backyard Cooks</h2>
-          <p className="hiw-p">
-            This app was not built for competition teams or professional pitmasters. It was built for people who cook in their backyard on weekends because they love it. People who want to get better, want to repeat their best cooks, and want to stop making the same mistakes.
-          </p>
-          <p className="hiw-p">
-            If that is you, you are in the right place. Start with a free account, plan your next cook, and see how it feels. The Preacher will be there when you need it.
-          </p>
+          <div className="hiw-row">
+            <div>
+              <span className="hiw-number">08</span>
+              <h2 className="hiw-h2">Built for Real Backyard Cooks</h2>
+            </div>
+            <p className="hiw-p">
+              This app was not built for competition teams or professional pitmasters. It was built for people who cook in their backyard on weekends because they love it and want to get better. Start with a free account, plan your next cook, and see how it feels.
+            </p>
+          </div>
 
           {/* CTA */}
           <div style={{

@@ -291,7 +291,7 @@ export default function LogsPage() {
                   ? "1px solid rgba(255, 106, 0, 0.5)"
                   : "1px solid var(--color-border, #333)",
                 borderRadius:  "var(--radius-lg)",
-                padding:       "var(--space-4)",
+                padding:       "var(--space-2)",
                 marginBottom:  "var(--space-3)",
                 transition:    "border-color 0.15s",
               }}
@@ -302,7 +302,7 @@ export default function LogsPage() {
                 justifyContent:"space-between",
                 alignItems:    "flex-start",
                 gap:           "var(--space-2)",
-                marginBottom:  "var(--space-2)",
+                marginBottom:  "var(--space-1)",
               }}>
                 <h3 style={{
                   fontFamily: "var(--font-heading)",
@@ -318,10 +318,10 @@ export default function LogsPage() {
               {/* Smoker · wood · date */}
               <p style={{
                 fontFamily:   "var(--font-body)",
-                fontSize:     "0.9rem",
+                fontSize:     "0.75rem",
                 color:        "var(--color-text-muted)",
                 margin:       0,
-                marginBottom: "var(--space-3)",
+                marginBottom: "var(--space-2)",
               }}>
                 {smokerWood ? `${smokerWood} · ` : ""}{date}
               </p>
@@ -334,15 +334,15 @@ export default function LogsPage() {
                   color:        "var(--color-text-muted)",
                   fontStyle:    "italic",
                   margin:       0,
-                  marginBottom: "var(--space-3)",
+                  marginBottom: "var(--space-2)",
                 }}>
                   This cook was archived after 48 hours of inactivity.
                 </p>
               )}
 
               {/* Cook log */}
-              {log ? (
-                <div style={{ marginBottom: "var(--space-3)" }}>
+              {log && (
+                <div style={{ marginBottom: "var(--space-2)" }}>
                   <div style={{ marginBottom: "var(--space-1)" }}>
                     <StarRating rating={log.rating} />
                   </div>
@@ -361,39 +361,28 @@ export default function LogsPage() {
                     </p>
                   )}
                 </div>
-              ) : (
-                <p style={{
-                  fontFamily:   "var(--font-body)",
-                  fontSize:     "0.875rem",
-                  color:        "var(--color-text-muted)",
-                  fontStyle:    "italic",
-                  margin:       0,
-                  marginBottom: "var(--space-3)",
-                }}>
-                  No summary yet
-                </p>
               )}
 
-              {/* Action buttons */}
-              <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" as const }}>
-                <Link href={`/cook/${cook.id}`}>
-                  <Button>View Cook</Button>
+              {/* Action links */}
+              <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" as const }}>
+                <Link href={`/cook/${cook.id}`} style={{
+                  fontFamily:     "var(--font-ui)",
+                  fontSize:       "0.78rem",
+                  color:          "var(--color-accent)",
+                  textDecoration: "none",
+                  letterSpacing:  "0.03em",
+                }}>
+                  View Cook →
                 </Link>
                 {cook.status === "completed" && !log && (
-                  <Link href={`/cook/${cook.id}/summary`}>
-                    <button style={{
-                      background:    "transparent",
-                      border:        "1px solid var(--color-accent)",
-                      borderRadius:  "var(--radius-md)",
-                      color:         "var(--color-accent)",
-                      fontFamily:    "var(--font-ui)",
-                      fontSize:      "0.875rem",
-                      padding:       "8px 16px",
-                      cursor:        "pointer",
-                      letterSpacing: "0.03em",
-                    }}>
-                      Add Summary
-                    </button>
+                  <Link href={`/cook/${cook.id}/summary`} style={{
+                    fontFamily:     "var(--font-ui)",
+                    fontSize:       "0.78rem",
+                    color:          "var(--color-text-muted)",
+                    textDecoration: "none",
+                    letterSpacing:  "0.03em",
+                  }}>
+                    Add Summary →
                   </Link>
                 )}
               </div>
