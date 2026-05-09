@@ -614,7 +614,6 @@ export default function Home() {
             {MEAT_TABS.find(t => t.key === activeMeatTab)!.items.map(name => renderTile(name, "meats"))}
             {renderOtherTile(`meats-${activeMeatTab}`, "meats")}
           </div>
-          <button onClick={() => setOpenPanel(null)} style={okBtn}>OK</button>
         </>
       );
     }
@@ -627,7 +626,6 @@ export default function Home() {
             {APPETIZERS.map(name => renderTile(name, "appetizers"))}
             {renderOtherTile("appetizers", "appetizers")}
           </div>
-          <button onClick={() => setOpenPanel(null)} style={okBtn}>OK</button>
         </>
       );
     }
@@ -640,7 +638,6 @@ export default function Home() {
             {SIDES.map(name => renderTile(name, "sides"))}
             {renderOtherTile("sides", "sides")}
           </div>
-          <button onClick={() => setOpenPanel(null)} style={okBtn}>OK</button>
         </>
       );
     }
@@ -758,6 +755,7 @@ export default function Home() {
         return (
           <>
             {stepIndicator}
+            <style>{`input[type="date"]::-webkit-calendar-picker-indicator { display: none; }`}</style>
             <div style={{ position: "relative", marginBottom: "var(--space-2)" }}>
               <input
                 ref={dateInputRef}
@@ -1187,6 +1185,21 @@ if (!user) {
                 )}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {(openPanel === "meats" || openPanel === "sides" || openPanel === "appetizers") && (
+                  <button
+                    onClick={() => setOpenPanel(null)}
+                    style={{
+                      padding: "6px 18px",
+                      background: "var(--color-accent)",
+                      color: "var(--color-bg)",
+                      border: "none",
+                      borderRadius: "var(--radius-md)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "1rem",
+                      cursor: "pointer",
+                    }}
+                  >OK</button>
+                )}
                 {openPanel === "settings" && settingsStep > 1 && (
                   <button
                     onClick={() => setSettingsStep((settingsStep - 1) as 1 | 2 | 3)}
