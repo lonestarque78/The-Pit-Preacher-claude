@@ -2,7 +2,7 @@
 
 
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import { VERSES, type Verse } from "@/lib/verses";
@@ -231,6 +231,8 @@ export default function Home() {
   const [otherText, setOtherText] = useState<Record<string, string>>({});
   const [cookingStyle, setCookingStyle] = useState("");
   const [styleSubOption, setStyleSubOption] = useState("");
+
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   const [next7Days, setNext7Days] = useState<Date[]>([]);
   const [pickerDate, setPickerDate] = useState<Date | null>(null);
@@ -756,32 +758,66 @@ export default function Home() {
         return (
           <>
             {stepIndicator}
-            <input
-              type="date"
-              value={pickerDate ? `${pickerDate.getFullYear()}-${String(pickerDate.getMonth() + 1).padStart(2, "0")}-${String(pickerDate.getDate()).padStart(2, "0")}` : ""}
-              min={(() => { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`; })()}
-              onChange={e => {
-                if (e.target.value) {
-                  const [y, m, d] = e.target.value.split("-").map(Number);
-                  setPickerDate(new Date(y!, m! - 1, d!));
-                } else {
-                  setPickerDate(null);
-                }
-              }}
-              style={{
-                background: "var(--color-bg)",
-                border: "1px solid rgba(201,151,58,0.3)",
-                color: "var(--color-text)",
-                fontFamily: "var(--font-body)",
-                padding: "8px 12px",
-                borderRadius: "var(--radius-md)",
-                width: "100%",
-                fontSize: "0.95rem",
-                marginBottom: "var(--space-2)",
-                cursor: "pointer",
-                boxSizing: "border-box",
-              }}
-            />
+            <div style={{ position: "relative", marginBottom: "var(--space-2)" }}>
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={pickerDate ? `${pickerDate.getFullYear()}-${String(pickerDate.getMonth() + 1).padStart(2, "0")}-${String(pickerDate.getDate()).padStart(2, "0")}` : ""}
+                min={(() => { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`; })()}
+                onChange={e => {
+                  if (e.target.value) {
+                    const [y, m, d] = e.target.value.split("-").map(Number);
+                    setPickerDate(new Date(y!, m! - 1, d!));
+                  } else {
+                    setPickerDate(null);
+                  }
+                }}
+                style={{
+                  background: "var(--color-bg)",
+                  border: "1px solid rgba(201,151,58,0.3)",
+                  color: "var(--color-text)",
+                  fontFamily: "var(--font-body)",
+                  padding: "8px 40px 8px 12px",
+                  borderRadius: "var(--radius-md)",
+                  width: "100%",
+                  fontSize: "0.95rem",
+                  cursor: "text",
+                  boxSizing: "border-box",
+                  outline: "none",
+                  colorScheme: "dark",
+                }}
+                onFocus={e => { e.currentTarget.style.border = "1px solid rgba(201,151,58,0.9)"; }}
+                onBlur={e => { e.currentTarget.style.border = "1px solid rgba(201,151,58,0.3)"; }}
+              />
+              <button
+                type="button"
+                onClick={() => dateInputRef.current?.showPicker()}
+                style={{
+                  position: "absolute",
+                  right: "8px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  padding: "4px",
+                  cursor: "pointer",
+                  color: "rgba(201,151,58,0.7)",
+                  display: "flex",
+                  alignItems: "center",
+                  lineHeight: 1,
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(201,151,58,1)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(201,151,58,0.7)"; }}
+                aria-label="Open date picker"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </button>
+            </div>
 
             <select
               value={pickerTime}
@@ -861,7 +897,7 @@ export default function Home() {
                   background: "var(--color-bg)",
                   border: "1px solid var(--color-border)",
                   borderRadius: "var(--radius-md)",
-                  padding: "var(--space-2) var(--space-3)",
+                  padding: "var(--space-1) var(--space-3)",
                   marginBottom: "var(--space-2)",
                 }}
               >
