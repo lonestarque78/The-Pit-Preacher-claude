@@ -253,11 +253,7 @@ export default async function DashboardPage() {
     <div>
 
       {/* Compact header bar */}
-      <div style={{ background: "var(--color-bg-alt)", borderBottom: "1px solid rgba(201,151,58,0.15)", padding: "var(--space-2) var(--space-4)", minHeight: "72px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-4)", flexWrap: "wrap" }}>
-        <div>
-          <p style={{ fontFamily: "var(--font-ui)", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "0.65rem", margin: "0 0 2px" }}>\u2756 The Pit Preacher \u2756</p>
-          <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.3rem", color: "#F5E6C8", margin: 0, fontWeight: 400 }}>The Pit Preacher</h1>
-        </div>
+      <div style={{ background: "var(--color-bg-alt)", borderBottom: "1px solid rgba(201,151,58,0.15)", padding: "var(--space-2) var(--space-4)", minHeight: "72px", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "var(--space-4)", flexWrap: "wrap" }}>
         <div style={{ textAlign: "right", maxWidth: "280px" }}>
           <DailyVerse />
         </div>
@@ -273,6 +269,27 @@ export default async function DashboardPage() {
 
       {/* Cook list */}
       <CookList cooks={finalCooks} logsMap={cookLogMap} />
+
+      {/* Ask the Preacher */}
+      <div style={{ padding: "0 var(--space-4) var(--space-3)" }}>
+        <Link
+          href="/preacher"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            fontFamily: "var(--font-ui)",
+            fontSize: "0.8rem",
+            color: "#A89070",
+            textDecoration: "none",
+            border: "1px solid rgba(201,151,58,0.2)",
+            borderRadius: "var(--radius-md)",
+            padding: "8px 16px",
+          }}
+        >
+          Ask the Preacher &rarr;
+        </Link>
+      </div>
 
       {/* Tier-aware marketing */}
       {tier !== "pitmaster" && (
