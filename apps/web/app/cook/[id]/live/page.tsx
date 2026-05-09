@@ -178,8 +178,10 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
   }, [cookId]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isThinking]);
+    if (messages.length > 0) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const loadData = async () => {
     const { data: { user } } = await supabase.auth.getUser();

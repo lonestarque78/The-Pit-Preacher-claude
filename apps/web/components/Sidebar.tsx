@@ -117,14 +117,14 @@ export function Sidebar({ isOpen, onClose, user, onLogout }: SidebarProps) {
               <div className="sidebar-section">
                 <h3 className="sidebar-section-title">Pitmaster</h3>
                 <Link href="/pitmaster/trends" className={linkClass("/pitmaster/trends")}>Trend Analysis</Link>
-                <Link href="/pitmaster/meat" className={linkClass("/pitmaster/meat")}>Meat Profiles</Link>
-                <Link href="/pitmaster/pit" className={linkClass("/pitmaster/pit")}>Pit Profiles</Link>
+                <Link href="/pitmaster/meat/brisket" className={linkClass("/pitmaster/meat/brisket")}>Meat Profiles</Link>
+                <Link href="/pitmaster/pit/offset" className={linkClass("/pitmaster/pit/offset")}>Pit Profiles</Link>
               </div>
 
               <div className="sidebar-section">
                 <h3 className="sidebar-section-title">Account</h3>
                 <Link href="/account" className={linkClass("/account")}>Account</Link>
-                <Link href="/plans" className={linkClass("/plans")}>Plans & Pricing</Link>
+                <Link href="/premium" className={linkClass("/premium")}>Plans & Pricing</Link>
               </div>
             </>
           ) : (
@@ -135,7 +135,7 @@ export function Sidebar({ isOpen, onClose, user, onLogout }: SidebarProps) {
                 <Link href="/features" className={linkClass("/features")}>Features</Link>
                 <Link href="/meet-the-preacher" className={linkClass("/meet-the-preacher")}>Meet the Preacher</Link>
                 <Link href="/about" className={linkClass("/about")}>About</Link>
-                <Link href="/plans" className={linkClass("/plans")}>Plans & Pricing</Link>
+                <Link href="/premium" className={linkClass("/premium")}>Plans & Pricing</Link>
               </div>
 
               <div className="sidebar-section">
