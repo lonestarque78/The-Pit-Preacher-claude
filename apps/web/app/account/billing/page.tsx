@@ -216,7 +216,7 @@ export default function BillingPage() {
       </div>
 
       {/* View / Change Plan */}
-      <div className="flex justify-center">
+      <div className="flex flex-col items-center gap-2">
         <a
           href="/premium"
           className="w-full text-center px-4 py-3 rounded-lg font-medium"
@@ -224,6 +224,13 @@ export default function BillingPage() {
         >
           View or change your plan →
         </a>
+        <button
+          onClick={openPortal}
+          className="text-xs"
+          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)" }}
+        >
+          Manage subscription settings
+        </button>
       </div>
     </div>
   );
