@@ -211,15 +211,15 @@ export default function PremiumPage() {
             </p>
 
             {/* Price */}
-            <div style={{ fontFamily: "var(--font-heading)", fontSize: "2rem", color: "#F5E6C8", margin: "var(--space-1) 0" }}>
+            <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.6rem", color: "#F5E6C8", margin: "calc(var(--space-1) * 0.6) 0" }}>
               {tier.price}
-              <span style={{ fontSize: "1rem", color: "var(--color-text-muted)", fontFamily: "var(--font-body)" }}>{tier.period}</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", fontFamily: "var(--font-body)" }}>{tier.period}</span>
             </div>
 
             {/* Description */}
             <p style={{
               fontFamily: "var(--font-body)",
-              fontSize: "0.85rem",
+              fontSize: "0.78rem",
               color: "var(--color-text-muted)",
               margin: 0,
               lineHeight: 1.6,
