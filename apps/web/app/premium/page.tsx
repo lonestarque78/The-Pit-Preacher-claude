@@ -142,7 +142,7 @@ export default function PremiumPage() {
   }
 
   return (
-    <div style={{ padding: "20px 24px", maxWidth: "1100px", margin: "0 auto" }}>
+    <div style={{ padding: "12px 24px", maxWidth: "1100px", margin: "0 auto" }}>
 
       {/* Back nav */}
       <div style={{ marginBottom: "var(--space-3)" }}>
@@ -152,7 +152,7 @@ export default function PremiumPage() {
       </div>
 
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "var(--space-5)" }}>
+      <div style={{ textAlign: "center", marginBottom: "calc(var(--space-5) * 0.6)" }}>
         <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", margin: "0 0 var(--space-2)" }}>
           The Congregation
         </p>
@@ -171,7 +171,7 @@ export default function PremiumPage() {
             key={tier.key}
             style={{
               background: "var(--color-bg-alt)",
-              padding: "var(--space-4)",
+              padding: "calc(var(--space-4) * 0.7)",
               borderRadius: "var(--radius-lg)",
               border: currentTier === tier.key
                 ? "2px solid #C9973A"
@@ -229,10 +229,10 @@ export default function PremiumPage() {
 
             {/* Features */}
             <ul style={{ margin: "var(--space-2) 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
-              {tier.features.map((feature) => (
+              {tier.features.slice(0, 4).map((feature) => (
                 <li key={feature} style={{
                   fontFamily: "var(--font-body)",
-                  fontSize: "0.85rem",
+                  fontSize: "0.78rem",
                   color: "var(--color-text-muted)",
                   display: "flex",
                   gap: "8px",
@@ -242,6 +242,17 @@ export default function PremiumPage() {
                   {feature}
                 </li>
               ))}
+              {tier.features.length > 4 && (
+                <li style={{
+                  fontFamily: "var(--font-body)",
+                  fontSize: "0.75rem",
+                  color: "var(--color-text-muted)",
+                  opacity: 0.5,
+                  paddingLeft: "16px",
+                }}>
+                  ...and more
+                </li>
+              )}
             </ul>
 
             {/* CTA */}
@@ -258,7 +269,7 @@ export default function PremiumPage() {
         fontSize: "0.8rem",
         color: "var(--color-text-muted)",
         textAlign: "center",
-        marginTop: "var(--space-5)",
+        marginTop: "calc(var(--space-5) * 0.7)",
         fontStyle: "italic",
       }}>
         All plans include a free tier to get started. Cancel anytime.
