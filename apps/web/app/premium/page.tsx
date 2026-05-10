@@ -178,7 +178,7 @@ export default function PremiumPage() {
         display: "grid",
         gridTemplateColumns: "repeat(3, 1fr)",
         gap: "var(--space-3)",
-        alignItems: "stretch",
+        alignItems: "flex-start",
         flex: 1,
         minHeight: 0,
       }}>
@@ -263,7 +263,7 @@ export default function PremiumPage() {
             </ul>
 
             {/* CTA */}
-            <div style={{ marginTop: "auto", paddingTop: "8px" }}>
+            <div style={{ marginTop: "12px", paddingTop: "8px" }}>
               {getButton(tier.key)}
             </div>
           </div>
