@@ -142,21 +142,30 @@ export default function PremiumPage() {
   }
 
   return (
-    <div style={{ padding: "12px 24px", maxWidth: "1100px", margin: "0 auto" }}>
+    <div style={{
+      height: "100vh",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      boxSizing: "border-box",
+      padding: "12px 24px",
+      maxWidth: "1100px",
+      margin: "0 auto",
+    }}>
 
       {/* Back nav */}
-      <div style={{ marginBottom: "var(--space-3)" }}>
+      <div style={{ marginBottom: "8px" }}>
         <Link href="/dashboard" style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "var(--color-text-muted)", textDecoration: "none" }}>
           ← Dashboard
         </Link>
       </div>
 
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "calc(var(--space-5) * 0.6)" }}>
-        <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", margin: "0 0 var(--space-2)" }}>
+      <div style={{ textAlign: "center", marginBottom: "12px" }}>
+        <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", margin: "0 0 4px" }}>
           The Congregation
         </p>
-        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(1.8rem, 4vw, 2.5rem)", color: "#F5E6C8", margin: "0 0 var(--space-2)" }}>
+        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(1.8rem, 4vw, 2.5rem)", color: "#F5E6C8", margin: "0 0 4px" }}>
           Plans & Pricing
         </h1>
         <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", fontSize: "0.9rem", maxWidth: "480px", margin: "0 auto", lineHeight: 1.6 }}>
@@ -165,20 +174,28 @@ export default function PremiumPage() {
       </div>
 
       {/* Tier cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "var(--space-4)" }}>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gap: "var(--space-3)",
+        alignItems: "stretch",
+        flex: 1,
+        minHeight: 0,
+      }}>
         {TIERS.map((tier) => (
           <div
             key={tier.key}
             style={{
               background: "var(--color-bg-alt)",
-              padding: "calc(var(--space-4) * 0.7)",
-              borderRadius: "var(--radius-lg)",
+              padding: "16px",
+              borderRadius: "8px",
               border: currentTier === tier.key
                 ? "2px solid #C9973A"
                 : "1px solid rgba(201,151,58,0.15)",
               display: "flex",
               flexDirection: "column",
-              gap: "var(--space-2)",
+              gap: "6px",
+              overflow: "hidden",
             }}
           >
             {/* Commandment label */}
@@ -194,7 +211,7 @@ export default function PremiumPage() {
             </p>
 
             {/* Tier name */}
-            <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.4rem", color: "#F5E6C8", margin: 0 }}>
+            <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.3rem", color: "#F5E6C8", margin: 0 }}>
               {tier.name}
             </h2>
 
@@ -211,28 +228,18 @@ export default function PremiumPage() {
             </p>
 
             {/* Price */}
-            <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.6rem", color: "#F5E6C8", margin: "calc(var(--space-1) * 0.6) 0" }}>
+            <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.4rem", color: "#F5E6C8", margin: 0 }}>
               {tier.price}
               <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", fontFamily: "var(--font-body)" }}>{tier.period}</span>
             </div>
 
-            {/* Description */}
-            <p style={{
-              fontFamily: "var(--font-body)",
-              fontSize: "0.78rem",
-              color: "var(--color-text-muted)",
-              margin: 0,
-              lineHeight: 1.6,
-            }}>
-              {tier.description}
-            </p>
-
             {/* Features */}
-            <ul style={{ margin: "var(--space-2) 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
+            <ul style={{ margin: "4px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "4px" }}>
               {tier.features.slice(0, 4).map((feature) => (
                 <li key={feature} style={{
                   fontFamily: "var(--font-body)",
-                  fontSize: "0.78rem",
+                  fontSize: "0.75rem",
+                  lineHeight: 1.4,
                   color: "var(--color-text-muted)",
                   display: "flex",
                   gap: "8px",
@@ -256,7 +263,7 @@ export default function PremiumPage() {
             </ul>
 
             {/* CTA */}
-            <div style={{ marginTop: "var(--space-2)" }}>
+            <div style={{ marginTop: "auto", paddingTop: "8px" }}>
               {getButton(tier.key)}
             </div>
           </div>
@@ -269,7 +276,7 @@ export default function PremiumPage() {
         fontSize: "0.8rem",
         color: "var(--color-text-muted)",
         textAlign: "center",
-        marginTop: "calc(var(--space-5) * 0.7)",
+        margin: "8px 0 0",
         fontStyle: "italic",
       }}>
         All plans include a free tier to get started. Cancel anytime.
