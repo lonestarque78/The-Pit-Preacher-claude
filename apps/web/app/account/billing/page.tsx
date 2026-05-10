@@ -215,79 +215,15 @@ export default function BillingPage() {
         )}
       </div>
 
-      {/* All Plans */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">
-          {isSubscribed ? "All Plans" : "Upgrade Your Plan"}
-        </h2>
-
-        {!isSubscribed && (
-          <p style={{ color: "var(--color-text-muted)" }}>
-            Save 15% by subscribing on the website.
-          </p>
-        )}
-
-        <div className="grid gap-4">
-          {TIERS.map((tier) => {
-            const tierLevel = TIER_ORDER.indexOf(currentTierKey);
-            const targetLevel = TIER_ORDER.indexOf(tier.key);
-            const isCurrent = tier.key === currentTierKey;
-            const isUpgrade = targetLevel > tierLevel;
-
-            if (isCurrent) {
-              return (
-                <div
-                  key={tier.key}
-                  className="p-4 rounded-lg flex items-center justify-between"
-                  style={{ background: "var(--color-bg-alt)", border: "2px solid var(--color-accent)" }}
-                >
-                  <span className="font-medium">{tier.label}</span>
-                  <span className="px-3 py-1 text-sm bg-amber-100 text-amber-800 rounded-full font-medium">
-                    Current Plan
-                  </span>
-                </div>
-              );
-            }
-
-            if (isUpgrade) {
-              return (
-                <div key={tier.key} className="flex flex-col gap-2">
-                  <button
-                    onClick={() => startCheckout(tier.monthly.priceId)}
-                    className="p-4 rounded-lg text-left"
-                    style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.15)", color: "var(--color-text)" }}
-                  >
-                    {tier.monthly.label}
-                  </button>
-                  <button
-                    onClick={() => startCheckout(tier.annual.priceId)}
-                    className="p-4 rounded-lg text-left"
-                    style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.15)", color: "var(--color-text)" }}
-                  >
-                    {tier.annual.label}
-                  </button>
-                </div>
-              );
-            }
-
-            return (
-              <div
-                key={tier.key}
-                className="p-4 rounded-lg flex items-center justify-between"
-                style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.15)" }}
-              >
-                <span className="font-medium" style={{ color: "var(--color-text)" }}>{tier.label}</span>
-                <button
-                  onClick={openPortal}
-                  className="px-4 py-2 rounded-lg"
-                  style={{ background: "transparent", border: "1px solid rgba(201,151,58,0.4)", color: "var(--color-text-muted)" }}
-                >
-                  Downgrade
-                </button>
-              </div>
-            );
-          })}
-        </div>
+      {/* View / Change Plan */}
+      <div className="flex justify-center">
+        <a
+          href="/premium"
+          className="w-full text-center px-4 py-3 rounded-lg font-medium"
+          style={{ background: "transparent", border: "1px solid var(--color-accent)", color: "var(--color-accent)" }}
+        >
+          View or change your plan →
+        </a>
       </div>
     </div>
   );
