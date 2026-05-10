@@ -177,28 +177,28 @@ export default function BillingPage() {
       <h1 className="text-3xl font-bold">Billing</h1>
 
       {/* Current Plan */}
-      <div className="p-4 border rounded-lg bg-white shadow-sm">
-        <h2 className="text-xl font-semibold mb-2">Your Plan</h2>
+      <div className="p-4 rounded-lg" style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.15)" }}>
+        <h2 className="text-xl font-semibold mb-2" style={{ color: "var(--color-text)" }}>Your Plan</h2>
 
         {!isSubscribed && (
-          <p className="text-gray-600 mb-4">
+          <p className="mb-4" style={{ color: "var(--color-text-muted)" }}>
             You are currently on the <strong>Free Plan</strong>.
           </p>
         )}
 
         {isSubscribed && subscription && (
           <>
-            <p className="text-gray-700">
+            <p style={{ color: "var(--color-text)" }}>
               <strong>Plan:</strong>{" "}
               {priceMap[subscription.price_id] ?? "Unknown Plan"}
             </p>
-            <p className="text-gray-700">
+            <p style={{ color: "var(--color-text)" }}>
               <strong>Status:</strong> {subscription.status}
             </p>
-            <p className="text-gray-700">
+            <p style={{ color: "var(--color-text)" }}>
               <strong>Renews:</strong>{" "}
               {subscription.current_period_end
-                ? new Date(subscription.current_period_end).toLocaleDateString()
+                ? new Date(subscription.current_period_end).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
                 : "—"}
             </p>
           </>
@@ -207,7 +207,8 @@ export default function BillingPage() {
         {isSubscribed && (
           <button
             onClick={openPortal}
-            className="mt-4 px-4 py-2 bg-black text-white rounded-lg"
+            className="mt-4 px-4 py-2 rounded-lg"
+            style={{ background: "transparent", border: "1px solid var(--color-accent)", color: "var(--color-accent)" }}
           >
             Manage Subscription
           </button>
@@ -221,7 +222,7 @@ export default function BillingPage() {
         </h2>
 
         {!isSubscribed && (
-          <p className="text-gray-600">
+          <p style={{ color: "var(--color-text-muted)" }}>
             Save 15% by subscribing on the website.
           </p>
         )}
@@ -237,7 +238,8 @@ export default function BillingPage() {
               return (
                 <div
                   key={tier.key}
-                  className="p-4 border-2 border-amber-500 rounded-lg bg-white shadow-sm flex items-center justify-between"
+                  className="p-4 rounded-lg flex items-center justify-between"
+                  style={{ background: "var(--color-bg-alt)", border: "2px solid var(--color-accent)" }}
                 >
                   <span className="font-medium">{tier.label}</span>
                   <span className="px-3 py-1 text-sm bg-amber-100 text-amber-800 rounded-full font-medium">
@@ -252,13 +254,15 @@ export default function BillingPage() {
                 <div key={tier.key} className="flex flex-col gap-2">
                   <button
                     onClick={() => startCheckout(tier.monthly.priceId)}
-                    className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50 text-left"
+                    className="p-4 rounded-lg text-left"
+                    style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.15)", color: "var(--color-text)" }}
                   >
                     {tier.monthly.label}
                   </button>
                   <button
                     onClick={() => startCheckout(tier.annual.priceId)}
-                    className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50 text-left"
+                    className="p-4 rounded-lg text-left"
+                    style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.15)", color: "var(--color-text)" }}
                   >
                     {tier.annual.label}
                   </button>
@@ -269,12 +273,14 @@ export default function BillingPage() {
             return (
               <div
                 key={tier.key}
-                className="p-4 border rounded-lg bg-white shadow-sm flex items-center justify-between"
+                className="p-4 rounded-lg flex items-center justify-between"
+                style={{ background: "var(--color-bg-alt)", border: "1px solid rgba(201,151,58,0.15)" }}
               >
-                <span className="font-medium">{tier.label}</span>
+                <span className="font-medium" style={{ color: "var(--color-text)" }}>{tier.label}</span>
                 <button
                   onClick={openPortal}
-                  className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 rounded-lg"
+                  style={{ background: "transparent", border: "1px solid rgba(201,151,58,0.4)", color: "var(--color-text-muted)" }}
                 >
                   Downgrade
                 </button>

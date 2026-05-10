@@ -61,6 +61,10 @@ export async function POST(req: NextRequest) {
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/account/billing?status=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/account/billing?status=cancelled`,
       allow_promotion_codes: true,
+      automatic_tax: { enabled: true },
+      customer_update: {
+        address: "auto",
+      },
     });
 
     return NextResponse.json({ url: session.url });
