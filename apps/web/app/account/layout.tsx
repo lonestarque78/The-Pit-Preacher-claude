@@ -5,6 +5,7 @@ import { createServerClient } from '@/lib/supabase-server'
 const NAV_ITEMS = [
   { href: '/account/profile',  label: 'Profile'     },
   { href: '/account/settings', label: 'Settings'    },
+  { href: '/account/billing',  label: 'Billing'     },
   { href: '/account/pits',     label: 'My Pits'     },
   { href: '/account/cooks',    label: 'My Cooks'    },
   { href: '/account/danger',   label: 'Danger Zone' },

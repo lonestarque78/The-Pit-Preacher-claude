@@ -77,19 +77,14 @@ export function CooksHistory({ initialCooks, pits }: Props) {
         <FormCard key={cook.cook_id}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              {cook.label && (
-                <p className="text-sm font-semibold text-[#e8d5a3]">{cook.label}</p>
-              )}
-              <p className={`text-xs mt-0.5 ${cook.label ? 'text-[#7a6a55]' : 'text-sm font-semibold text-[#e8d5a3]'}`}>
+              <p className="text-sm font-semibold text-[#e8d5a3]">
+                {cook.label?.trim() || 'Untitled Cook'}
+              </p>
+              <p className="text-xs mt-0.5 text-[#7a6a55]">
                 {new Date(cook.started_at).toLocaleDateString('en-US', {
                   weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
                 })}
               </p>
-              {(cook.pit_name || cook.wood_type) && (
-                <p className="text-xs text-[#7a6a55] mt-0.5 capitalize">
-                  {[cook.pit_name, cook.wood_type].filter(Boolean).join(' · ')}
-                </p>
-              )}
               {cook.summary_notes && (
                 <p className="text-xs text-[#7a6a55] mt-1 line-clamp-2">{cook.summary_notes}</p>
               )}
