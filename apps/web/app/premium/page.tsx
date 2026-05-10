@@ -63,6 +63,12 @@ const TIERS = [
 
 const TIER_ORDER = ["free", "basic", "backyard", "pitmaster"];
 
+const PRICE_IDS: Record<string, string> = {
+  basic: process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID!,
+  backyard: process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID!,
+  pitmaster: process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID!,
+};
+
 export default function PremiumPage() {
   const supabase = createClient();
   const [currentTier, setCurrentTier] = useState<string>("free");
@@ -88,14 +94,22 @@ export default function PremiumPage() {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
+    if (!res.ok) {
+      alert(data.error);
+      return;
+    }
     if (data.url) window.location.href = data.url;
   }
 
   async function startCheckout(tierKey: string) {
-    const res = await fetch("/api/checkout", {
+    const token = (await supabase.auth.getSession()).data.session?.access_token;
+    const res = await fetch("/api/billing/create-checkout-session", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tier: tierKey }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ priceId: PRICE_IDS[tierKey] }),
     });
     const data = await res.json();
     if (data.url) {
