@@ -64,11 +64,11 @@ const TIERS = [
 const TIER_ORDER = ["free", "basic", "backyard", "pitmaster"];
 
 export default function PremiumPage() {
+  const supabase = createClient();
   const [currentTier, setCurrentTier] = useState<string>("free");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       if (data?.user) {
         getTier(data.user.id, supabase).then((tier) => {
@@ -80,6 +80,16 @@ export default function PremiumPage() {
       }
     });
   }, []);
+
+  async function openPortal() {
+    const token = (await supabase.auth.getSession()).data.session?.access_token;
+    const res = await fetch("/api/billing/portal", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+  }
 
   async function startCheckout(tierKey: string) {
     const res = await fetch("/api/checkout", {
@@ -120,17 +130,7 @@ export default function PremiumPage() {
       return <Button onClick={() => startCheckout(tierKey)}>Upgrade</Button>;
     }
 
-    return (
-      <span style={{
-        display: "inline-block",
-        padding: "var(--space-2) var(--space-4)",
-        fontFamily: "var(--font-ui)",
-        color: "var(--color-text-muted)",
-        fontSize: "0.85rem",
-      }}>
-        ✓ Included
-      </span>
-    );
+    return <Button onClick={openPortal}>Downgrade</Button>;
   }
 
   if (loading) {

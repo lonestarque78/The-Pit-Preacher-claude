@@ -48,6 +48,38 @@ export default function BillingPage() {
     [process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID!]: "Pitmaster (Annual)",
   };
 
+  const priceToTier: Record<string, string> = {
+    [process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID!]: "basic",
+    [process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID!]: "basic",
+    [process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID!]: "backyard",
+    [process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID!]: "backyard",
+    [process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID!]: "pitmaster",
+    [process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID!]: "pitmaster",
+  };
+
+  const TIER_ORDER = ["free", "basic", "backyard", "pitmaster"];
+
+  const TIERS = [
+    {
+      key: "basic",
+      label: "Basic",
+      monthly: { label: "Basic — $3.99/mo", priceId: process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID! },
+      annual: { label: "Basic — $29.99/yr (save ~37%)", priceId: process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID! },
+    },
+    {
+      key: "backyard",
+      label: "Backyard",
+      monthly: { label: "Backyard — $7.99/mo", priceId: process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID! },
+      annual: { label: "Backyard — $79.99/yr (save ~16%)", priceId: process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID! },
+    },
+    {
+      key: "pitmaster",
+      label: "Pitmaster",
+      monthly: { label: "Pitmaster — $11.99/mo", priceId: process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID! },
+      annual: { label: "Pitmaster — $119.99/yr (save ~17%)", priceId: process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID! },
+    },
+  ];
+
   // -----------------------------
   // Load Billing Data
   // -----------------------------
@@ -132,6 +164,11 @@ export default function BillingPage() {
   const isSubscribed =
     subscription?.status && subscription.status !== "canceled";
 
+  const currentTierKey =
+    isSubscribed && subscription
+      ? (priceToTier[subscription.price_id] ?? "free")
+      : "free";
+
   // -----------------------------
   // Render
   // -----------------------------
@@ -167,7 +204,6 @@ export default function BillingPage() {
           </>
         )}
 
-        {/* Manage Subscription */}
         {isSubscribed && (
           <button
             onClick={openPortal}
@@ -178,72 +214,75 @@ export default function BillingPage() {
         )}
       </div>
 
-      {/* Upgrade Options */}
-      {!isSubscribed && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Upgrade Your Plan</h2>
+      {/* All Plans */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">
+          {isSubscribed ? "All Plans" : "Upgrade Your Plan"}
+        </h2>
 
+        {!isSubscribed && (
           <p className="text-gray-600">
             Save 15% by subscribing on the website.
           </p>
+        )}
 
-          <div className="grid gap-4">
-            {/* Basic */}
-            <button
-              onClick={() =>
-                startCheckout(process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID!)
-              }
-              className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
-            >
-              Basic — $3.99/mo
-            </button>
-            <button
-              onClick={() =>
-                startCheckout(process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID!)
-              }
-              className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
-            >
-              Basic — $29.99/yr (save ~37%)
-            </button>
+        <div className="grid gap-4">
+          {TIERS.map((tier) => {
+            const tierLevel = TIER_ORDER.indexOf(currentTierKey);
+            const targetLevel = TIER_ORDER.indexOf(tier.key);
+            const isCurrent = tier.key === currentTierKey;
+            const isUpgrade = targetLevel > tierLevel;
 
-            {/* Backyard */}
-            <button
-              onClick={() =>
-                startCheckout(process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID!)
-              }
-              className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
-            >
-              Backyard — $7.99/mo
-            </button>
-            <button
-              onClick={() =>
-                startCheckout(process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID!)
-              }
-              className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
-            >
-              Backyard — $79.99/yr (save ~16%)
-            </button>
+            if (isCurrent) {
+              return (
+                <div
+                  key={tier.key}
+                  className="p-4 border-2 border-amber-500 rounded-lg bg-white shadow-sm flex items-center justify-between"
+                >
+                  <span className="font-medium">{tier.label}</span>
+                  <span className="px-3 py-1 text-sm bg-amber-100 text-amber-800 rounded-full font-medium">
+                    Current Plan
+                  </span>
+                </div>
+              );
+            }
 
-            {/* Pitmaster */}
-            <button
-              onClick={() =>
-                startCheckout(process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID!)
-              }
-              className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
-            >
-              Pitmaster — $11.99/mo
-            </button>
-            <button
-              onClick={() =>
-                startCheckout(process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID!)
-              }
-              className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50"
-            >
-              Pitmaster — $119.99/yr (save ~17%)
-            </button>
-          </div>
+            if (isUpgrade) {
+              return (
+                <div key={tier.key} className="flex flex-col gap-2">
+                  <button
+                    onClick={() => startCheckout(tier.monthly.priceId)}
+                    className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50 text-left"
+                  >
+                    {tier.monthly.label}
+                  </button>
+                  <button
+                    onClick={() => startCheckout(tier.annual.priceId)}
+                    className="p-4 border rounded-lg bg-white shadow-sm hover:bg-gray-50 text-left"
+                  >
+                    {tier.annual.label}
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={tier.key}
+                className="p-4 border rounded-lg bg-white shadow-sm flex items-center justify-between"
+              >
+                <span className="font-medium">{tier.label}</span>
+                <button
+                  onClick={openPortal}
+                  className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50"
+                >
+                  Downgrade
+                </button>
+              </div>
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 }
