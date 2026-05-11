@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
+import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -139,6 +140,67 @@ function buildWoodList(tools: PlanTool[]): string {
   return woods.length > 0 ? woods.join(", ") : "Not specified";
 }
 
+function createServiceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
+
+async function checkRateLimit(userId: string): Promise<boolean> {
+  try {
+    const admin = createServiceClient();
+    const ENDPOINT = "preacher";
+    const WINDOW_SECONDS = 60;
+    const MAX_REQUESTS = 20;
+
+    const { data, error } = await admin
+      .from("api_rate_limits")
+      .select("request_count, window_start")
+      .eq("user_id", userId)
+      .eq("endpoint", ENDPOINT)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      await admin.from("api_rate_limits").insert({
+        user_id: userId,
+        endpoint: ENDPOINT,
+        request_count: 1,
+        window_start: new Date().toISOString(),
+      });
+      return true;
+    }
+
+    const windowAge = (Date.now() - new Date(data.window_start).getTime()) / 1000;
+
+    if (windowAge > WINDOW_SECONDS) {
+      await admin
+        .from("api_rate_limits")
+        .update({ request_count: 1, window_start: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("endpoint", ENDPOINT);
+      return true;
+    }
+
+    if (data.request_count >= MAX_REQUESTS) {
+      return false;
+    }
+
+    await admin
+      .from("api_rate_limits")
+      .update({ request_count: data.request_count + 1 })
+      .eq("user_id", userId)
+      .eq("endpoint", ENDPOINT);
+
+    return true;
+  } catch (err) {
+    console.error("Rate limit check failed, allowing request through:", err);
+    return true;
+  }
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await createServerClient();
 
@@ -146,6 +208,14 @@ export async function POST(req: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const allowed = await checkRateLimit(user.id);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment before sending another message." },
+      { status: 429 }
+    );
   }
 
   const { message, cookId, cookContext, imageBase64 } = await req.json();
