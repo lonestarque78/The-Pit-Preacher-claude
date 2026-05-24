@@ -6,5 +6,4 @@ const nextConfig = {
     "@supabase/supabase-js",
   ],
 };
-
 export default nextConfig;
