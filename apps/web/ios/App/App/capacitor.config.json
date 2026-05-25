@@ -1,0 +1,9 @@
+{
+  "appId": "com.thepitpreacher.app",
+  "appName": "The Pit Preacher",
+  "webDir": "www",
+  "server": {
+    "url": "https://thepitpreacher.com",
+    "cleartext": false
+  }
+}
