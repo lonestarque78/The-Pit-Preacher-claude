@@ -69,6 +69,7 @@ export default function LoginPage() {
   const [signupError, setSignupError]       = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [googleError, setGoogleError]       = useState("");
+  const [appleError, setAppleError]         = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -101,6 +102,20 @@ export default function LoginPage() {
       },
     });
     if (error) setGoogleError(error.message);
+  };
+
+  // ── Apple OAuth handler ──────────────────────────────────────────────────────
+
+  const handleAppleSignIn = async () => {
+    setAppleError("");
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "apple",
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      },
+    });
+    if (error) setAppleError(error.message);
   };
 
   // ── Forgot password handler ──────────────────────────────────────────────────
@@ -321,6 +336,32 @@ export default function LoginPage() {
             /* ── LOGIN MODE ── */
             <div>
               <button
+                onClick={handleAppleSignIn}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "10px",
+                  width: "100%",
+                  padding: "10px",
+                  background: "#000",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: "var(--radius-md)",
+                  color: "#fff",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  marginBottom: appleError ? "var(--space-1)" : "10px",
+                }}
+              >
+                <svg width="16" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="white">
+                  <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.54 9.103 1.519 12.09 1.013 1.459 2.208 3.09 3.792 3.029 1.52-.065 2.09-.987 3.925-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.391-2.376Zm3.178-2.086c.84-1.04 1.404-2.48 1.247-3.922-1.209.052-2.675.806-3.544 1.818-.78.91-1.467 2.363-1.279 3.754 1.35.103 2.728-.688 3.576-1.65Z"/>
+                </svg>
+                Continue with Apple
+              </button>
+              {appleError && errEl(appleError)}
+
+              <button
                 onClick={handleGoogleSignIn}
                 style={{
                   display: "flex",
@@ -354,7 +395,7 @@ export default function LoginPage() {
                 alignItems: "center",
                 gap: "var(--space-2)",
                 marginBottom: "var(--space-3)",
-                marginTop: googleError ? "var(--space-2)" : 0,
+                marginTop: (appleError || googleError) ? "var(--space-2)" : 0,
               }}>
                 <div style={{ flex: 1, height: "1px", background: "#2a2a2a" }} />
                 <span style={{
@@ -480,6 +521,32 @@ export default function LoginPage() {
               {step === 1 && (
                 <div>
                   <button
+                    onClick={handleAppleSignIn}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "10px",
+                      width: "100%",
+                      padding: "10px",
+                      background: "#000",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: "var(--radius-md)",
+                      color: "#fff",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "0.9rem",
+                      cursor: "pointer",
+                      marginBottom: appleError ? "var(--space-1)" : "10px",
+                    }}
+                  >
+                    <svg width="16" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="white">
+                      <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.54 9.103 1.519 12.09 1.013 1.459 2.208 3.09 3.792 3.029 1.52-.065 2.09-.987 3.925-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.391-2.376Zm3.178-2.086c.84-1.04 1.404-2.48 1.247-3.922-1.209.052-2.675.806-3.544 1.818-.78.91-1.467 2.363-1.279 3.754 1.35.103 2.728-.688 3.576-1.65Z"/>
+                    </svg>
+                    Continue with Apple
+                  </button>
+                  {appleError && errEl(appleError)}
+
+                  <button
                     onClick={handleGoogleSignIn}
                     style={{
                       display: "flex",
@@ -513,7 +580,7 @@ export default function LoginPage() {
                     alignItems: "center",
                     gap: "var(--space-2)",
                     marginBottom: "var(--space-3)",
-                    marginTop: googleError ? "var(--space-2)" : 0,
+                    marginTop: (appleError || googleError) ? "var(--space-2)" : 0,
                   }}>
                     <div style={{ flex: 1, height: "1px", background: "#2a2a2a" }} />
                     <span style={{

@@ -222,6 +222,79 @@ export default function PremiumPage() {
           line-height: 1;
         }
 
+        /* Web savings banner */
+        .web-savings-banner {
+          display: flex;
+          align-items: flex-start;
+          gap: 14px;
+          background: rgba(201,151,58,0.06);
+          border: 1px solid rgba(201,151,58,0.22);
+          border-left: 3px solid #C9973A;
+          border-radius: 8px;
+          padding: 14px 18px;
+          margin-bottom: 24px;
+        }
+
+        .web-savings-icon {
+          flex-shrink: 0;
+          width: 32px;
+          height: 32px;
+          background: rgba(201,151,58,0.12);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #C9973A;
+          font-size: 0.9rem;
+          margin-top: 1px;
+        }
+
+        .web-savings-body {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .web-savings-headline {
+          font-family: var(--font-ui);
+          font-size: 0.82rem;
+          color: #F5E6C8;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin: 0 0 4px;
+          line-height: 1.3;
+        }
+
+        .web-savings-subtext {
+          font-family: var(--font-body);
+          font-size: 0.8rem;
+          color: var(--color-text-muted);
+          margin: 0;
+          line-height: 1.55;
+        }
+
+        .web-savings-subtext strong {
+          color: #D9C9A8;
+          font-style: normal;
+        }
+
+        /* Per-card web price badge */
+        .web-price-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-family: var(--font-ui);
+          font-size: 0.6rem;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #C9973A;
+          background: rgba(201,151,58,0.1);
+          border: 1px solid rgba(201,151,58,0.3);
+          border-radius: 3px;
+          padding: 2px 7px;
+          margin-bottom: 14px;
+          white-space: nowrap;
+        }
+
         /* Billing toggle */
         .billing-toggle-wrap {
           display: flex;
@@ -431,6 +504,19 @@ export default function PremiumPage() {
         <span className={`billing-save-badge${isAnnual ? "" : " hidden"}`}>Save 20%</span>
       </div>
 
+      {/* Web vs App Store savings banner */}
+      <div className="web-savings-banner">
+        <div className="web-savings-icon">$</div>
+        <div className="web-savings-body">
+          <p className="web-savings-headline">Subscribe on the web and save</p>
+          <p className="web-savings-subtext">
+            Our website prices are lower than the App Store —&nbsp;
+            <strong>same features, same Preacher, just less.</strong>&nbsp;
+            Apple charges a fee on in-app purchases, so we pass the savings to you here.
+          </p>
+        </div>
+      </div>
+
       {/* Tier cards */}
       <div className="pricing-grid">
         {TIERS.map((tier) => (
@@ -456,7 +542,12 @@ export default function PremiumPage() {
             {isAnnual && (
               <p className="pricing-card-annual-label">billed annually</p>
             )}
-            <hr className="pricing-card-divider" style={{ marginTop: isAnnual ? 0 : "12px" }} />
+            <div style={{ marginTop: isAnnual ? "8px" : "10px" }}>
+              <span className="web-price-badge">
+                ↓ Lower than App Store
+              </span>
+            </div>
+            <hr className="pricing-card-divider" style={{ marginTop: "10px" }} />
             <ul className="pricing-card-features">
               {tier.features.map((feature) => (
                 <li key={feature} className="pricing-card-feature">
