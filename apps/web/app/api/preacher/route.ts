@@ -48,7 +48,7 @@ const CookContextSchema = z.object({
 
 const PreacherRequestSchema = z.object({
   message: z.string().min(1, "message must not be empty"),
-  cookId: z.string().min(1, "cookId is required"),
+  cookId: z.string().nullable().optional(),
   cookContext: CookContextSchema,
   imageBase64: z.string().nullish(),
 });
@@ -192,14 +192,32 @@ function createServiceClient() {
 
 async function checkRateLimit(userId: string): Promise<boolean> {
   try {
-    const admin = createServiceClient();
-    const { data, error } = await admin.rpc("check_rate_limit", {
-      p_user_id: userId,
-      p_endpoint: "preacher",
-      p_window_seconds: 60,
-      p_max_requests: 20,
-    });
-    if (error) throw error;
+    // Use a direct fetch so p_user_id is sent to PostgREST as a proper UUID string.
+    // The SQL function must declare p_user_id as uuid (not text) so PostgREST coerces
+    // the JSON string to uuid — otherwise PostgreSQL raises "operator does not exist: text = uuid".
+    const res = await fetch(
+      `${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/check_rate_limit`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": env.SUPABASE_SERVICE_ROLE_KEY,
+          "Authorization": `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        },
+        body: JSON.stringify({
+          p_user_id: userId,
+          p_endpoint: "preacher",
+          p_window_seconds: 60,
+          p_max_requests: 20,
+        }),
+      }
+    );
+    if (!res.ok) {
+      const errBody = await res.text();
+      console.error("[preacher] rate limit RPC error:", res.status, errBody);
+      throw new Error(`Rate limit RPC failed: ${res.status} — ${errBody}`);
+    }
+    const data = await res.json();
     return data as boolean;
   } catch (err) {
     const e = err as Error;
@@ -287,7 +305,7 @@ export async function POST(req: NextRequest) {
   if (isRegularMessage) {
     const { data: subData } = await supabase.from("subscriptions").select("tier").eq("user_id", user.id).single();
     const userTier = subData?.tier ?? "free";
-    if (userTier === "free") {
+    if (userTier === "free" && cookId) {
       const { count } = await supabase
         .from("cook_events")
         .select("*", { count: "exact", head: true })
