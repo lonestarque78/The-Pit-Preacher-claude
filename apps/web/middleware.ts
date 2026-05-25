@@ -1,17 +1,20 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { updateSession } from './lib/supabase-middleware'
 
 const PROTECTED_PATHS = ['/dashboard', '/cook', '/account', '/setup', '/preacher']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Refresh the Supabase session on every request so tokens don't expire
+  const supabaseResponse = await updateSession(request)
+
   const isProtected = PROTECTED_PATHS.some(path => pathname.startsWith(path))
-  if (!isProtected) return NextResponse.next()
+  if (!isProtected) return supabaseResponse
 
-  const response = NextResponse.next()
-
+  // Check auth for protected routes using the now-refreshed cookies
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,7 +25,7 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options)
           })
         },
       },
@@ -37,7 +40,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  return response
+  return supabaseResponse
 }
 
 export const config = {

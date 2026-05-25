@@ -7,7 +7,7 @@ export async function isPremium(userId: string) {
   );
 
   const { data } = await supabase
-    .from("stripe_subscriptions")
+    .from("subscriptions")
     .select("status")
     .eq("user_id", userId)
     .maybeSingle();

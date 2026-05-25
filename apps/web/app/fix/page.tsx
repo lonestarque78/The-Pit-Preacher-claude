@@ -29,7 +29,7 @@ const HOURS_OPTIONS = [
 
 type ActiveCookRow = {
   id: string;
-  label: string;
+  label: string | null;
   smoker_type: string | null;
   wood_type: string | null;
   eat_time: string | null;

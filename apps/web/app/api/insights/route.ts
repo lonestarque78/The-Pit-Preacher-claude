@@ -121,7 +121,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     patternInsights.push("Light smoke profile this cook. Add a smoke tube in the first two hours or switch to a stronger wood like hickory or oak.");
   }
 
-  if (outcome.smoke_profile >= 5 && outcome.flavor_balance && outcome.flavor_balance <= 3) {
+  if (outcome.smoke_profile != null && outcome.smoke_profile >= 5 && outcome.flavor_balance && outcome.flavor_balance <= 3) {
     patternInsights.push("Heavy smoke overpowered the flavor balance. Pull back to fruit wood or reduce your smoke exposure window.");
   }
 

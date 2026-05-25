@@ -13,9 +13,8 @@ export default function BillingPage() {
   // Local Types (Safe + Minimal)
   // -----------------------------
   type SubscriptionRow = {
-    id: string;
     user_id: string;
-    price_id: string;
+    tier: string;
     status: string;
     current_period_end: string | null;
   };
@@ -97,8 +96,8 @@ export default function BillingPage() {
       setUser({ id: user.id, email: user.email ?? undefined });
 
       const { data: sub } = await supabase
-        .from("stripe_subscriptions")
-        .select("*")
+        .from("subscriptions")
+        .select("user_id, tier, status, current_period_end")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -162,11 +161,11 @@ export default function BillingPage() {
   // Subscription Status
   // -----------------------------
   const isSubscribed =
-    subscription?.status && subscription.status !== "canceled";
+    subscription?.status && subscription.status !== "inactive";
 
   const currentTierKey =
     isSubscribed && subscription
-      ? (priceToTier[subscription.price_id] ?? "free")
+      ? (subscription.tier ?? "free")
       : "free";
 
   // -----------------------------
@@ -190,7 +189,9 @@ export default function BillingPage() {
           <>
             <p style={{ color: "var(--color-text)" }}>
               <strong>Plan:</strong>{" "}
-              {priceMap[subscription.price_id] ?? "Unknown Plan"}
+              {subscription.tier
+                ? subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)
+                : "Unknown Plan"}
             </p>
             <p style={{ color: "var(--color-text)" }}>
               <strong>Status:</strong> {subscription.status}

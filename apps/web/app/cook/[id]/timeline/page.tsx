@@ -19,9 +19,9 @@ type CompletionDetail = { completedAt: string; tempEntered: string | null };
 
 type CookRow = {
   id: string;
-  label: string;
+  label: string | null;
   status: string;
-  created_at: string;
+  created_at: string | null;
   actual_start: string | null;
   completed_at: string | null;
   eat_time: string | null;
@@ -29,7 +29,7 @@ type CookRow = {
   wood_type: string | null;
   cooking_style: string | null;
   prep_session_id: string | null;
-  plan: Record<string, unknown> | null;
+  plan: unknown;
 };
 type SessionRow = {
   id: string;
@@ -155,8 +155,8 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
     const details: Record<string, CompletionDetail> = {};
     for (const event of phaseEvents || []) {
       try {
-        const parsed = JSON.parse(event.message);
-        if (parsed.phaseId) {
+        const parsed = JSON.parse(event.message ?? "null");
+        if (parsed?.phaseId) {
           completedIds.push(parsed.phaseId);
           details[parsed.phaseId] = {
             completedAt: parsed.completedAt || event.created_at,
@@ -230,13 +230,13 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
 
     const matchingEvent = (events || []).find(e => {
       try {
-        return JSON.parse(e.message).phaseId === phase.id;
+        return JSON.parse(e.message ?? "null")?.phaseId === phase.id;
       } catch { return false; }
     });
 
     if (!matchingEvent) return;
 
-    const parsed = JSON.parse(matchingEvent.message);
+    const parsed = JSON.parse(matchingEvent.message ?? "null") ?? {};
     const updatedMessage = JSON.stringify({ ...parsed, tempEntered: newTemp || null });
 
     await supabase

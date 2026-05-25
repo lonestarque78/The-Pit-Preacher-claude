@@ -9,18 +9,18 @@ import Link from "next/link";
 
 type Cook = {
   id: string;
-  label: string;
+  label: string | null;
   status: string;
   smoker_type: string | null;
   wood_type: string | null;
-  created_at: string;
+  created_at: string | null;
 };
 
 type CookLog = {
   id: string;
   cook_id: string;
-  rating: number;
-  summary: string;
+  rating: number | null;
+  summary: string | null;
   lessons: string | null;
 };
 
@@ -98,8 +98,8 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function StarRating({ rating }: { rating: number }) {
-  const filled = Math.max(0, Math.min(5, rating));
+function StarRating({ rating }: { rating: number | null }) {
+  const filled = Math.max(0, Math.min(5, rating ?? 0));
   return (
     <span>
       <span style={{ color: "var(--color-accent)", fontSize: "1rem" }}>
@@ -183,7 +183,7 @@ export default function LogsPage() {
 
   const filtered = cooks.filter(cook => {
     const q = searchQuery.trim().toLowerCase();
-    const matchesSearch = q === "" || cook.label.toLowerCase().includes(q);
+    const matchesSearch = q === "" || (cook.label ?? "").toLowerCase().includes(q);
     const matchesStatus =
       statusFilter === "all" ||
       cook.status === statusFilter;
@@ -282,7 +282,7 @@ export default function LogsPage() {
         {filtered.map(cook => {
           const log     = logsMap[cook.id] ?? null;
           const hovered = hoveredId === cook.id;
-          const date    = new Date(cook.created_at).toLocaleDateString(undefined, {
+          const date    = new Date(cook.created_at ?? Date.now()).toLocaleDateString(undefined, {
             month: "long",
             day:   "numeric",
             year:  "numeric",

@@ -26,14 +26,14 @@ type CannedQuestion = string | { label: string; action: () => void };
 
 type CookRow = {
   id: string;
-  label: string;
+  label: string | null;
   status: string;
   eat_time: string | null;
   smoker_type: string | null;
   wood_type: string | null;
   cooking_style: string | null;
   prep_session_id: string | null;
-  plan: Record<string, unknown> | null;
+  plan: unknown;
 };
 type SessionRow = {
   id: string;
@@ -230,17 +230,17 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
     const rebuiltMessages: Message[] = [];
     for (const event of eventsData || []) {
       try {
-        const parsed = JSON.parse(event.message);
-        if (parsed.userMessage && parsed.preacherResponse) {
+        const parsed = JSON.parse(event.message ?? "null");
+        if (parsed?.userMessage && parsed?.preacherResponse) {
           rebuiltMessages.push({
             role: "user",
             content: parsed.userMessage,
-            timestamp: new Date(event.created_at),
+            timestamp: new Date(event.created_at ?? Date.now()),
           });
           rebuiltMessages.push({
             role: "preacher",
             content: parsed.preacherResponse,
-            timestamp: new Date(event.created_at),
+            timestamp: new Date(event.created_at ?? Date.now()),
           });
         }
       } catch {

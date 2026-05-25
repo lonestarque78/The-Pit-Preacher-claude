@@ -1,0 +1,515 @@
+COMPREHENSIVE CODE REVIEW — THE PIT PREACHER
+Generated: 2026-05-24
+============================================================
+
+PRIORITY SUMMARY
+----------------
+1. Dual Stripe webhook handlers + dual subscription tables    P0 — broken billing
+2. /api/checkout creates a new Stripe customer on every call  P0 — data corruption
+3. updateSession never called — sessions don't refresh        P0 — auth failure
+4. /api/usage endpoint broken — service client has no auth    P1
+5. Race conditions in rate limiting and pit count             P1
+6. `any` everywhere, TypeScript 5.9.2 (likely wrong version)  P1
+7. Inline styles (1,267-line components), no shared tokens    P2
+8. Turborepo packages/ui is dead weight, apps/docs unused     P2
+9. temp/, page_fixed.tsx, zip files, .docx committed to repo  P2
+10. Capacitor: cleartext, missing icon sizes, no safe-area    P2
+
+
+============================================================
+1. ARCHITECTURE AND FOLDER STRUCTURE
+============================================================
+
+Turborepo is scaffolding without substance. packages/ui has three starter
+components (button.tsx, card.tsx, code.tsx) that aren't imported anywhere in
+the app. apps/docs is the unmodified Turborepo starter. Both add CI overhead
+with zero value.
+
+The temp/ directory at repo root contains duplicate copies of components
+already in apps/web/components/playbook/. Delete it entirely.
+
+Dead files committed to the repository:
+- apps/web/app.zip.txt.zip — an actual zip file
+- notepad — plaintext notes file at repo root
+- apps/web/app/cook/[id]/events/page_fixed.tsx — exists alongside page.tsx.
+  If the fix was verified, it should have replaced the original; instead both
+  coexist.
+- build-output.txt, app-tree.txt — build artifacts
+- apps/web/www/index.html — Capacitor web output, should be gitignored
+- Two .docx files at repo root
+
+Two Stripe webhook routes handle overlapping events but write to DIFFERENT DB tables:
+
+  Route: apps/web/app/api/webhook/route.ts
+  Events: checkout.session.completed, subscription.updated/deleted, invoice.payment_failed
+  Table Written: subscriptions
+
+  Route: apps/web/app/api/stripe/webhook/route.ts
+  Events: subscription.created/updated/deleted
+  Table Written: stripe_subscriptions
+
+Only one of these can be registered in Stripe as the webhook endpoint. The
+other is dead code — but worse, the two write to different tables that
+separate parts of the app read from.
+
+RECOMMENDATION: Remove apps/docs, packages/ui, and temp/. Consolidate to a
+single webhook handler and a single subscription table. Delete dead files.
+
+
+============================================================
+2. CODE QUALITY AND PATTERNS
+============================================================
+
+Inline styles at scale. apps/web/app/cook/[id]/live/page.tsx is 1,267 lines
+with hundreds of style={{...}} objects. The same values repeat in every file:
+fontFamily: "var(--font-ui)", color: "#C9973A", borderRadius: "var(--radius-md)".
+Tailwind is installed and configured but barely used.
+
+Utility functions redefined per file. capitalize, formatTime, formatDateTime
+appear in at least live/page.tsx and events/page_fixed.tsx. The cook sub-nav
+NAV_LINKS array is duplicated in every cook sub-page. These belong in
+lib/utils.ts and a shared CookSubNav component.
+
+The preacher route is a 493-line monolith (apps/web/app/api/preacher/route.ts)
+handling 6 message types via string prefix detection
+(message.startsWith("OPENING_MESSAGE:")). Each type has different token limits
+and prompt construction. This should be split: POST /api/preacher/chat,
+POST /api/preacher/plan, POST /api/preacher/rescue, etc.
+
+`any` is used throughout critical paths:
+
+  // webhook/route.ts:37 — bypasses all Stripe type safety
+  const subscription = event.data.object as any;
+
+  // timeline/engine.ts:52 — cook object completely untyped
+  export function generatePhases(cook: any, items: any[], session?: any)
+
+  // live/page.tsx:70 — context is an untyped blob
+  function buildCookContext(cookData: any, sessionData: any, ...): Record<string, any>
+
+RECOMMENDATION: Extract shared utilities and components, split the preacher
+route by message type, replace `any` with proper interfaces. Adopt Tailwind
+class names in place of inline style objects.
+
+
+============================================================
+3. PERFORMANCE OPTIMIZATIONS
+============================================================
+
+Two sequential API calls per user message. In apps/web/app/cook/[id]/live/page.tsx
+lines 391-413, after receiving the preacher's response, the code immediately
+fires a second request to /api/preacher for suggested prompts. Both are
+awaited sequentially. The suggested prompts request should be fire-and-forget
+(no await) or run in parallel with the insert.
+
+Double isPremium call per gate check. canUseFeature in
+apps/web/lib/gating/canUseFeature.ts calls isPremium() directly, then calls
+checkUsage() which internally calls isPremium() again — two identical DB
+roundtrips.
+
+New Supabase client created on every call. Both incrementUsage and checkUsage
+in apps/web/lib/usage/track.ts call createClient(URL, SERVICE_ROLE_KEY) on
+every invocation. Same in apps/web/lib/billing/isPremium.ts. Unnecessary
+instantiation on every function call.
+
+No pagination on any list query. Cook history, events, and past cooks are all
+loaded without limit. A user with 500 cook events pulls all of them into a
+single response.
+
+Insights endpoints are force-dynamic but recompute deterministically. The
+/api/confidence, /api/fire-control, /api/trends, /api/strategy routes produce
+stable output for stable input data. They should use next: { revalidate: 300 }
+on their Supabase fetches.
+
+RECOMMENDATION: Parallelize the suggested prompts request, memoize isPremium
+per request, add limit() to all list queries, and add revalidation to
+analytics endpoints.
+
+
+============================================================
+4. SECURITY VULNERABILITIES
+============================================================
+
+CRITICAL — Race condition in rate limiting
+(apps/web/app/api/preacher/route.ts lines 150-202). The pattern reads count,
+checks limit, then increments in three separate DB calls. Under concurrent
+requests from the same user, both could read request_count: 19, both pass the
+>= 20 check, and both increment to 20. Fix with an atomic Postgres function:
+
+  -- Use a Supabase RPC instead of read-then-write
+  SELECT increment_rate_limit(user_id, endpoint, window_seconds, max_requests)
+
+/api/billing/portal and /api/billing/create-checkout-session use Bearer token
++ service role key. Both routes do:
+
+  const supabase = createClient(URL, SUPABASE_SERVICE_ROLE_KEY); // full DB access
+  const { data: { user } } = await supabase.auth.getUser(accessToken); // client token
+
+Using the service role key to validate a client-provided access token is
+an unusual pattern. These routes should use createServerClient() with cookies,
+matching the rest of the app.
+
+/api/usage endpoint always returns 401. The route at
+apps/web/app/api/usage/route.ts creates a service role client and calls
+auth.getUser() with no session — a service role client with no cookies/token
+has no user context. This endpoint is completely broken.
+
+env.NEXT_PUBLIC_STRIPE_*_ANNUAL_PRICE_ID! used in getTierFromPriceId. If the
+env var is missing, process.env.UNDEFINED_VAR! evaluates to the string
+"undefined". The price map then has an entry for the literal key "undefined",
+which could match unexpected price IDs and assign the wrong tier.
+
+No request body validation. API routes destructure req.json() with no schema
+validation. Malformed or adversarial bodies (e.g., very large imageBase64,
+missing required fields) reach business logic unchecked.
+
+RECOMMENDATION: Use an atomic RPC for rate limiting, standardize auth to
+cookie-based sessions, validate request bodies with Zod, fix the NEXT_PUBLIC_
+env guard for the price map.
+
+
+============================================================
+5. DATABASE SCHEMA AND SUPABASE USAGE
+============================================================
+
+THE MOST SERIOUS STRUCTURAL PROBLEM: two separate subscription tables with
+different readers/writers.
+
+  apps/web/lib/billing/isPremium.ts
+    → reads stripe_subscriptions, checks status
+
+  apps/web/lib/premium.ts
+    → reads subscriptions, checks tier + status = active
+
+  apps/web/app/api/preacher/route.ts line 259
+    → reads subscriptions inline
+
+  apps/web/app/api/webhook/route.ts
+    → writes to subscriptions (via stripe_customer_id)
+
+  apps/web/app/api/stripe/webhook/route.ts
+    → writes to stripe_subscriptions (via user_id)
+
+Premium status checks are inconsistent across the codebase. A user's status
+in stripe_subscriptions says one thing; subscriptions may say another. There
+is no single source of truth.
+
+select('*') on all queries. No projection. Full rows pulled when only one or
+two columns are needed.
+
+TOCTOU in pit creation (apps/web/lib/supabase/account.ts lines 82-100).
+getPitCount() then createPit() are two separate operations — concurrent
+requests can both pass the count < 3 check. This needs a database-level
+constraint (e.g., a unique partial index or trigger).
+
+supabase-middleware.ts drops cookie options (apps/web/lib/supabase-middleware.ts
+lines 19-20):
+  request.cookies.set(name, value)  // options (secure, httpOnly, sameSite) silently dropped
+
+RECOMMENDATION: Consolidate to one subscription table, add select(...) column
+projections, enforce pit limit at the DB level, and fix the cookie options
+passthrough.
+
+
+============================================================
+6. API ROUTE DESIGN AND EFFICIENCY
+============================================================
+
+/api/checkout/route.ts creates a new Stripe customer on every invocation
+(apps/web/app/api/checkout/route.ts lines 35-39):
+
+  const customer = await stripe.customers.create({  // always creates, never checks
+    email: user.email,
+    metadata: { userId: user.id },
+  });
+
+There is no lookup for an existing customer. Every checkout attempt produces a
+duplicate cus_xxx object in Stripe. The create-checkout-session route does
+this correctly (with an existence check) — the checkout route needs the same
+pattern.
+
+Anthropic called via raw fetch instead of the SDK
+(apps/web/app/api/preacher/route.ts lines 457-470). The SDK provides typed
+responses, automatic retries, and proper error surfacing. The current direct
+fetch approach requires manual response parsing and has no retry logic.
+
+Anthropic API version "2023-06-01" is two years old. The model is specified as
+claude-sonnet-4-20250514 but the API version is June 2023. Update to
+"2024-10-22" or latest stable.
+
+Message type dispatch via string prefix. Six message types are detected with
+message.startsWith("OPENING_MESSAGE:") etc. This is fragile — a user who
+types "OPENING_MESSAGE:" as their actual question would trigger unintended
+behavior. The message type should be a separate field in the request body.
+
+
+============================================================
+7. AUTHENTICATION AND AUTHORIZATION
+============================================================
+
+updateSession from supabase-middleware.ts is never called. The middleware
+creates its own Supabase client and checks auth but never calls the session
+refresh logic:
+
+  // middleware.ts — creates client, checks getUser(), returns response
+  // supabase-middleware.ts — exports updateSession() but middleware.ts never imports it
+
+The Supabase SSR pattern requires the middleware to call updateSession() on
+every request to refresh the session token via cookie. Without it, auth tokens
+expire and users are logged out unexpectedly. Middleware should be:
+
+  import { updateSession } from '@/lib/supabase-middleware'
+  export async function middleware(req: NextRequest) {
+    return await updateSession(req)
+  }
+
+The Paywall component is client-side only. It renders null during the auth
+check and then conditionally shows content. This is not a security boundary —
+it's a UX hint. The actual enforcement happens in the API routes (correct),
+but the flash of hidden content and reliance on JS for access control is a UX
+issue worth addressing.
+
+deletePit in account actions doesn't validate pitId is a UUID before passing
+it to Supabase — relies entirely on Supabase's parameterized queries, which is
+acceptable but an explicit UUID format check at the boundary is cleaner.
+
+
+============================================================
+8. STRIPE INTEGRATION AND BILLING LOGIC
+============================================================
+
+SUMMARY OF CRITICAL BILLING BUGS:
+
+1. /api/checkout always creates duplicate Stripe customers (missing existence check)
+
+2. Two webhook handlers writing to different tables — only one is active in
+   Stripe, so subscription state is permanently out of sync
+
+3. getTierFromPriceId silently maps undefined env vars to the literal string
+   "undefined"
+
+4. stripe_subscriptions table (written by stripe/webhook) is checked by
+   isPremium in lib/billing/isPremium.ts — but stripe/webhook only writes on
+   subscription.created/updated/deleted, never on checkout.session.completed.
+   A new subscriber won't appear in stripe_subscriptions unless
+   subscription.created fires separately.
+
+5. Stripe API version "2026-03-25.dahlia" in checkout/route.ts is a
+   beta/preview version — mixing with the default stable version in other
+   routes can produce inconsistent object shapes.
+
+RECOMMENDED REMEDIATION PATH:
+1. Delete api/stripe/webhook — consolidate all handling into api/webhook
+2. Choose one table (subscriptions is more fully featured with tier) —
+   migrate all reads/writes to it
+3. Fix the duplicate customer creation in api/checkout
+4. Add startup validation that all Stripe env vars are present and not "undefined"
+
+
+============================================================
+9. FRONTEND COMPONENT STRUCTURE AND REUSABILITY
+============================================================
+
+The cook sub-navigation is copy-pasted into every cook sub-page. The
+NAV_LINKS array and the sticky bottom bar JSX repeat verbatim across
+live/page.tsx, events/page_fixed.tsx, and likely other sub-pages. One
+CookSubNav component would suffice.
+
+Hardcoded hex color #C9973A appears in dozens of components. When the brand
+color changes, it requires a find-and-replace across the entire codebase.
+Define it once as var(--color-accent) or a Tailwind config extension.
+
+The Paywall component (apps/web/components/Paywall.tsx) calls getTier() from
+lib/premium.ts on the client side, which queries the subscriptions table via
+the browser Supabase client. This is a DB query triggered from the browser
+using the anon key — it needs proper RLS policies to be safe. Prefer a
+server-rendered auth check passed as a prop.
+
+packages/ui/ components (button.tsx, card.tsx) use a different styling system
+(Tailwind clsx/cva) than the app (inline styles). Since they're never used
+anyway, removing the package is the right call.
+
+
+============================================================
+10. TYPESCRIPT USAGE AND TYPE SAFETY
+============================================================
+
+typescript: 5.9.2 in apps/web/package.json — as of mid-2025, TypeScript
+stable is in the 5.5-5.6 range. 5.9.2 may be a typo for ^5.x or a
+pre-release. Verify the intended version.
+
+No Zod schema validation anywhere. All API inputs and FormData values are cast
+directly:
+
+  experience_level: formData.get('experience_level') as ExperienceLevel | null
+
+An unexpected string passes through as a value that doesn't match the union
+type at runtime while TypeScript believes it's type-safe.
+
+The cookContext object flowing from the client to /api/preacher is untyped on
+both sides — Record<string, any> on the server, an ad-hoc object on the
+client. A shared CookContext type would catch mismatches.
+
+Stripe event objects cast as any defeat all the type improvements that come
+with using the Stripe SDK's typed events. Use the typed discriminated union:
+  event.data.object as Stripe.Subscription
+
+
+============================================================
+11. ERROR HANDLING
+============================================================
+
+No error.tsx files in any route segment. Unhandled React render errors produce
+a full Next.js error page with no recovery path for the user.
+
+Silent DB errors return empty defaults:
+
+  // supabase/account.ts
+  if (error) return []  // DB error looks like empty data to the caller
+
+These should at minimum be logged. Consider a structured logger (Pino,
+Winston) or Sentry integration.
+
+JSON parse in the preacher route silently swallows failures:
+
+  try {
+    const parsed = JSON.parse(replyText);
+    // ...
+  } catch {
+    return NextResponse.json({ reply: replyText, logEvent: null });
+    // No log of parse failure — impossible to know when the AI returns bad JSON
+  }
+
+Client-side auth failure handling in live/page.tsx redirects with
+window.location.href = "/auth/login" rather than Next.js router.push. This
+causes a full page reload and loses React state.
+
+
+============================================================
+12. MOBILE RESPONSIVENESS AND CAPACITOR
+============================================================
+
+cleartext: true in capacitor.config.ts allows HTTP traffic in the iOS app.
+This may trigger App Store reviewer flags. If the server is HTTPS-only, this
+flag serves no purpose and should be removed.
+
+server.url points to production — the iOS app is essentially a web view
+loading the live site. There's no offline capability, no native asset
+bundling, and no network failure handling. For an app used at a BBQ pit with
+poor connectivity, this is a real UX gap.
+
+Missing safe-area insets. The live page uses height: "calc(100vh - 64px)" with
+a fixed bottom bar. On iOS, env(safe-area-inset-bottom) needs to be added to
+the bottom padding to avoid the home indicator covering the input.
+
+Single app icon. Assets.xcassets/AppIcon.appiconset/ contains only
+AppIcon-512@2x.png. Apple requires a full icon set across all sizes for App
+Store submission. This would fail App Store review immediately.
+
+No @capacitor/network for connectivity detection, no
+@capacitor/push-notifications, no native camera plugin (@capacitor/camera) —
+the image upload uses a web <input capture="environment"> which has
+inconsistent behavior on iOS.
+
+
+============================================================
+13. SEO AND METADATA
+============================================================
+
+NEXT_PUBLIC_SITE_URL fallback is "" in both apps/web/app/sitemap.ts and
+apps/web/app/robots.ts. When this env var is unset, the sitemap produces URLs
+like "/" instead of "https://thepitpreacher.com/", and robots.txt points to
+"/sitemap.xml" with no domain. Both should fall back to the canonical domain:
+
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://thepitpreacher.com";
+
+Individual playbook and pitmaster pages likely lack generateMetadata exports.
+The global layout.tsx metadata covers the default, but Google will use the
+page's own title/description for indexing. These high-value SEO pages (meat
+types, pit types, playbook articles) should each export specific metadata.
+
+OG image is /logo.jpeg declared as 1200x630 — verify the actual image is
+that resolution; mismatched dimensions cause OpenGraph preview rendering
+issues.
+
+
+============================================================
+14. ENVIRONMENT VARIABLE USAGE AND SECURITY
+============================================================
+
+Two env vars for the same value: NEXT_PUBLIC_APP_URL and NEXT_PUBLIC_SITE_URL
+are both used for "the app's public URL" — used interchangeably across
+different routes. Pick one.
+
+NEXT_PUBLIC_STRIPE_*_PRICE_ID vars expose price IDs to the client bundle.
+Price IDs aren't secret but if they're only used server-side (they are in
+getTierFromPriceId), remove the NEXT_PUBLIC_ prefix. The annual price IDs
+used in the webhook server code should be server-only.
+
+No startup env validation. If ANTHROPIC_API_KEY is missing in production, the
+first preacher request fails with a runtime error. Add a startup check:
+
+  // lib/env.ts
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is required");
+
+.env.local in the repo file list — confirm it's in .gitignore and was never
+committed. If it was, rotate all keys.
+
+
+============================================================
+15. TECHNICAL DEBT AND DEPRECATED PATTERNS
+============================================================
+
+@supabase/auth-helpers-nextjs@0.15.0 is a deprecated package. It is installed
+in package.json but @supabase/ssr (the replacement) is also installed. The
+deprecated package isn't needed. Remove it.
+
+supabase-middleware.ts is orphaned — it exports updateSession() which is the
+recommended Supabase session refresh pattern, but middleware never uses it.
+The file is referenced nowhere. Either adopt the pattern (fixing the session
+refresh bug) or delete the file.
+
+The daily_usage table is referenced in lib/usage/track.ts but is never written
+to by any visible code path. incrementUsage is never called. The checkUsage
+function queries a table that's always empty — the usage system is essentially
+non-functional.
+
+Anthropic API version "2023-06-01" in the raw fetch call — should be updated
+to the current stable version.
+
+page_fixed.tsx — either replace page.tsx with it and delete it, or delete it.
+Having both creates confusion about which is canonical.
+
+
+============================================================
+HIGHEST-IMPACT FIXES IN ORDER
+============================================================
+
+1. Consolidate to one webhook handler + one subscription table
+   Billing is unreliable until this is done.
+
+2. Fix /api/checkout to check for existing Stripe customer before creating
+   Prevents customer record corruption in Stripe.
+
+3. Call updateSession() in middleware
+   Prevents unexpected session expiry for logged-in users.
+
+4. Fix /api/usage — use cookie-based client, not service role key without session
+   The endpoint currently always returns 401.
+
+5. Atomic rate limit increment — use a Supabase RPC
+   Eliminates the TOCTOU race condition under concurrent requests.
+
+6. Validate NEXT_PUBLIC_SITE_URL fallback in sitemap.ts and robots.ts
+   Prevents broken SEO infrastructure in misconfigured deployments.
+
+7. Add env(safe-area-inset-bottom) to the live page bottom bar
+   iOS usability fix so the input isn't obscured by the home indicator.
+
+8. Remove deprecated packages (@supabase/auth-helpers-nextjs) and dead files
+   (temp/, apps/docs, page_fixed.tsx, zip files, .docx files, notepad)
+
+9. Fix the duplicate customer creation and validate all Stripe price ID
+   env vars at startup.
+
+10. Add Zod validation to API route inputs.

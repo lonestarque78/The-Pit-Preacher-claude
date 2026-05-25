@@ -184,7 +184,7 @@ export default function LoginPage() {
     const userId = data.user.id;
 
     await supabase.from("profiles").insert({
-      id: userId,
+      user_id: userId,
       display_name: displayName.trim(),
       home_region: cookingStyle || null,
       profile_complete: false,

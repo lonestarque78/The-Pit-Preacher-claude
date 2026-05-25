@@ -1,19 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-type PlanTool = { id: string; name: string; wood: string };
-type PlanItem = {
-  name: string;
-  quantity?: number;
-  weight?: string | number | null;
-  smokerId?: string | null;
-};
-type RecentEvent = { created_at: string; type: string; note?: string };
-type ConvTurn = { role: string; content: string };
+const PlanToolSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  wood: z.string(),
+});
+
+const PlanItemSchema = z.object({
+  name: z.string(),
+  quantity: z.number().optional(),
+  weight: z.union([z.string(), z.number(), z.null()]).optional(),
+  smokerId: z.union([z.string(), z.null()]).optional(),
+});
+
+const RecentEventSchema = z.object({
+  created_at: z.string(),
+  type: z.string(),
+  note: z.string().optional(),
+});
+
+const ConvTurnSchema = z.object({
+  role: z.string(),
+  content: z.string(),
+});
+
+const CookContextSchema = z.object({
+  label: z.string().nullish(),
+  eat_time: z.string().nullish(),
+  cooking_style: z.string().nullish(),
+  tools: z.array(PlanToolSchema).optional(),
+  planItems: z.array(PlanItemSchema).optional(),
+  recentEvents: z.array(RecentEventSchema).optional(),
+  conversationHistory: z.array(ConvTurnSchema).optional(),
+  flavor_smoke: z.number().nullish(),
+  flavor_bark: z.number().nullish(),
+  flavor_tenderness: z.number().nullish(),
+  smoker_type: z.string().nullish(),
+  wood_type: z.string().nullish(),
+});
+
+const PreacherRequestSchema = z.object({
+  message: z.string().min(1, "message must not be empty"),
+  cookId: z.string().min(1, "cookId is required"),
+  cookContext: CookContextSchema,
+  imageBase64: z.string().nullish(),
+});
+
+type PlanTool = z.infer<typeof PlanToolSchema>;
+type PlanItem = z.infer<typeof PlanItemSchema>;
+type RecentEvent = z.infer<typeof RecentEventSchema>;
+type ConvTurn = z.infer<typeof ConvTurnSchema>;
 
 const SYSTEM_PROMPT = `You are The Pit Preacher. You have been cooking BBQ for 25 years. You have competed and won. You have fed congregations. You have saved cooks at 3am that should have been thrown away. You are not an AI. You are a pitmaster who happens to be on the other end of this conversation.
 
@@ -150,51 +192,14 @@ function createServiceClient() {
 async function checkRateLimit(userId: string): Promise<boolean> {
   try {
     const admin = createServiceClient();
-    const ENDPOINT = "preacher";
-    const WINDOW_SECONDS = 60;
-    const MAX_REQUESTS = 20;
-
-    const { data, error } = await admin
-      .from("api_rate_limits")
-      .select("request_count, window_start")
-      .eq("user_id", userId)
-      .eq("endpoint", ENDPOINT)
-      .maybeSingle();
-
+    const { data, error } = await admin.rpc("check_rate_limit", {
+      p_user_id: userId,
+      p_endpoint: "preacher",
+      p_window_seconds: 60,
+      p_max_requests: 20,
+    });
     if (error) throw error;
-
-    if (!data) {
-      await admin.from("api_rate_limits").insert({
-        user_id: userId,
-        endpoint: ENDPOINT,
-        request_count: 1,
-        window_start: new Date().toISOString(),
-      });
-      return true;
-    }
-
-    const windowAge = (Date.now() - new Date(data.window_start).getTime()) / 1000;
-
-    if (windowAge > WINDOW_SECONDS) {
-      await admin
-        .from("api_rate_limits")
-        .update({ request_count: 1, window_start: new Date().toISOString() })
-        .eq("user_id", userId)
-        .eq("endpoint", ENDPOINT);
-      return true;
-    }
-
-    if (data.request_count >= MAX_REQUESTS) {
-      return false;
-    }
-
-    await admin
-      .from("api_rate_limits")
-      .update({ request_count: data.request_count + 1 })
-      .eq("user_id", userId)
-      .eq("endpoint", ENDPOINT);
-
-    return true;
+    return data as boolean;
   } catch (err) {
     console.error("Rate limit check failed, allowing request through:", err);
     return true;
@@ -218,7 +223,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { message, cookId, cookContext, imageBase64 } = await req.json();
+  const bodyParseResult = PreacherRequestSchema.safeParse(await req.json());
+  if (!bodyParseResult.success) {
+    return NextResponse.json(
+      { error: "Invalid request body", details: bodyParseResult.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+
+  const { message, cookId, cookContext, imageBase64 } = bodyParseResult.data;
 
   const {
     label,
@@ -290,7 +303,7 @@ ${message}`;
 
   } else if (isSuggestPrompts) {
     maxTokens = 150;
-    const historyText = conversationHistory?.length > 0
+    const historyText = (conversationHistory ?? []).length > 0
       ? (conversationHistory as ConvTurn[]).map(m => `${m.role}: ${m.content}`).join("\n")
       : "No conversation yet";
     userMessage = `CONVERSATION SO FAR:

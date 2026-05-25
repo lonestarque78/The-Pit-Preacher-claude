@@ -1,6 +1,9 @@
 import "./globals.css";
 import React from "react";
 import type { Metadata } from "next";
+import { validateEnv } from "@/lib/env";
+
+validateEnv();
 import { Playfair_Display, Libre_Baskerville, Oswald } from "next/font/google";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";

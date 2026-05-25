@@ -84,7 +84,7 @@ export async function generatePitProfile(
   ]);
 
   const outcomeMap: Record<string, any> = {};
-  for (const o of outcomes ?? []) outcomeMap[o.cook_id] = o;
+  for (const o of outcomes ?? []) if (o.cook_id) outcomeMap[o.cook_id] = o;
 
   const trackedCooks = matchingCooks.filter((c: any) => outcomeMap[c.id]);
   const allEvents = events ?? [];

@@ -157,6 +157,6 @@ export async function getCookHistory(
   }
   const { data, error } = await query
   if (error) return []
-  return data as CookHistoryRow[]
+  return (data ?? []) as unknown as CookHistoryRow[]
 }
 

@@ -32,11 +32,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid tier or price not configured" }, { status: 400 });
   }
 
-  const customer = await stripe.customers.create({
-    email: user.email,
-    metadata: { userId: user.id },
-  });
-  const customerId = customer.id;
+  // Reuse existing Stripe customer if one is already stored for this user.
+  let customerId: string;
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("stripe_customer_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (sub?.stripe_customer_id) {
+    customerId = sub.stripe_customer_id;
+  } else {
+    // Fall back to searching Stripe by email before creating a new customer.
+    const existing = await stripe.customers.list({ email: user.email, limit: 1 });
+    const existingCustomer = existing.data[0];
+    if (existingCustomer) {
+      customerId = existingCustomer.id;
+    } else {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { userId: user.id },
+      });
+      customerId = customer.id;
+    }
+  }
 
   await supabase.from("subscriptions").upsert(
     { user_id: user.id, tier: "free", status: "active", stripe_customer_id: customerId },

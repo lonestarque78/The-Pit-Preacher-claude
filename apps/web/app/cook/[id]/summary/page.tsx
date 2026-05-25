@@ -23,9 +23,9 @@ type CookPlan = {
 
 type CookRow = {
   id: string;
-  label: string;
+  label: string | null;
   status: string;
-  created_at: string;
+  created_at: string | null;
   actual_start: string | null;
   completed_at: string | null;
   eat_time: string | null;
@@ -33,7 +33,7 @@ type CookRow = {
   wood_type: string | null;
   cooking_style: string | null;
   prep_session_id: string | null;
-  plan: Record<string, unknown> | null;
+  plan: unknown;
 };
 type CookItemRow = {
   id: string;
@@ -44,18 +44,18 @@ type CookEventRow = {
   id: string;
   cook_id: string;
   event_type: string;
-  created_at: string;
+  created_at: string | null;
 };
 type CookLogRow = {
   id: string;
   cook_id: string;
-  rating: number;
-  summary: string;
+  rating: number | null;
+  summary: string | null;
   lessons: string | null;
 };
 type OutcomeRow = {
   id: string;
-  cook_id: string;
+  cook_id: string | null;
   start_time_actual: string | null;
   finish_time_actual: string | null;
   rest_time_minutes: number | null;
@@ -77,7 +77,7 @@ type OutcomeRow = {
 };
 type TrackerNotesRow = {
   id: string;
-  cook_id: string;
+  cook_id: string | null;
   note_1: string | null;
   note_2: string | null;
   note_3: string | null;

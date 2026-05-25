@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
+const CheckoutRequestSchema = z.object({
+  priceId: z.string().min(1, "priceId is required"),
+});
+
 export async function POST(req: NextRequest) {
   try {
-    const { priceId } = await req.json();
-
-    if (!priceId) {
-      return NextResponse.json({ error: "Missing priceId" }, { status: 400 });
+    const bodyParseResult = CheckoutRequestSchema.safeParse(await req.json());
+    if (!bodyParseResult.success) {
+      return NextResponse.json(
+        { error: "Invalid request body", details: bodyParseResult.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+
+    const { priceId } = bodyParseResult.data;
 
     const authHeader = req.headers.get("Authorization");
     const accessToken = authHeader?.replace("Bearer ", "");

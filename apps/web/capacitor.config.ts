@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'The Pit Preacher',
   server: {
     url: 'https://thepitpreacher.com',
-    cleartext: true
+    cleartext: false
   }
 };
 

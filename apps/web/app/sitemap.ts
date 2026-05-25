@@ -31,7 +31,7 @@ const MEAT_TYPES = [
 const PIT_TYPES = ["offset", "pellet", "kamado", "kettle", "drum", "cabinet", "electric"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://thepitpreacher.com";
 
   return [
     ...STATIC_ROUTES.map((route) => ({ url: `${base}${route}` })),

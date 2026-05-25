@@ -24,9 +24,9 @@ type CookPlan = {
 type CookRow = {
   id: string;
   user_id: string;
-  label: string;
+  label: string | null;
   status: string;
-  created_at: string;
+  created_at: string | null;
   actual_start: string | null;
   completed_at: string | null;
   eat_time: string | null;
@@ -34,7 +34,7 @@ type CookRow = {
   wood_type: string | null;
   cooking_style: string | null;
   prep_session_id: string | null;
-  plan: Record<string, unknown> | null;
+  plan: unknown;
 };
 type SessionRow = {
   id: string;
@@ -46,8 +46,8 @@ type CookItemRow = {
   id: string;
   cook_id: string;
   name: string;
-  weight?: string | number | null;
-  notes?: string;
+  weight: number | null;
+  notes: string | null;
 };
 
 const SECTION_HEADERS = [

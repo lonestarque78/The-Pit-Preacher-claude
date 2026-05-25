@@ -22,14 +22,14 @@ type DisplayItem = {
 
 type CookRow = {
   id: string;
-  label: string;
+  label: string | null;
   status: string;
   eat_time: string | null;
   smoker_type: string | null;
   wood_type: string | null;
   cooking_style: string | null;
   prep_session_id: string | null;
-  plan: Record<string, unknown> | null;
+  plan: unknown;
 };
 type SessionRow = {
   id: string;
@@ -41,8 +41,8 @@ type CookItemRow = {
   id: string;
   cook_id: string;
   name: string;
-  weight?: string | number | null;
-  notes?: string;
+  weight: number | null;
+  notes: string | null;
 };
 
 function capitalize(str: string): string {
