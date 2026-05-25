@@ -95,7 +95,28 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const session = await stripe.checkout.sessions.create({
+    // Check if this is a Pitmaster tier price
+    const pitmasterPriceIds = [
+      process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID,
+      process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID,
+    ].filter(Boolean);
+    
+    const isPitmasterTier = pitmasterPriceIds.includes(priceId);
+    
+    // Check if user has ever had a Pitmaster subscription
+    let shouldApplyTrial = false;
+    if (isPitmasterTier) {
+      const { data: priorPitmasterSub } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("tier", "pitmaster")
+        .maybeSingle();
+      
+      shouldApplyTrial = !priorPitmasterSub;
+    }
+
+    const sessionParams: Parameters<typeof stripe.checkout.sessions.create>[0] = {
       mode: "subscription",
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
@@ -106,7 +127,15 @@ export async function POST(req: NextRequest) {
       customer_update: {
         address: "auto",
       },
-    });
+    };
+
+    if (shouldApplyTrial) {
+      sessionParams.subscription_data = {
+        trial_period_days: 7,
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return NextResponse.json({ url: session.url });
   } catch (err) {

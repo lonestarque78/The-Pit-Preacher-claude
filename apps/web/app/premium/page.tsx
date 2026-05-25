@@ -14,6 +14,7 @@ const TIERS = [
     name: "Basic",
     tagline: "You shall not cook blind.",
     price: "$3.99",
+    annualMonthlyPrice: "$3.19",
     period: "/mo",
     description: "The Preacher speaks. Ask anything about your cook, your pit, or your meat. Unlimited questions. No more guessing.",
     features: [
@@ -30,6 +31,7 @@ const TIERS = [
     name: "Backyard",
     tagline: "You shall tend the pit with purpose.",
     price: "$7.99",
+    annualMonthlyPrice: "$6.39",
     period: "/mo",
     description: "Everything in Basic, plus the full Pitmaster's Playbook, Pit Rescue Mode, and your Cook Log. Your setup, your wood, your history — all in one place.",
     features: [
@@ -47,6 +49,7 @@ const TIERS = [
     name: "Pitmaster",
     tagline: "You shall know yourself as a cook.",
     price: "$11.99",
+    annualMonthlyPrice: "$9.59",
     period: "/mo",
     description: "The full congregation. Trend Analysis, Meat Profiles, Pit Profiles, Cook Confidence Scores, Fire Control Scores, Deep Insights, and a personalized strategy before every cook.",
     features: [
@@ -63,24 +66,43 @@ const TIERS = [
 
 const TIER_ORDER = ["free", "basic", "backyard", "pitmaster"];
 
-const PRICE_IDS: Record<string, string> = {
+const MONTHLY_PRICE_IDS: Record<string, string> = {
   basic: process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID!,
   backyard: process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID!,
   pitmaster: process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID!,
+};
+
+const ANNUAL_PRICE_IDS: Record<string, string> = {
+  basic: process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID!,
+  backyard: process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID!,
+  pitmaster: process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID!,
 };
 
 export default function PremiumPage() {
   const supabase = createClient();
   const [currentTier, setCurrentTier] = useState<string>("free");
   const [loading, setLoading] = useState(true);
+  const [pitmasterTrialAvailable, setPitmasterTrialAvailable] = useState(false);
+  const [isAnnual, setIsAnnual] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data?.user) {
         getTier(data.user.id, supabase).then((tier) => {
           setCurrentTier(tier || "free");
-          setLoading(false);
         });
+
+        // Check if user qualifies for Pitmaster trial
+        supabase
+          .from("subscriptions")
+          .select("id")
+          .eq("user_id", data.user.id)
+          .eq("tier", "pitmaster")
+          .maybeSingle()
+          .then(({ data: priorSub }) => {
+            setPitmasterTrialAvailable(!priorSub);
+            setLoading(false);
+          });
       } else {
         setLoading(false);
       }
@@ -109,7 +131,7 @@ export default function PremiumPage() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ priceId: PRICE_IDS[tierKey] }),
+      body: JSON.stringify({ priceId: isAnnual ? ANNUAL_PRICE_IDS[tierKey] : MONTHLY_PRICE_IDS[tierKey] }),
     });
     const data = await res.json();
     if (data.url) {
@@ -182,7 +204,7 @@ export default function PremiumPage() {
           font-family: var(--font-heading);
           font-size: 1.6rem;
           color: #F5E6C8;
-          margin: 0 0 16px;
+          margin: 0 0 4px;
           line-height: 1;
         }
 
@@ -190,6 +212,87 @@ export default function PremiumPage() {
           font-size: 0.85rem;
           color: var(--color-text-muted);
           font-family: var(--font-body);
+        }
+
+        .pricing-card-annual-label {
+          font-family: var(--font-body);
+          font-size: 0.72rem;
+          color: var(--color-text-muted);
+          margin: 0 0 16px;
+          line-height: 1;
+        }
+
+        /* Billing toggle */
+        .billing-toggle-wrap {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 24px;
+        }
+
+        .billing-toggle-label {
+          font-family: var(--font-ui);
+          font-size: 0.8rem;
+          color: var(--color-text-muted);
+          cursor: pointer;
+          user-select: none;
+          transition: color 0.15s;
+        }
+
+        .billing-toggle-label.active {
+          color: #F5E6C8;
+        }
+
+        .billing-toggle-track {
+          position: relative;
+          width: 44px;
+          height: 24px;
+          background: rgba(201,151,58,0.15);
+          border: 1px solid rgba(201,151,58,0.3);
+          border-radius: 12px;
+          cursor: pointer;
+          transition: background 0.2s, border-color 0.2s;
+          flex-shrink: 0;
+        }
+
+        .billing-toggle-track.on {
+          background: rgba(201,151,58,0.25);
+          border-color: rgba(201,151,58,0.6);
+        }
+
+        .billing-toggle-thumb {
+          position: absolute;
+          top: 3px;
+          left: 3px;
+          width: 16px;
+          height: 16px;
+          background: #C9973A;
+          border-radius: 50%;
+          transition: transform 0.2s;
+        }
+
+        .billing-toggle-track.on .billing-toggle-thumb {
+          transform: translateX(20px);
+        }
+
+        .billing-save-badge {
+          font-family: var(--font-ui);
+          font-size: 0.65rem;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #1a1007;
+          background: #C9973A;
+          border-radius: 4px;
+          padding: 2px 7px;
+          font-weight: 700;
+          white-space: nowrap;
+          transition: opacity 0.2s;
+        }
+
+        .billing-save-badge.hidden {
+          opacity: 0;
+          pointer-events: none;
         }
 
         .pricing-card-divider {
@@ -252,6 +355,21 @@ export default function PremiumPage() {
           text-align: center;
         }
 
+        .pricing-trial-badge {
+          display: inline-block;
+          background: linear-gradient(135deg, rgba(201, 151, 58, 0.2), rgba(201, 151, 58, 0.1));
+          border: 1px solid rgba(201, 151, 58, 0.4);
+          border-radius: 4px;
+          padding: 6px 12px;
+          font-family: var(--font-ui);
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #C9973A;
+          font-weight: 600;
+          margin-bottom: 12px;
+        }
+
         @media (max-width: 768px) {
           .pricing-outer {
             padding: 12px 16px 40px;
@@ -288,6 +406,31 @@ export default function PremiumPage() {
         </p>
       </div>
 
+      {/* Billing toggle */}
+      <div className="billing-toggle-wrap">
+        <span
+          className={`billing-toggle-label${!isAnnual ? " active" : ""}`}
+          onClick={() => setIsAnnual(false)}
+        >
+          Monthly
+        </span>
+        <div
+          className={`billing-toggle-track${isAnnual ? " on" : ""}`}
+          onClick={() => setIsAnnual((v) => !v)}
+          role="switch"
+          aria-checked={isAnnual}
+        >
+          <div className="billing-toggle-thumb" />
+        </div>
+        <span
+          className={`billing-toggle-label${isAnnual ? " active" : ""}`}
+          onClick={() => setIsAnnual(true)}
+        >
+          Annual
+        </span>
+        <span className={`billing-save-badge${isAnnual ? "" : " hidden"}`}>Save 20%</span>
+      </div>
+
       {/* Tier cards */}
       <div className="pricing-grid">
         {TIERS.map((tier) => (
@@ -300,14 +443,20 @@ export default function PremiumPage() {
                 : "1px solid rgba(201,151,58,0.15)",
             }}
           >
+            {tier.key === "pitmaster" && pitmasterTrialAvailable && (
+              <div className="pricing-trial-badge">🎁 7-Day Free Trial</div>
+            )}
             <p className="pricing-card-commandment">{tier.commandment}</p>
             <h2 className="pricing-card-name">{tier.name}</h2>
             <p className="pricing-card-tagline">{tier.tagline}</p>
             <div className="pricing-card-price">
-              {tier.price}
+              {isAnnual ? tier.annualMonthlyPrice : tier.price}
               <span className="pricing-card-price-period">{tier.period}</span>
             </div>
-            <hr className="pricing-card-divider" />
+            {isAnnual && (
+              <p className="pricing-card-annual-label">billed annually</p>
+            )}
+            <hr className="pricing-card-divider" style={{ marginTop: isAnnual ? 0 : "12px" }} />
             <ul className="pricing-card-features">
               {tier.features.map((feature) => (
                 <li key={feature} className="pricing-card-feature">

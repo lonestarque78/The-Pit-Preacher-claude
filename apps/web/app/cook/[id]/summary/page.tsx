@@ -484,21 +484,47 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
         }}>
           The Verdict
         </span>
-        <button
-          onClick={handleCopyLink}
-          style={{
-            background: "none", border: "none", cursor: "pointer",
-            display: "flex", alignItems: "center", gap: "5px",
-            color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.75rem",
-            padding: "4px 0", opacity: 0.85,
-          }}
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-          </svg>
-          {copied ? "Link copied" : "Share Cook"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Link
+            href={`/cook/${cookId}/share`}
+            style={{
+              background: "#C9973A",
+              color: "#0e0c0a",
+              fontFamily: "var(--font-ui)",
+              fontSize: "0.7rem",
+              padding: "5px 11px",
+              borderRadius: "4px",
+              textDecoration: "none",
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+              <polyline points="16 6 12 2 8 6"/>
+              <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+            Share Card
+          </Link>
+          <button
+            onClick={handleCopyLink}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              display: "flex", alignItems: "center", gap: "5px",
+              color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.75rem",
+              padding: "4px 0", opacity: 0.75,
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            {copied ? "Copied" : "Copy Link"}
+          </button>
+        </div>
       </div>
 
       {/* ── MISSION CARD ── */}
@@ -1502,6 +1528,311 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
               </div>
             </div>
           )}
+
+          {/* ── FREE TIER UPSELL: PREMIUM INSIGHTS ── */}
+          {userTier === "free" && outcome && statusIsCompleted && (
+            <div style={{ marginTop: "var(--space-6)", maxWidth: "1200px", margin: "var(--space-6) auto 0" }}>
+              <div style={{
+                fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "#C9973A",
+                textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "var(--space-3)",
+                paddingLeft: "var(--space-4)", paddingRight: "var(--space-4)",
+              }}>
+                Unlock Your Cook Insights
+              </div>
+
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: "var(--space-3)",
+                paddingLeft: "var(--space-4)",
+                paddingRight: "var(--space-4)",
+                marginBottom: "var(--space-4)",
+              }}>
+                {/* Confidence Score Card */}
+                <div style={{
+                  ...cardStyle,
+                  position: "relative",
+                  overflow: "hidden",
+                  minHeight: "160px",
+                }}>
+                  <div style={{
+                    filter: "blur(6px)",
+                    pointerEvents: "none",
+                    userSelect: "none",
+                  }}>
+                    <div style={{
+                      fontFamily: "var(--font-heading)",
+                      fontSize: "2.5rem",
+                      color: "#C9973A",
+                      lineHeight: 1,
+                      marginBottom: "var(--space-2)",
+                    }}>
+                      87
+                    </div>
+                    <div style={{
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "0.65rem",
+                      color: "var(--color-text-muted)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      lineHeight: 1.5,
+                    }}>
+                      Pit Stability · Plan Adherence · Outcome Quality
+                    </div>
+                  </div>
+                  <div style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(14,12,10,0.8)",
+                    padding: "var(--space-3)",
+                    textAlign: "center",
+                  }}>
+                    <span style={{ fontSize: "1.8rem", marginBottom: "var(--space-1)" }}>🔒</span>
+                    <p style={{
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "0.7rem",
+                      color: "#C9973A",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      margin: "0 0 var(--space-1)",
+                      fontWeight: "600",
+                    }}>
+                      Confidence Score
+                    </p>
+                    <p style={{
+                      fontFamily: "var(--font-body)",
+                      fontSize: "0.75rem",
+                      color: "var(--color-text-muted)",
+                      margin: 0,
+                      lineHeight: 1.4,
+                    }}>
+                      See how well you executed this cook
+                    </p>
+                  </div>
+                </div>
+
+                {/* Fire Control Score Card */}
+                <div style={{
+                  ...cardStyle,
+                  position: "relative",
+                  overflow: "hidden",
+                  minHeight: "160px",
+                }}>
+                  <div style={{
+                    filter: "blur(6px)",
+                    pointerEvents: "none",
+                    userSelect: "none",
+                  }}>
+                    <div style={{
+                      fontFamily: "var(--font-heading)",
+                      fontSize: "2.5rem",
+                      color: "#C9973A",
+                      lineHeight: 1,
+                      marginBottom: "var(--space-2)",
+                    }}>
+                      82
+                    </div>
+                    <div style={{
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "0.65rem",
+                      color: "var(--color-text-muted)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      lineHeight: 1.5,
+                    }}>
+                      Stability · Responsiveness · Efficiency
+                    </div>
+                  </div>
+                  <div style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(14,12,10,0.8)",
+                    padding: "var(--space-3)",
+                    textAlign: "center",
+                  }}>
+                    <span style={{ fontSize: "1.8rem", marginBottom: "var(--space-1)" }}>🔥</span>
+                    <p style={{
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "0.7rem",
+                      color: "#C9973A",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      margin: "0 0 var(--space-1)",
+                      fontWeight: "600",
+                    }}>
+                      Fire Control Score
+                    </p>
+                    <p style={{
+                      fontFamily: "var(--font-body)",
+                      fontSize: "0.75rem",
+                      color: "var(--color-text-muted)",
+                      margin: 0,
+                      lineHeight: 1.4,
+                    }}>
+                      Measure your fire management
+                    </p>
+                  </div>
+                </div>
+
+                {/* Next Cook Strategy Card */}
+                <div style={{
+                  ...cardStyle,
+                  position: "relative",
+                  overflow: "hidden",
+                  minHeight: "160px",
+                }}>
+                  <div style={{
+                    filter: "blur(6px)",
+                    pointerEvents: "none",
+                    userSelect: "none",
+                  }}>
+                    <div style={{
+                      fontFamily: "var(--font-body)",
+                      fontSize: "0.875rem",
+                      color: "var(--color-text)",
+                      lineHeight: 1.6,
+                      marginBottom: "var(--space-2)",
+                    }}>
+                      Start 30 minutes earlier · Wrap at 165°F · Use hickory for deeper smoke...
+                    </div>
+                  </div>
+                  <div style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(14,12,10,0.8)",
+                    padding: "var(--space-3)",
+                    textAlign: "center",
+                  }}>
+                    <span style={{ fontSize: "1.8rem", marginBottom: "var(--space-1)" }}>📋</span>
+                    <p style={{
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "0.7rem",
+                      color: "#C9973A",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      margin: "0 0 var(--space-1)",
+                      fontWeight: "600",
+                    }}>
+                      Next Cook Strategy
+                    </p>
+                    <p style={{
+                      fontFamily: "var(--font-body)",
+                      fontSize: "0.75rem",
+                      color: "var(--color-text-muted)",
+                      margin: 0,
+                      lineHeight: 1.4,
+                    }}>
+                      Personalized recommendations for your next cook
+                    </p>
+                  </div>
+                </div>
+
+                {/* Preacher's Pit Learning Card */}
+                <div style={{
+                  ...cardStyle,
+                  position: "relative",
+                  overflow: "hidden",
+                  minHeight: "160px",
+                }}>
+                  <div style={{
+                    filter: "blur(6px)",
+                    pointerEvents: "none",
+                    userSelect: "none",
+                  }}>
+                    <div style={{
+                      fontFamily: "var(--font-body)",
+                      fontSize: "0.875rem",
+                      fontStyle: "italic",
+                      color: "var(--color-text)",
+                      lineHeight: 1.6,
+                    }}>
+                      Your pit runs hot on the grate but stable at dome level. Exploit this...
+                    </div>
+                  </div>
+                  <div style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(14,12,10,0.8)",
+                    padding: "var(--space-3)",
+                    textAlign: "center",
+                  }}>
+                    <span style={{ fontSize: "1.8rem", marginBottom: "var(--space-1)" }}>⛪</span>
+                    <p style={{
+                      fontFamily: "var(--font-ui)",
+                      fontSize: "0.7rem",
+                      color: "#C9973A",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      margin: "0 0 var(--space-1)",
+                      fontWeight: "600",
+                    }}>
+                      Pit Profile Learning
+                    </p>
+                    <p style={{
+                      fontFamily: "var(--font-body)",
+                      fontSize: "0.75rem",
+                      color: "var(--color-text-muted)",
+                      margin: 0,
+                      lineHeight: 1.4,
+                    }}>
+                      What the Preacher learned about your pit
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Upgrade CTA */}
+              <div style={{
+                paddingLeft: "var(--space-4)",
+                paddingRight: "var(--space-4)",
+                textAlign: "center",
+                marginTop: "var(--space-3)",
+              }}>
+                <Link href="/premium" style={{
+                  display: "inline-block",
+                  background: "#C9973A",
+                  color: "var(--color-bg)",
+                  fontFamily: "var(--font-heading)",
+                  fontSize: "1rem",
+                  padding: "14px 28px",
+                  borderRadius: "var(--radius-lg)",
+                  textDecoration: "none",
+                  fontWeight: "600",
+                  letterSpacing: "0.04em",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 4px 12px rgba(201,151,58,0.2)",
+                }}>
+                  🎁 Unlock your cook insights — Upgrade to Pitmaster
+                </Link>
+                <p style={{
+                  fontFamily: "var(--font-body)",
+                  fontSize: "0.8rem",
+                  color: "var(--color-text-muted)",
+                  marginTop: "var(--space-2)",
+                  marginBottom: 0,
+                }}>
+                  7-day free trial. Payment method required. First charge delayed.
+                </p>
+              </div>
+            </div>
+          )}
+
       {/* ── DEEP INSIGHTS TRIGGER ── */}
       {statusIsCompleted && (
         <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 var(--space-4) var(--space-2)" }}>
