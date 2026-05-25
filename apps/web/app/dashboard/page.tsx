@@ -210,7 +210,7 @@ export default async function DashboardPage() {
   const [profileRes, tier, allCooksRes] = await Promise.all([
     supabase.from("profiles").select("display_name, profile_complete").eq("user_id", user.id).single(),
     getTier(user.id, supabase),
-    supabase.from("cooks").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+    supabase.from("cooks").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(100),
   ]);
 
   const profile     = profileRes.data;

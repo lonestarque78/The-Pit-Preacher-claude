@@ -184,7 +184,8 @@ export default function CookJournalPage({
           .from("cook_events")
           .select("*")
           .eq("cook_id", cookId)
-          .order("created_at", { ascending: true }),
+          .order("created_at", { ascending: true })
+          .limit(200),
         supabase.from("cook_logs").select("*").eq("cook_id", cookId).maybeSingle(),
       ]);
 

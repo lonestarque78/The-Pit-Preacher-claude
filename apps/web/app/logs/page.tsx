@@ -1,11 +1,12 @@
 "use client";
 
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import Button from "@/components/Button";
 import Link from "next/link";
+
+const PAGE_SIZE = 50;
 
 type Cook = {
   id: string;
@@ -128,9 +129,12 @@ export default function LogsPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [cooks, setCooks]       = useState<Cook[]>([]);
-  const [logsMap, setLogsMap]   = useState<Record<string, CookLog>>({});
-  const [loading, setLoading]   = useState(true);
+  const [cooks, setCooks]             = useState<Cook[]>([]);
+  const [logsMap, setLogsMap]         = useState<Record<string, CookLog>>({});
+  const [loading, setLoading]         = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore]         = useState(false);
+  const [nextPage, setNextPage]       = useState(1);
   const [searchQuery, setSearchQuery]   = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [hoveredId, setHoveredId]       = useState<string | null>(null);
@@ -144,14 +148,16 @@ export default function LogsPage() {
         return;
       }
 
-      const { data: cooksData } = await supabase
+      const { data: cooksData, count } = await supabase
         .from("cooks")
-        .select("*")
+        .select("*", { count: "exact" })
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(0, PAGE_SIZE - 1);
 
       const cookList: Cook[] = cooksData || [];
       setCooks(cookList);
+      setHasMore((count ?? 0) > PAGE_SIZE);
 
       if (cookList.length > 0) {
         const cookIds = cookList.map(c => c.id);
@@ -172,6 +178,43 @@ export default function LogsPage() {
 
     load();
   }, []);
+
+  const handleLoadMore = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    setLoadingMore(true);
+    const from = nextPage * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    const { data: moreCooks, count } = await supabase
+      .from("cooks")
+      .select("*", { count: "exact" })
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    const newCooks: Cook[] = moreCooks || [];
+
+    if (newCooks.length > 0) {
+      const newIds = newCooks.map(c => c.id);
+      const { data: moreLogs } = await supabase
+        .from("cook_logs")
+        .select("*")
+        .in("cook_id", newIds);
+
+      setLogsMap(prev => {
+        const next = { ...prev };
+        for (const log of moreLogs || []) next[log.cook_id] = log;
+        return next;
+      });
+    }
+
+    setCooks(prev => [...prev, ...newCooks]);
+    setHasMore((count ?? 0) > (nextPage + 1) * PAGE_SIZE);
+    setNextPage(p => p + 1);
+    setLoadingMore(false);
+  };
 
   if (loading) {
     return (
@@ -402,6 +445,29 @@ export default function LogsPage() {
           );
         })}
       </div>
+
+      {/* ── LOAD MORE ── */}
+      {hasMore && (
+        <div style={{ textAlign: "center", marginTop: "var(--space-3)" }}>
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            style={{
+              background:   "transparent",
+              border:       "1px solid rgba(201,151,58,0.4)",
+              borderRadius: "var(--radius-md)",
+              color:        "#C9973A",
+              fontFamily:   "var(--font-ui)",
+              fontSize:     "0.85rem",
+              padding:      "10px 28px",
+              cursor:       loadingMore ? "not-allowed" : "pointer",
+              opacity:      loadingMore ? 0.6 : 1,
+            }}
+          >
+            {loadingMore ? "Loading…" : "Load more cooks"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

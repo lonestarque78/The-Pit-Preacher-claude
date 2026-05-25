@@ -911,7 +911,7 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         flexDirection: "column",
         minHeight: 0,
         overflow: "hidden",
-        paddingBottom: "52px",
+        paddingBottom: "calc(52px + env(safe-area-inset-bottom))",
       }}>
         {/* Scrollable messages */}
         <div style={{
@@ -1245,7 +1245,10 @@ export default function LiveModePage({ params }: { params: Promise<{ id: string 
         zIndex: 50,
         background: "var(--color-bg-alt)",
         borderTop: "1px solid rgba(201,151,58,0.2)",
-        padding: "var(--space-2) var(--space-4)",
+        paddingTop: "var(--space-2)",
+        paddingLeft: "var(--space-4)",
+        paddingRight: "var(--space-4)",
+        paddingBottom: "calc(var(--space-2) + env(safe-area-inset-bottom))",
         display: "flex",
         justifyContent: "center",
         gap: "var(--space-3)",

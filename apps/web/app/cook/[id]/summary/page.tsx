@@ -572,7 +572,10 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
           gap: "var(--space-4)",
           maxWidth: "1200px",
           margin: "0 auto",
-          padding: "var(--space-3) var(--space-4) 80px",
+          paddingTop: "var(--space-3)",
+        paddingLeft: "var(--space-4)",
+        paddingRight: "var(--space-4)",
+        paddingBottom: "calc(80px + env(safe-area-inset-bottom))",
         }}
       >
         {/* ── LEFT COLUMN ── */}
@@ -1568,7 +1571,10 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50,
         background: "var(--color-bg-alt)",
         borderTop: "1px solid rgba(201,151,58,0.2)",
-        padding: "var(--space-2) var(--space-4)",
+        paddingTop: "var(--space-2)",
+        paddingLeft: "var(--space-4)",
+        paddingRight: "var(--space-4)",
+        paddingBottom: "calc(var(--space-2) + env(safe-area-inset-bottom))",
         display: "flex", justifyContent: "center", gap: "var(--space-3)", flexWrap: "wrap",
       }}>
         {NAV_LINKS.map(link => (

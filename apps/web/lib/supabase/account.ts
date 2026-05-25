@@ -144,19 +144,27 @@ export async function deletePit(
 
 export async function getCookHistory(
   userId: string,
-  filters?: { pitId?: string; tag?: string }
-): Promise<CookHistoryRow[]> {
+  filters?: { pitId?: string; tag?: string },
+  page = 0,
+  pageSize = 50
+): Promise<{ data: CookHistoryRow[]; hasMore: boolean }> {
   const supabase = await createServerClient()
+  const from = page * pageSize
+  const to = from + pageSize - 1
   let query = supabase
     .from('cook_history_view')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
+    .range(from, to)
   if (filters?.pitId) {
     query = query.eq('pit_id', filters.pitId)
   }
-  const { data, error } = await query
-  if (error) return []
-  return (data ?? []) as unknown as CookHistoryRow[]
+  const { data, error, count } = await query
+  if (error) return { data: [], hasMore: false }
+  return {
+    data: (data ?? []) as unknown as CookHistoryRow[],
+    hasMore: (count ?? 0) > from + pageSize,
+  }
 }
 

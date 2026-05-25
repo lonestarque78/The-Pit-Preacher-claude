@@ -363,7 +363,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
   };
 
   return (
-    <div style={{ paddingBottom: "80px" }}>
+    <div style={{ paddingBottom: "calc(80px + env(safe-area-inset-bottom))" }}>
       <style>{`
         .cook-nav-btn {
           background: transparent;
@@ -1091,7 +1091,10 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
         zIndex: 50,
         background: "var(--color-bg-alt)",
         borderTop: "1px solid rgba(201,151,58,0.2)",
-        padding: "var(--space-2) var(--space-4)",
+        paddingTop: "var(--space-2)",
+        paddingLeft: "var(--space-4)",
+        paddingRight: "var(--space-4)",
+        paddingBottom: "calc(var(--space-2) + env(safe-area-inset-bottom))",
         display: "flex",
         justifyContent: "center",
         gap: "var(--space-3)",

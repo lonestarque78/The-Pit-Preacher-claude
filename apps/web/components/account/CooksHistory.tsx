@@ -7,24 +7,42 @@ import { FormCard } from './FormCard'
 
 interface Props {
   initialCooks: CookHistoryRow[]
+  initialHasMore: boolean
   pits: Pit[]
+  loadMore: (page: number) => Promise<{ data: CookHistoryRow[]; hasMore: boolean }>
 }
 
-export function CooksHistory({ initialCooks, pits }: Props) {
+export function CooksHistory({ initialCooks, initialHasMore, pits, loadMore }: Props) {
+  const [allCooks, setAllCooks] = useState(initialCooks)
+  const [hasMore, setHasMore] = useState(initialHasMore)
+  const [nextPage, setNextPage] = useState(1)
+  const [loading, setLoading] = useState(false)
   const [pitFilter, setPitFilter] = useState('')
   const [tagFilter, setTagFilter] = useState('')
 
-  const filtered = initialCooks.filter((c) => {
+  const handleLoadMore = async () => {
+    setLoading(true)
+    try {
+      const { data, hasMore: more } = await loadMore(nextPage)
+      setAllCooks(prev => [...prev, ...data])
+      setHasMore(more)
+      setNextPage(p => p + 1)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filtered = allCooks.filter((c) => {
     if (pitFilter && c.pit_id !== pitFilter) return false
     if (tagFilter && !c.tags?.includes(tagFilter)) return false
     return true
   })
 
   const allTags = Array.from(
-    new Set(initialCooks.flatMap((c) => c.tags?.filter(Boolean) ?? []))
+    new Set(allCooks.flatMap((c) => c.tags?.filter(Boolean) ?? []))
   ).sort()
 
-  if (initialCooks.length === 0) {
+  if (allCooks.length === 0) {
     return (
       <p className="text-sm text-[#7a6a55]">
         No cooks logged yet. Fire up the planner and get cooking.
@@ -112,6 +130,18 @@ export function CooksHistory({ initialCooks, pits }: Props) {
           </div>
         </FormCard>
       ))}
+
+      {hasMore && (
+        <div className="pt-2 text-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={loading}
+            className="text-sm text-[#c4a97d] border border-[#2e2820] rounded px-4 py-2 hover:border-[#c4a97d] transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Loading…' : 'Load more cooks'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
