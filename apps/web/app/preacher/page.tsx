@@ -200,9 +200,13 @@ export default function PreacherPage() {
 
   return (
     <div style={{
+      position: "fixed",
+      top: 64,
+      left: 0,
+      right: 0,
+      bottom: 0,
       display: "flex",
       flexDirection: "column",
-      height: "calc(100vh - 64px)",
       overflow: "hidden",
     }}>
       <style>{`
@@ -260,6 +264,7 @@ export default function PreacherPage() {
           flex: 1,
           overflowY: "auto",
           padding: "var(--space-3) var(--space-4)",
+          WebkitOverflowScrolling: "touch",
         }}>
           <div style={{ maxWidth: "860px", margin: "0 auto" }}>
             {messages.map((msg, idx) => (
@@ -381,6 +386,7 @@ export default function PreacherPage() {
           <div style={{
             flexShrink: 0,
             padding: "var(--space-3) var(--space-4)",
+            paddingBottom: "calc(var(--space-3) + env(safe-area-inset-bottom))",
             textAlign: "center",
             borderTop: "1px solid rgba(201,151,58,0.15)",
             background: "var(--color-bg-alt)",
@@ -408,6 +414,7 @@ export default function PreacherPage() {
             background: "var(--color-bg-alt)",
             borderTop: "1px solid rgba(201,151,58,0.2)",
             padding: "var(--space-2) var(--space-4)",
+            paddingBottom: "calc(var(--space-2) + env(safe-area-inset-bottom))",
           }}>
             <div style={{
               display: "flex",
