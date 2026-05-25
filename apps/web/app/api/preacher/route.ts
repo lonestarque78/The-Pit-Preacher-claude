@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { env } from "@/lib/env";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -201,12 +202,16 @@ async function checkRateLimit(userId: string): Promise<boolean> {
     if (error) throw error;
     return data as boolean;
   } catch (err) {
-    console.error("Rate limit check failed, allowing request through:", err);
+    const e = err as Error;
+    console.error("Rate limit check failed, allowing request through:", e?.message ?? err);
+    if (e?.stack) console.error(e.stack);
     return true;
   }
 }
 
 export async function POST(req: NextRequest) {
+  console.log("[preacher] ANTHROPIC_API_KEY present:", !!env.ANTHROPIC_API_KEY, "length:", env.ANTHROPIC_API_KEY?.length ?? 0);
+
   const supabase = await createServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -225,11 +230,22 @@ export async function POST(req: NextRequest) {
 
   const bodyParseResult = PreacherRequestSchema.safeParse(await req.json());
   if (!bodyParseResult.success) {
+    console.error("[preacher] Zod validation failed:", JSON.stringify(bodyParseResult.error.flatten().fieldErrors, null, 2));
     return NextResponse.json(
       { error: "Invalid request body", details: bodyParseResult.error.flatten().fieldErrors },
       { status: 400 }
     );
   }
+
+  console.log("[preacher] validated request body:", JSON.stringify({
+    message: bodyParseResult.data.message.slice(0, 120),
+    cookId: bodyParseResult.data.cookId,
+    hasImage: !!bodyParseResult.data.imageBase64,
+    cookContext: {
+      ...bodyParseResult.data.cookContext,
+      conversationHistory: `[${bodyParseResult.data.cookContext.conversationHistory?.length ?? 0} turns]`,
+    },
+  }, null, 2));
 
   const { message, cookId, cookContext, imageBase64 } = bodyParseResult.data;
 
@@ -471,7 +487,7 @@ Remember to return your response as valid JSON with reply and logEvent fields.`;
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY!,
+      "x-api-key": env.ANTHROPIC_API_KEY,
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
@@ -484,7 +500,7 @@ Remember to return your response as valid JSON with reply and logEvent fields.`;
 
   if (!anthropicRes.ok) {
     const errBody = await anthropicRes.text();
-    console.error("Anthropic error:", anthropicRes.status, errBody);
+    console.error("[preacher] Anthropic API error — status:", anthropicRes.status, "body:", errBody);
     return NextResponse.json({ error: "AI request failed" }, { status: 500 });
   }
 
@@ -497,7 +513,11 @@ Remember to return your response as valid JSON with reply and logEvent fields.`;
       const preacherReply = parsed.reply ?? replyText;
       const logEvent = parsed.logEvent ?? null;
       return NextResponse.json({ reply: preacherReply, logEvent });
-    } catch {
+    } catch (err) {
+      const e = err as Error;
+      console.error("[preacher] Failed to parse Anthropic JSON reply — message:", e?.message ?? err);
+      if (e?.stack) console.error(e.stack);
+      console.error("[preacher] Raw reply text:", replyText);
       return NextResponse.json({ reply: replyText, logEvent: null });
     }
   }
