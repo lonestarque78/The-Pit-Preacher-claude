@@ -1,145 +1,37 @@
-# Comprehensive Expert Code Review: The Pit Preacher
-
-Based on systematic analysis of the production codebase, this document identifies critical issues, architectural opportunities, and specific improvements organized by impact.
-
----
-
-## 🔴 CRITICAL ISSUES (Fix Immediately)
-
-### 1. SECURITY: Secrets Management and Environment Variables
-
-**Issue**: Service role keys (`SUPABASE_SERVICE_ROLE_KEY`) are being instantiated in multiple client-accessible code locations, violating the fundamental principle of key segregation.
-
-**Files**:
-- lib/usage/track.ts — Creates Supabase client with service role key in non-API code
-- lib/billing/isPremium.ts — Service role key exposed in library function
-- app/api/billing/create-checkout-session/route.ts — Using service role in API route is correct, but pattern is inconsistent elsewhere
-
-**Problem**: If lib/usage/track.ts is called from the browser (via Server Components or direct imports), the service role key could leak. This bypasses Supabase's row-level security and grants full database access.
-
-**Recommendation**:
-1. Create a single server-side utility: `/lib/supabase-admin.ts` for all service-role operations
-2. Move `isPremium()` to API route or make it accept a user-authenticated client
-3. Move `incrementUsage()` and `checkUsage()` to `/app/api/usage/` endpoints
-4. Never import service-role clients in component code or shared utilities
-
-**Impact**: 🔴 **CRITICAL** — Potential full database access compromise
+# Code Review & Feature Enhancement Assessment
+## The Pit Preacher — May 25, 2026
 
 ---
 
-### 2. SECURITY: Cleartext Protocol in Capacitor Config
+## REMAINING CODE QUALITY ISSUES
 
-**File**: capacitor.config.ts
+### 1. 🟠 ERROR HANDLING: Still Inconsistent in API Routes
 
+**Status**: Not fully resolved. Generic catch blocks remain.
+
+**Files with issues**:
+- app/api/billing/create-checkout-session/route.ts
+- app/api/stripe/webhook/route.ts
+- app/api/insights/route.ts
+
+**Example**:
 ```typescript
-server: {
-  url: 'https://thepitpreacher.com',
-  cleartext: true  // ❌ CRITICAL SECURITY ISSUE
+} catch (err) {
+  console.error("Webhook handler error:", err);
+  return NextResponse.json({ error: "Webhook handler error" }, { status: 500 });
 }
 ```
 
-**Problem**: `cleartext: true` allows HTTP traffic to mixed HTTP/HTTPS URLs on iOS. On production, this should **never** be enabled.
+**Problem**: No error categorization or user-friendly messages. Stripe errors are indistinguishable from database errors from client perspective.
 
-**Recommendation**:
-```typescript
-// Production
-server: {
-  url: 'https://thepitpreacher.com',
-  cleartext: false  // or omit (defaults to false)
-}
-```
-
-Use environment-based config:
-```typescript
-const isProduction = process.env.NODE_ENV === 'production';
-const config: CapacitorConfig = {
-  // ...
-  server: {
-    url: process.env.NEXT_PUBLIC_APP_URL,
-    cleartext: !isProduction,  // Allow only in dev
-  },
-};
-```
-
-**Impact**: 🔴 **CRITICAL** — Man-in-the-middle vulnerabilities on iOS app
-
----
-
-### 3. SECURITY: Stripe Webhook Signature Validation Gap
-
-**File**: app/api/stripe/webhook/route.ts
-
-```typescript
-try {
-  event = stripe.webhooks.constructEvent(body, sig!, process.env.STRIPE_WEBHOOK_SECRET!);
-} catch (err: any) {
-  console.error("Webhook signature error:", err.message);
-  return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-}
-```
-
-**Problem**: The `sig` parameter is accessed with non-null assertion (`sig!`) but could be undefined. If someone calls the webhook without the header, it passes an undefined signature, potentially accepting invalid events.
-
-**Recommendation**:
-```typescript
-const sig = req.headers.get("stripe-signature");
-
-if (!sig) {
-  console.error("Missing stripe-signature header");
-  return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-}
-
-try {
-  event = stripe.webhooks.constructEvent(
-    body,
-    sig,
-    process.env.STRIPE_WEBHOOK_SECRET!
-  );
-}
-```
-
-**Impact**: 🔴 **CRITICAL** — Could accept forged Stripe events
-
----
-
-## 🟠 HIGH PRIORITY ISSUES
-
-### 4. Error Handling: Inconsistent and Incomplete Across All APIs
-
-**Pattern Found**: Generic catch blocks with minimal logging.
-
-**Examples**:
-- app/api/billing/create-checkout-session/route.ts:
-  ```typescript
-  } catch (err) {
-    console.error("Checkout session error:", err);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
-  ```
-
-- app/api/stripe/webhook/route.ts:
-  ```typescript
-  } catch (err) {
-    console.error("Webhook handler error:", err);
-    return NextResponse.json({ error: "Webhook handler error" }, { status: 500 });
-  }
-  ```
-
-**Problems**:
-1. No error categorization (client error vs. server error vs. external service error)
-2. User-facing errors expose internal details (bad UX + security risk)
-3. No structured logging for debugging
-4. Missing Stripe-specific error handling (e.g., authentication failures, rate limits)
-5. No retry logic for transient failures
-
-**Recommendation**: Create a unified error handling library:
-
+**Quick Fix** (Medium effort):
 ```typescript
 // lib/api-errors.ts
 export class APIError extends Error {
   constructor(
     public statusCode: number,
     public userMessage: string,
+    public code: string,
     public details?: unknown
   ) {
     super(userMessage);
@@ -148,22 +40,13 @@ export class APIError extends Error {
 
 export function handleError(err: unknown) {
   if (err instanceof APIError) {
+    console.error(`[${err.code}]`, err.details);
     return NextResponse.json(
-      { error: err.userMessage },
+      { error: err.userMessage, code: err.code },
       { status: err.statusCode }
     );
   }
   
-  if (err instanceof Stripe.errors.StripeError) {
-    // Handle Stripe-specific errors
-    const status = err.statusCode || 500;
-    return NextResponse.json(
-      { error: "Payment processing failed" },
-      { status }
-    );
-  }
-  
-  // Unknown error
   console.error("Unhandled error:", err);
   return NextResponse.json(
     { error: "An unexpected error occurred" },
@@ -172,525 +55,138 @@ export function handleError(err: unknown) {
 }
 ```
 
-Apply to all API routes:
-```typescript
-export async function POST(req: NextRequest) {
-  try {
-    // ... logic
-  } catch (err) {
-    return handleError(err);
-  }
-}
-```
-
-**Impact**: 🟠 **HIGH** — Data leakage, poor debugging, worse user experience
+**Impact**: Better user experience, easier debugging, improved monitoring.
 
 ---
 
-### 5. Environment Variables: Scattered Throughout Codebase Without Central Validation
+### 2. 🟡 ENVIRONMENT VARIABLES: Still Scattered Without Validation
 
-**Pattern Found**: 50+ references to `process.env` with no validation.
-
-**Example locations with direct access**:
-- app/account/billing/page.tsx — Client component accessing Stripe price IDs
-- app/premium/page.tsx — Same pattern
-- lib/plan/autoAdjustPlan.ts — Direct `process.env.NEXT_PUBLIC_SITE_URL`
-
-**Problems**:
-1. **No type safety** — Typos in env var names aren't caught at compile time
-2. **No validation** — Missing required vars only fail at runtime
-3. **No documentation** — Hard to know all required variables
-4. **Scattered usage** — Makes refactoring painful
-5. **Build-time exposure** — Unset vars in Turbo config silently fail
-
-**Recommendation**: Create centralized configuration:
-
-```typescript
-// lib/config.ts
-import { z } from "zod";
-
-const envSchema = z.object({
-  // Public variables (safe for browser)
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
-  NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID: z.string(),
-  NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID: z.string(),
-  NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID: z.string(),
-  NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID: z.string(),
-  NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID: z.string(),
-  NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID: z.string(),
-  NEXT_PUBLIC_SITE_URL: z.string().url(),
-  NEXT_PUBLIC_APP_URL: z.string().url(),
-  
-  // Server-only variables
-  SUPABASE_SERVICE_ROLE_KEY: z.string(),
-  STRIPE_SECRET_KEY: z.string(),
-  STRIPE_WEBHOOK_SECRET: z.string(),
-  ANTHROPIC_API_KEY: z.string().optional(),
-});
-
-type Config = z.infer<typeof envSchema>;
-
-let config: Config | null = null;
-
-export function getConfig(): Config {
-  if (!config) {
-    const parsed = envSchema.safeParse(process.env);
-    if (!parsed.success) {
-      console.error("Invalid environment variables:", parsed.error.flatten());
-      throw new Error("Invalid environment configuration");
-    }
-    config = parsed.data;
-  }
-  return config;
-}
-
-// Prevent server-only access
-export function getPublicConfig() {
-  const cfg = getConfig();
-  return {
-    supabaseUrl: cfg.NEXT_PUBLIC_SUPABASE_URL,
-    supabaseAnonKey: cfg.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    siteUrl: cfg.NEXT_PUBLIC_SITE_URL,
-    appUrl: cfg.NEXT_PUBLIC_APP_URL,
-    // Stripe prices
-    stripePrices: {
-      basicMonthly: cfg.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID,
-      basicAnnual: cfg.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID,
-      backyardMonthly: cfg.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID,
-      backyardAnnual: cfg.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID,
-      pitmasterMonthly: cfg.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID,
-      pitmasterAnnual: cfg.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID,
-    }
-  };
-}
-
-export function getServerConfig() {
-  const cfg = getConfig();
-  return {
-    ...getPublicConfig(),
-    supabaseServiceRoleKey: cfg.SUPABASE_SERVICE_ROLE_KEY,
-    stripeSecretKey: cfg.STRIPE_SECRET_KEY,
-    stripeWebhookSecret: cfg.STRIPE_WEBHOOK_SECRET,
-    anthropicApiKey: cfg.ANTHROPIC_API_KEY,
-  };
-}
-```
-
-Then use consistently:
-```typescript
-// In client components
-import { getPublicConfig } from "@/lib/config";
-const config = getPublicConfig();
-
-// In server code
-import { getServerConfig } from "@/lib/config";
-const config = getServerConfig();
-```
-
-**Update Turbo config to validate**:
-```json
-{
-  "tasks": {
-    "build": {
-      "env": [
-        "NEXT_PUBLIC_SUPABASE_URL",
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-        // ... all required vars
-      ]
-    }
-  }
-}
-```
-
-**Impact**: 🟠 **HIGH** — Runtime crashes, deployment failures, security risks
-
----
-
-## 🟡 MEDIUM PRIORITY ISSUES
-
-### 6. Architecture: No Separation Between Usage Tracking and API Boundaries
-
-**Current Pattern**: lib/usage/track.ts contains business logic that should be in API routes.
+**Status**: Not fully centralized.
 
 **Issues**:
-- Mixing service-layer with API authentication
-- Usage tracking called directly from components with service role credentials
-- Difficult to audit/monitor API calls
+- 50+ direct `process.env` references throughout codebase
+- No build-time validation
+- Missing variables only caught at runtime
+- Inconsistent naming (e.g., `STRIPE_BASIC_PRICE_ID` vs `NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID`)
 
-**Recommendation**: Move usage tracking to middleware/API:
-
+**Example problem in** app/premium/page.tsx:
 ```typescript
-// app/api/usage/track/route.ts
-export async function POST(req: NextRequest) {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  
-  const { feature } = await req.json();
-  await incrementUsage(user.id, feature);
-  
-  return NextResponse.json({ success: true });
-}
+const PRICE_IDS: Record<string, string> = {
+  basic: process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID!,
+  backyard: process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID!,
+  pitmaster: process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID!,
+};
 ```
 
-Then call from client:
-```typescript
-// Before
-import { incrementUsage } from "@/lib/usage/track";
-await incrementUsage(userId, "insights");
+**Quick Fix**: Create lib/config.ts (see previous review) and update Turbo to validate env vars at build time.
 
-// After
-const response = await fetch("/api/usage/track", {
-  method: "POST",
-  body: JSON.stringify({ feature: "insights" })
-});
-```
-
-**Impact**: 🟡 **MEDIUM** — Better security posture, easier auditing
+**Impact**: Prevents deployment failures, improves type safety.
 
 ---
 
-### 7. Type Safety: Relax Typings in Critical Code
+### 3. 🟡 TYPE SAFETY: `as any` in Webhook Handler
 
-**File**: app/api/stripe/webhook/route.ts
+**Status**: Still present.
 
+**File**: app/api/stripe/webhook/route.ts, line 31
 ```typescript
 const subscription = event.data.object as any; // relax typings
 ```
 
-**Problem**: Using `as any` defeats TypeScript's type system. The webhook handler processes subscription data without type checking.
-
-**Recommendation**: Use proper Stripe types:
-
+**Fix**: 
 ```typescript
-import Stripe from "stripe";
-
 type SubscriptionEvent = Stripe.Events.Data<Stripe.Subscription>;
+const subscription = event.data.object as SubscriptionEvent;
+```
 
-case "customer.subscription.created":
-case "customer.subscription.updated":
-case "customer.subscription.deleted": {
-  const subscription = event.data.object as SubscriptionEvent;
-  // Now TypeScript knows the shape
-  const currentPeriodStart = subscription.current_period_start;
-  // ...
+**Impact**: Prevents runtime bugs, improves maintainability.
+
+---
+
+### 4. 🟡 STRIPE WEBHOOK IDEMPOTENCY: No Duplicate Prevention
+
+**Status**: Not addressed.
+
+**Problem**: If Stripe retries a webhook, duplicates could be created in database.
+
+**Quick Fix**: Add event deduplication:
+```typescript
+// In webhook handler
+const eventId = event.id;
+const { data: existingEvent } = await supabase
+  .from("webhook_events")
+  .select("id")
+  .eq("stripe_event_id", eventId)
+  .single();
+
+if (existingEvent) {
+  return NextResponse.json({ received: true }); // Already processed
 }
 ```
 
-**Impact**: 🟡 **MEDIUM** — Prevents runtime bugs, improves maintainability
+**Impact**: Prevents subscription duplication, improves data integrity.
 
 ---
 
-### 8. API Design: Inconsistent Authentication Patterns
+### 5. 🟡 DATABASE SCHEMA TYPES: No Supabase Type Generation
 
-**Current Pattern**: Mix of header-based and cookie-based auth.
-
-**Examples**:
-- app/api/billing/create-checkout-session/route.ts — Uses Bearer token from header
-- app/api/stripe/webhook/route.ts — Uses Supabase session from cookies
-- app/api/account/delete/route.ts — Uses session from cookies
-
-**Recommendation**: Standardize on Supabase session (cookie-based via middleware):
-
-```typescript
-// All API routes should follow this pattern
-export async function POST(req: NextRequest) {
-  const supabase = await createServerClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  
-  if (error || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  
-  // user is authenticated, proceed
-}
-```
-
-**Impact**: 🟡 **MEDIUM** — Simpler, more consistent, better security
-
----
-
-### 9. Performance: Missing Code Splitting and Dynamic Imports
-
-**Current State**: No visible usage of Next.js dynamic imports or code splitting for large components.
-
-**Issue**: Page components like app/page.tsx import everything statically, bloating the initial bundle.
-
-**Recommendation**: Add dynamic imports for heavy components:
-
-```typescript
-// app/page.tsx
-import dynamic from "next/dynamic";
-
-const CookingStyleSection = dynamic(
-  () => import("@/components/CookingStyleSection"),
-  { loading: () => <div>Loading...</div> }
-);
-
-const MeatSelectionSection = dynamic(
-  () => import("@/components/MeatSelectionSection"),
-  { loading: () => <div>Loading...</div> }
-);
-```
-
-Also use Suspense for async components (Next.js 13+):
-```typescript
-import { Suspense } from "react";
-
-export default function Page() {
-  return (
-    <>
-      <Suspense fallback={<LoadingSkeleton />}>
-        <AsyncInsightsSection />
-      </Suspense>
-    </>
-  );
-}
-```
-
-**Impact**: 🟡 **MEDIUM** — Faster initial page loads, better Core Web Vitals
-
----
-
-### 10. Billing Logic: No Reconciliation or Retry Mechanism for Failed Webhooks
-
-**File**: app/api/stripe/webhook/route.ts
-
-**Issues**:
-1. No dead-letter queue for failed webhook processing
-2. No idempotency keys — if webhook retried, duplicates created
-3. No retry logic if database insert fails after signature validation
-
-**Recommendation**: Add webhook idempotency:
-
-```typescript
-// Add idempotency key tracking
-export async function POST(req: NextRequest) {
-  const sig = req.headers.get("stripe-signature");
-  // ...
-  
-  const eventId = event.id; // Stripe provides unique event ID
-  
-  // Check if we've already processed this event
-  const supabase = createClient(...);
-  const { data: existingEvent } = await supabase
-    .from("webhook_events")
-    .select("id")
-    .eq("stripe_event_id", eventId)
-    .single();
-  
-  if (existingEvent) {
-    // Already processed, return success to prevent retry
-    return NextResponse.json({ received: true });
-  }
-  
-  try {
-    // ... process webhook
-    
-    // Record successful processing
-    await supabase.from("webhook_events").insert({
-      stripe_event_id: eventId,
-      event_type: event.type,
-      processed_at: new Date().toISOString(),
-    });
-    
-    return NextResponse.json({ received: true });
-  } catch (err) {
-    // Let Stripe retry
-    console.error("Webhook processing failed:", err);
-    return NextResponse.json(
-      { error: "Processing failed" },
-      { status: 500 }
-    );
-  }
-}
-```
-
-**Impact**: 🟡 **MEDIUM** — Prevents subscription duplication, improves reliability
-
----
-
-### 11. Component Organization: Components Folder Lacks Clear Hierarchy
-
-**Current Structure**:
-```
-components/
-  account/        # ✓ Good
-  Button.tsx
-  Footer.tsx
-  gospel/         # ❌ Unclear naming
-  Input.tsx
-  Nav.tsx
-  Paywall.tsx
-  Sidebar.tsx
-```
-
-**Recommendation**: Reorganize for clarity:
-
-```
-components/
-  ui/              # Base components (Button, Input, Card)
-    Button.tsx
-    Input.tsx
-    Card.tsx
-  account/         # Account-related features
-    SettingsForm.tsx
-    BillingCard.tsx
-  insights/        # Insights visualization
-    InsightCard.tsx
-    TrendChart.tsx
-  common/          # Page-level components
-    Nav.tsx
-    Footer.tsx
-    Sidebar.tsx
-  features/        # Feature-specific components
-    CookPlanner.tsx
-    FireControl.tsx
-```
-
-Also: Break down large page components into smaller pieces.
-
-**Impact**: 🟡 **MEDIUM** — Better maintainability, easier to find code
-
----
-
-### 12. TypeScript: Missing Type Definitions for Database Responses
-
-**Current Pattern**: lib/supabase/account.ts uses proper types, but most other data fetches use implicit `any`.
-
-**Issue**: No consistent database schema types.
+**Status**: Only partial typing (account.ts has types, others don't).
 
 **Recommendation**: Generate types from Supabase schema:
-
 ```bash
 npm install --save-dev @supabase/cli
-supabase gen types typescript --schema public > types/database.ts
+supabase gen types typescript --schema public > apps/web/types/database.ts
 ```
 
-Then use throughout:
-
+Use consistently:
 ```typescript
-// types/database.ts (auto-generated)
-export type Database = {
-  public: {
-    Tables: {
-      cooks: {
-        Row: { id: string; user_id: string; ... }
-        Insert: { ... }
-        Update: { ... }
-      }
-    }
-  }
-}
-
-// Usage
 import type { Database } from "@/types/database";
-
 const supabase = createClient<Database>();
-const { data } = await supabase.from("cooks").select();
-// data is now properly typed!
+// Now data is properly typed
 ```
 
-**Impact**: 🟡 **MEDIUM** — Prevents runtime errors, better IDE support
+**Impact**: Prevents runtime errors, better IDE autocomplete.
 
 ---
 
-## 🔵 LOWER PRIORITY BUT IMPORTANT
+### 6. 🟡 MISSING CODE SPLITTING & LAZY LOADING
 
-### 13. SEO: Well Implemented, But Missing Structured Data
+**Status**: Not implemented.
 
-**Current State**: Good metadata in app/layout.tsx.
+**Issue**: Page.tsx loads all components statically, bloating initial bundle.
 
-**Recommendation**: Add JSON-LD structured data for rich search results:
-
+**Fix**: Use dynamic imports for heavy sections:
 ```typescript
-// app/layout.tsx
-import { type Metadata } from "next";
+import dynamic from "next/dynamic";
 
-export const metadata: Metadata = {
-  // ... existing metadata
-};
-
-export default function RootLayout({ children }) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "The Pit Preacher",
-    "description": "BBQ cook planner for pitmasters",
-    "url": "https://thepitpreacher.com",
-    "applicationCategory": "Productivity",
-    "offers": {
-      "@type": "Offer",
-      "price": "3.99",
-      "priceCurrency": "USD"
-    }
-  };
-
-  return (
-    <html>
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      </head>
-      {/* ... */}
-    </html>
-  );
-}
+const CookingStylesSection = dynamic(
+  () => import("@/components/CookingStylesSection"),
+  { loading: () => <div>Loading styles...</div> }
+);
 ```
 
-**Impact**: 🔵 **LOW** — Improves search visibility
+**Impact**: Faster page loads, better Core Web Vitals, improved UX.
 
 ---
 
-### 14. Mobile: Capacitor iOS Build Needs Proper Config per Environment
+### 7. 🔵 TESTING: No Visible Test Coverage
 
-**Current Issue**: Single config file doesn't support dev/prod differentiation.
+**Status**: Jest configured but no test files visible.
 
-**Recommendation**: Use environment-based build:
+**What to add**:
+1. Unit tests for critical functions (isPremium, canUseFeature)
+2. Integration tests for API routes
+3. E2E tests for billing flow
 
-```typescript
-// capacitor.config.ts
-import { CapacitorConfig } from "@capacitor/cli";
-
-const isProduction = process.env.ENVIRONMENT === "production";
-
-const config: CapacitorConfig = {
-  appId: "com.thepitpreacher.app",
-  appName: "The Pit Preacher",
-  server: {
-    url: isProduction
-      ? "https://thepitpreacher.com"
-      : "http://localhost:3000",
-    cleartext: !isProduction,
-  },
-  plugins: {
-    SplashScreen: {
-      launchAutoHide: true,
-    },
-  },
-};
-
-export default config;
-```
-
-Then build with: `ENVIRONMENT=production npx cap sync`
-
-**Impact**: 🔵 **LOW** — Better dev/prod parity
+**Impact**: Prevents regressions, increases deployment confidence.
 
 ---
 
-### 15. Logging & Monitoring: Missing Structured Logging
+### 8. 🔵 LOGGING & MONITORING: Basic Console.error() Only
 
-**Current Pattern**: Basic `console.error()` calls.
+**Status**: Not improved.
 
-**Recommendation**: Add structured logging library:
-
+**Recommendation**: Add structured logging:
 ```bash
 npm install pino
 ```
@@ -701,82 +197,430 @@ import pino from "pino";
 
 export const logger = pino({
   level: process.env.LOG_LEVEL || "info",
-  transport: {
-    target: "pino/file",
-    options: { destination: 1 }, // stdout
-  },
 });
 
 // Usage
-logger.error({ err, userId }, "Webhook processing failed");
-logger.info({ eventId, type: event.type }, "Webhook received");
+logger.error({ err, userId, cookId }, "Insights generation failed");
+logger.info({ eventId }, "Webhook processed successfully");
 ```
 
-**Impact**: 🔵 **LOW** — Better debugging and monitoring
+**Impact**: Better debugging, easier monitoring in production.
 
 ---
 
-### 16. Testing: No Visible Test Coverage
+---
 
-**Current State**: Jest configured but no test files visible.
+## FEATURE ENHANCEMENT OPPORTUNITIES
 
-**Recommendation**:
-1. Add unit tests for critical functions:
-   - lib/billing/isPremium.ts
-   - lib/gating/canUseFeature.ts
-   - Error handling utilities
-
-2. Add integration tests for API routes:
-   ```typescript
-   // __tests__/api/billing/create-checkout.test.ts
-   describe("POST /api/billing/create-checkout-session", () => {
-     it("should create checkout session for authenticated user", async () => {
-       // Test logic
-     });
-   });
-   ```
-
-3. Add E2E tests with Playwright:
-   ```typescript
-   // e2e/checkout.spec.ts
-   test("should complete billing flow", async ({ page }) => {
-     // Test Stripe checkout flow
-   });
-   ```
-
-**Impact**: 🔵 **LOW** — Prevents regressions, improves confidence in deployments
+### HIGH IMPACT: These Features Will Drive Signups & Retention
 
 ---
 
-## 📊 Priority Summary
+## 1. 🚀 **LIVE COOKING MODE** (Backyard/Pitmaster Tiers) — HIGH PRIORITY
 
-| Issue | Severity | Effort | Impact |
-|-------|----------|--------|--------|
-| Service role key exposure | 🔴 Critical | Low | Full DB access breach |
-| Capacitor cleartext config | 🔴 Critical | Low | MITM vulnerabilities |
-| Stripe webhook validation | 🔴 Critical | Low | Forged events |
-| Error handling | 🟠 High | Medium | Data leaks, poor UX |
-| Environment variables | 🟠 High | Medium | Runtime failures |
-| Usage tracking architecture | 🟡 Medium | Medium | Security + auditing |
-| Type safety (Stripe) | 🟡 Medium | Low | Runtime bugs |
-| Auth patterns | 🟡 Medium | Medium | Inconsistency |
-| Code splitting | 🟡 Medium | Low | Performance |
-| Webhook idempotency | 🟡 Medium | Medium | Data integrity |
-| Component organization | 🟡 Medium | Medium | Maintainability |
-| Database types | 🟡 Medium | High | Type safety |
-| SEO structured data | 🔵 Low | Low | Search visibility |
-| Mobile config | 🔵 Low | Low | Dev/prod parity |
-| Logging | 🔵 Low | Low | Debugging |
-| Testing | 🔵 Low | High | Reliability |
+### Problem
+Users plan a cook, then need to manually track time/temperature manually throughout. The app becomes unused *during the actual cook* — the highest-engagement moment.
+
+### Solution
+Build a **Live Cook Tracker** that runs on the cook detail page:
+
+**Core Features** (Backyard tier):
+- **Real-time timeline overlay**: Show planned timeline vs. actual elapsed time
+- **Temperature tracking**: Simple input for pit temp every 15-30 min (optional QR code or voice input for iOS app)
+- **Event markers**: User can tap to log "wrapped", "stall started", "off the pit", etc.
+- **Voice notes**: Quick voice memo capability for observations
+- **Alerts**: Notify if cook is falling behind timeline by >30 min
+- **Photo capture**: Take photos of the cook (for later review)
+
+**Enhanced** (Pitmaster tier):
+- **Predictive alerts**: "Based on current pace, you'll finish 45 minutes early—consider lowering temp"
+- **Auto-generated events**: Parse voice notes for events ("wrapped in foil" → auto-log WRAP event)
+- **Fire control score in real-time**: See how your pit management is tracking
+- **Sidebar next cook tips**: Show relevant Playbook articles based on what's happening now
+
+### Why This Works
+- Solves the actual use case (tracking live cooks)
+- Creates habit loop (users return app constantly during cook)
+- Natural upsell: "Get alerts if behind timeline" = Backyard tier paywall
+- Pittmaster tier shows predictive insights that free users can't see
+
+### Implementation
+- New page: `/cook/[id]/live` 
+- Real-time updates via Supabase subscriptions
+- Mobile-first design (smaller inputs for iOS app)
+- Estimated effort: **2-3 weeks**
 
 ---
 
-## Immediate Action Items (This Week)
+## 2. 🎯 **COOK COMPETITIONS/LEADERBOARDS** (Backyard Tier) — MODERATE PRIORITY
 
-1. **Move service role keys** out of shared libraries
-2. **Disable cleartext in Capacitor** production config
-3. **Fix Stripe webhook** sig validation
-4. **Create config.ts** for environment variables
-5. **Add error handling library** to API routes
+### Problem
+Currently no social engagement. Users cook alone. There's no achievement system or community aspect.
 
-The codebase is well-structured overall (Turbo monorepo, good component patterns, Supabase auth setup), but these security and architectural issues need addressing before scaling further.
+### Solution
+Create optional **Cook Competitions** within the app:
+
+**Features**:
+- **Weekly/Monthly challenges**: "Best brisket bark", "Fastest cook", "Most consistent temperature control"
+- **Scoring system**: Based on actual cook data (bark quality ratings, time variance, temperature stability)
+- **Leaderboards**: Leaderboard per meat type, per region, per pit type
+- **Private group competitions**: Invite friends to compete (features up to 10 people)
+- **Achievement badges**: Unlockable badges for milestones
+
+### Why This Works
+- Creates social motivation (compete with friends)
+- Increases app engagement (users come back to check scores)
+- Free tier: Can see leaderboards but can't submit cooks
+- Backyard/Pitmaster: Can compete and view detailed competition analytics
+- Natural virality: Invite friends → they need account
+
+### Implementation
+- New DB tables: `competitions`, `competition_entries`, `achievement_badges`
+- New pages: `/leaderboards`, `/competitions/[id]`, `/account/achievements`
+- Estimated effort: **2-3 weeks**
+
+---
+
+## 3. 📱 **OFFLINE MODE / MOBILE APP FIRST** (All Tiers) — HIGH PRIORITY
+
+### Problem
+Users are cooking outdoors without reliable WiFi. Current web app requires connection.
+
+### Solution
+Add **Offline-first cook tracking** using Service Workers:
+
+**Features**:
+- Pre-load cook plan, timeline, playbook articles
+- Log temperature, events, photos locally
+- Sync to server when connection restored
+- Native iOS/Android app (build from current Capacitor setup)
+
+### Why This Works
+- Solves critical use case (cooking outdoors)
+- Creates app-like behavior (no refresh needed)
+- Makes iOS/Android app feel essential, not optional
+- Free tier users can't use offline features (premium only)
+
+### Implementation
+- Add Workbox/Service Worker for caching
+- Implement queue system for offline uploads
+- Complete iOS app build (currently just configured)
+- Estimated effort: **3-4 weeks**
+
+---
+
+## 4. 🧠 **AI-POWERED "ASK THE PREACHER" IMPROVEMENTS** (Basic Tier, Enhanced Premium) — MEDIUM PRIORITY
+
+### Current State
+"Ask the Preacher" exists but is gated behind Basic tier with unlimited questions.
+
+### Enhancement Ideas
+**For Basic tier** (limited):
+- 20 questions/day (already limited)
+- Generic questions: "What's the best wood for brisket?"
+- No context about user's specific cook
+
+**For Backyard tier** (context-aware):
+- Unlimited questions
+- Questions can reference user's active cook: "Is my bark developing fast enough based on my timeline?"
+- Can ask about past cooks: "Why did my last brisket come out dry?"
+- Historical analysis: "I always have temp spikes. What am I doing wrong?"
+
+**For Pitmaster tier** (advanced):
+- Custom recipe generation based on user's pit profile
+- "Create a cook plan for competition brisket on my offset smoker"
+- Predictive cooking: "Based on your skill level (Pitmaster), optimize your timeline for this 16 lb brisket"
+- Competitive analysis: "How does your last cook compare to competition standards?"
+
+### Why This Works
+- Free users: "I can ask 1 question for free" → gets addicted → pays for Basic
+- Basic users: Want context-aware answers → upgrade to Backyard
+- Backyard users: Want AI-generated recipes and optimization → upgrade to Pitmaster
+
+### Implementation
+- Update Preacher system prompt to include cook context
+- Add cook context to API requests
+- Store conversation history (linked to cook)
+- Estimated effort: **1-2 weeks**
+
+---
+
+## 5. 📊 **COOK ANALYTICS & PERFORMANCE DASHBOARD** (Pitmaster Tier) — MEDIUM PRIORITY
+
+### Problem
+Pitmaster users can see individual cook insights, but no aggregate dashboard showing patterns over 10+ cooks.
+
+### Solution
+Add **Advanced Cook Analytics** page for Pitmaster tier:
+
+**Sections**:
+- **Performance vs. Time**: Scatter plot of cook duration vs. final quality rating
+- **Temperature stability**: Average temp variance across all cooks (trend over time)
+- **Meat type mastery**: Compare bark/moisture quality across beef/pork/chicken
+- **Pit type performance**: Which of your pits produces best results?
+- **Wood pairing analysis**: Which wood-meat combos work best for you?
+- **Seasonal trends**: Do cooks differ in summer vs. winter?
+- **Personal records**: Best bark, best moisture, fastest cook, etc.
+
+### Why This Works
+- Pitmaster-only feature creates tier differentiation
+- Shows data-driven insights they can't get elsewhere
+- Encourages continued use (track improvement over months)
+- Potential future monetization: "Export cook data for competition submission"
+
+### Implementation
+- New page: `/dashboard/analytics`
+- Use Chart.js (already in dependencies) for visualizations
+- Aggregate queries on cook_outcomes table
+- Estimated effort: **2 weeks**
+
+---
+
+## 6. 🎓 **PERSONALIZED LEARNING PATH** (Backyard/Pitmaster) — MEDIUM PRIORITY
+
+### Current State
+Playbook has 7 modules, all equally presented. Users don't know what to learn based on their goals.
+
+### Solution
+Create **Skill Trees** based on user's cooking profile:
+
+**Types**:
+- **Beginner path**: "Master the basics" (Temperature control → Time management → Wrapping strategy)
+- **Competition path**: "Prepare for competition" (Bark science → Color control → Presentation → Judging criteria)
+- **Specialty master**: "Become a brisket expert" (Meat science → Fire behavior → Troubleshooting → Timeline philosophy)
+- **Pit-specific**: "Master your offset" (Fire behavior → Pit types → Finishing moves → Troubleshooting)
+
+**Features**:
+- Recommended articles based on cooking history
+- Progress tracking (% of path completed)
+- Unlock badges for completing paths
+- Quiz/test before unlocking advanced modules
+
+### Why This Works
+- Backyard tier: Can see recommended path (drives engagement)
+- Pitmaster tier: Can unlock "advanced" paths and quizzes
+- Creates learning motivation (users want to complete paths)
+- Natural progression: Free users see paths → want Backyard to unlock recommendations
+
+### Implementation
+- New DB table: `learning_paths`, `path_progress`
+- New pages: `/playbook/paths`, `/playbook/paths/[pathId]`
+- Update Playbook to show learning progress
+- Estimated effort: **1.5 weeks**
+
+---
+
+## 7. 🏆 **RECIPE/TEMPLATE LIBRARY** (Backyard/Pitmaster) — MEDIUM PRIORITY
+
+### Problem
+Free users see "Ask the Preacher" but can't see example cook plans. Beginner friction point.
+
+### Solution
+Create **Public Recipe Library** with user-generated + official content:
+
+**Features**:
+- Official recipes: "Classic Texas Brisket (13-16 hrs)", "Competition Chicken", etc.
+- User templates: Top-rated user plans marked as public (with author credit)
+- Filtering: By meat type, pit type, cook duration, difficulty level
+- One-click import: Use a template to create a new cook, customize it
+- Fork & remix: Base cook on someone else's but modify temps/times
+
+**Monetization**:
+- Free users: View 3 recipes/month (paywall)
+- Backyard: Unlimited recipes + can publish own
+- Pitmaster: All of above + see detailed analytics on their published recipes
+
+### Why This Works
+- Solves new user problem: "What's a good cook plan?"
+- Creates community (users see other cooks' plans)
+- Viral: "I found an amazing recipe on Pit Preacher"
+- Natural upsell: "Create unlimited recipes" → Backyard tier
+
+### Implementation
+- New DB table: `recipe_templates`, `recipe_ratings`
+- New pages: `/recipes`, `/recipes/[id]`, `/recipes/create`
+- Import flow in cook creation
+- Estimated effort: **2 weeks**
+
+---
+
+## 8. 🔔 **SMART NOTIFICATIONS** (All Tiers) — QUICK WIN
+
+### Problem
+Users get no reminders or notifications. App is passive.
+
+### Solution
+Add **Contextual notifications** (use Supabase real-time + browser notifications):
+
+**Examples**:
+- "Your cook timeline suggests wrapping in 30 minutes"
+- "Your pit is 15°F hotter than your plan — adjust vents"
+- "Unusual stall detected (>3 hours) — check your wrap"
+- "Great bark development detected based on your notes"
+- "Cook finished! Time to review and log outcome"
+- Daily: "You have a cook planned for tomorrow at 6 AM — prep checklist ready?"
+
+**Monetization**:
+- Free: Generic notifications only
+- Backyard+: Pit-specific, predictive alerts
+- Pitmaster: All of above + custom notification rules
+
+### Implementation
+- Use Supabase real-time for cook event subscriptions
+- Browser notifications API (easy to implement)
+- Optional push notifications for iOS app
+- Estimated effort: **5-7 days**
+
+---
+
+## 9. 📸 **COOK PHOTO JOURNAL** (Backyard Tier) — QUICK WIN
+
+### Problem
+Users want to document cooks visually (bark color, meat appearance, final sliced product) but have no system for it.
+
+### Solution
+Add **Photo timeline** to cook details:
+
+**Features**:
+- Upload photos at any point (before, during, after)
+- Auto-tag photos by time (e.g., "6:00 AM - Pre-cook", "12:30 PM - Wrapped")
+- Timeline view: Photos + events + notes in chronological order
+- Export as PDF cook report: Photos + timeline + ratings + notes
+- Gallery: All cook photos in user dashboard for browsing
+
+**Monetization**:
+- Free: No photos
+- Backyard: 10 photos/cook
+- Pitmaster: Unlimited photos + PDF export
+
+### Implementation
+- Use Supabase storage for images
+- New component: PhotoUploadWidget, PhotoTimeline
+- New page: `/cook/[id]/photos`
+- Estimated effort: **1 week**
+
+---
+
+## 10. 🌐 **COMMUNITY FEATURES** (Pitmaster Tier) — LONGER TERM
+
+### Ideas (in priority order):
+
+1. **Cook feed**: Follow other Pitmaster users, see their recent cooks, comment/react
+2. **Private teams**: Create teams for cook clubs, family competitions
+3. **Live cook watching**: Spectate someone's live cook in real-time
+4. **Expert directory**: Verified competition cooks available for consulting/mentorship
+5. **Forum/Q&A**: Community-driven questions (moderated by admins)
+
+### Why This Works
+- Pitmaster-exclusive creates subscription stickiness
+- Reduces churn (friends are using it too)
+- Potential future monetization: "Expert consultation" marketplace
+
+### Implementation: Future (3+ months out)
+
+---
+
+---
+
+## PRICING TIER SUMMARY: How Enhancements Drive Monetization
+
+```
+FREE TIER
+├─ 3 cooks/month
+├─ Basic Playbook (meat science only)
+├─ Ask Preacher: 3 questions/month
+├─ View leaderboards (not eligible to join)
+├─ View public recipes (3/month)
+└─ Static cook planning
+
+BASIC TIER ($3.99/mo)
+├─ Unlimited cooks
+├─ Full Playbook (all modules)
+├─ Ask Preacher: Unlimited questions
+├─ Leaderboard participation
+├─ Can publish recipes
+├─ Smart notifications (basic)
+└─ Live cook mode (basic tracking)
+
+BACKYARD TIER ($7.99/mo)
+├─ Everything in Basic
+├─ Live cook mode + alerts
+├─ Pit Rescue (emergency troubleshooting)
+├─ Context-aware Ask Preacher (references your cooks)
+├─ Photo timeline (10 photos/cook)
+├─ Private team competitions
+├─ Smart notifications (pit-specific)
+├─ Learn Path recommendations
+└─ Offline mode (cook tracking)
+
+PITMASTER TIER ($11.99/mo)
+├─ Everything in Backyard
+├─ Advanced Cook Analytics Dashboard
+├─ Predictive insights (real-time during cook)
+├─ Unlimited photo storage + PDF export
+├─ AI-generated recipe optimization
+├─ Competition analysis tools
+├─ Community features (follow cooks, feed)
+├─ Ask Preacher (with recipe generation)
+└─ Full offline + sync
+```
+
+---
+
+## QUICK WINS (Can ship this week)
+
+1. **Improve error handling** in API routes (1-2 days)
+2. **Add smart notifications** (3-4 days)
+3. **Simple photo upload to cooks** (3-4 days)
+4. **Fix Stripe webhook idempotency** (1 day)
+5. **Centralize env config** (2-3 days)
+
+**Expected impact**: Reduces friction, improves user experience, prevents bugs.
+
+---
+
+## MEDIUM-TERM ROADMAP (Next 4-6 weeks)
+
+1. **Live Cooking Mode** (highest impact for engagement)
+2. **Offline mode** (critical for outdoor use)
+3. **Cook Analytics Dashboard** (Pitmaster tier differentiation)
+4. **Leaderboards/Competitions** (social engagement)
+5. **Recipe Library** (solves beginner problem)
+
+**Expected impact**: Higher retention, higher ARPU (average revenue per user), word-of-mouth growth.
+
+---
+
+## ARCHITECTURE IMPROVEMENTS STILL NEEDED
+
+These don't add user value but reduce technical debt:
+
+1. ✅ Centralize environment variables (started)
+2. ⚠️ Improve error handling across all APIs (in progress)
+3. ⚠️ Add Supabase type generation (not done)
+4. ⚠️ Implement webhook idempotency (not done)
+5. ⚠️ Add code splitting for bundle optimization (not done)
+6. ⚠️ Set up structured logging (not done)
+7. ⚠️ Add test coverage (not done)
+
+**Recommendation**: Pick #2, #4, #6 this sprint (3-5 days total effort).
+
+---
+
+## SUMMARY
+
+**Current State**: App has solid foundation with good feature set. Missing engagement loops and offline capability.
+
+**Biggest Gaps**:
+- Users can't track cooks in real-time (app is only useful for planning)
+- No social/community elements
+- No offline capability (critical for outdoor cooking)
+- Limited analytics for advanced users
+
+**Highest ROI Improvements**:
+1. **Live Cook Mode** — Gets users to use app during actual cook
+2. **Offline Capability** — Removes WiFi friction point
+3. **Better Analytics** — Makes Pitmaster tier sticky
+4. **Community Features** — Reduces churn, enables growth
+
+**Recommendation**: Build live cook mode first (2-3 weeks), then offline mode (2 weeks), then leaderboards (1 week). These three features alone would likely 2-3x engagement and conversion rates.

@@ -50,7 +50,7 @@ const PreacherRequestSchema = z.object({
   message: z.string().min(1, "message must not be empty"),
   cookId: z.string().nullable().optional(),
   cookContext: CookContextSchema,
-  imageBase64: z.string().nullish(),
+  imageBase64: z.string().max(2_000_000).nullish(),
 });
 
 type PlanTool = z.infer<typeof PlanToolSchema>;

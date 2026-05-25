@@ -188,7 +188,12 @@ export default function SummaryPage({ params }: { params: Promise<{ id: string }
     setUserTier(subData?.tier ?? "free");
 
     const { data: cookData } = await supabase
-      .from("cooks").select("*").eq("id", cookId).single();
+      .from("cooks").select("*").eq("id", cookId).eq("user_id", user.id).single();
+
+    if (!cookData) {
+      window.location.href = "/dashboard";
+      return;
+    }
 
     const [itemsResult, eventsResult, logResult, outcomeResult, trackerNotesResult] = await Promise.all([
       supabase.from("cook_items").select("*").eq("cook_id", cookId),

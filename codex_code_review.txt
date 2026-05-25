@@ -1,519 +1,78 @@
-Comprehensive Code Review - The Pit Preacher
-Reviewed: 2026-05-24
-
-Executive summary
-This is a production-facing Next.js 16 + Supabase + Stripe application in a Turborepo. The product surface is broad and useful, but the implementation currently has several release-blocking risks: billing state is split across two incompatible Stripe implementations, some cook subpages read or mutate cook-owned rows without consistently scoping by user_id, the build/type check is failing, Supabase database types and migrations are absent from the repo, and API validation/error handling are uneven. The highest-impact work is to consolidate billing, enforce ownership and RLS assumptions everywhere, add generated database types plus schema migrations, and introduce a typed validation layer for API/server actions.
-
-Impact priority legend
-Critical: can break production, billing, auth, privacy, or deploys.
-High: likely bugs, data integrity issues, performance/cost risk, or hard-to-debug production failures.
-Medium: maintainability, UX, SEO, mobile, and reliability improvements.
-Low: polish and cleanup.
+Code Review Assessment
 
-1. Architecture and folder structure
-
-Critical - The app has duplicate billing stacks with different routes and database tables.
-Files:
-- apps/web/app/api/checkout/route.ts:41 writes subscriptions.
-- apps/web/app/api/webhook/route.ts:48-119 updates subscriptions.
-- apps/web/app/api/billing/create-checkout-session/route.ts:35-53 writes stripe_customers.
-- apps/web/app/api/stripe/webhook/route.ts:41-59 writes stripe_customers/stripe_subscriptions.
-- apps/web/lib/premium.ts:16 reads subscriptions.
-- apps/web/lib/billing/isPremium.ts:10 reads stripe_subscriptions.
+I did another review pass. I agree the truly critical areas look much better, but I would not call the app "clean" yet. What is left is mostly medium-risk hardening and conversion polish.
 
-Issue:
-There are two sources of truth for subscription state. Some gating reads subscriptions while newer helper code reads stripe_subscriptions. A user can pay successfully through one route and still be treated as free by another feature. Conversely, stale data can keep premium access after cancellation.
+Findings
 
-Recommendation:
-Pick one billing domain model. I recommend stripe_customers + stripe_subscriptions with a derived entitlement view or function. Delete /api/checkout and /api/webhook after migrating callers, or route them internally to the single implementation. Replace getTier/isPremium with one shared server-only billing module and one database view such as active_user_entitlements.
+1. Medium: some cook subpages still rely too heavily on RLS instead of app-level ownership checks.
 
-High - Folder structure mixes product code, generated/native app output, stale docs, temp files, and prior review artifacts.
-Files:
-- temp/*
-- apps/web/app.zip.txt.zip
-- apps/web/www/index.html
-- Claude_Code_Review.txt
-- copilot_COMPREHENSIVE_CODE_REVIEW.md
-- apps/docs default scaffold
-- apps/web/ios/*
-
-Issue:
-The repo contains temporary files, an empty Capacitor web output, prior review artifacts, and what appears to be scaffold code. This makes it harder to identify deployable source, increases accidental commits, and obscures ownership boundaries.
-
-Recommendation:
-Add a repo hygiene pass: remove temp artifacts from source control unless they are deliberate fixtures, move review docs under docs/reviews if they must stay, document whether apps/docs is production documentation or scaffold, and add ignore rules for generated Capacitor/web build outputs. Keep ios checked in only if native project changes are intentionally managed in this repo.
+apps/web/app/cook/[id]/events/page.tsx loads cooks, cook_events, and cook_logs by cookId only.
 
-High - Supabase schema/migrations are not present.
-Files:
-- No supabase/ directory or migration files found.
-- apps/web/lib/supabase/account.ts references profiles, user_preferences, pits, cook_history_view.
-- apps/web/app/api/* references cooks, cook_events, cook_outcomes, stripe_subscriptions, subscriptions, usage_events, daily_usage, api_rate_limits.
-
-Issue:
-The application depends heavily on database shape, RPCs, views, and RLS, but the schema is not versioned in the repo. Production behavior cannot be reproduced, reviewed, or safely migrated from this codebase alone.
-
-Recommendation:
-Add Supabase CLI migrations under supabase/migrations, commit RLS policies, table/view/RPC definitions, and generate TypeScript Database types from the live schema. Include a seed or fixture strategy for local dev.
-
-2. Code quality and patterns
-
-Critical - The web build/type check is failing.
-Files:
-- apps/web-build-output.txt shows the failure.
-- apps/web/app/account/actions.ts:67 fails because payload is inferred with units/preacher_voice_mode as string.
-
-Issue:
-The saved build output shows Next compiled, then failed TypeScript with: units string is not assignable to TemperatureUnit. My live npm.cmd run check-types also exited non-zero, though Turbo did not emit details in this shell.
-
-Recommendation:
-Fix the immediate type error by explicitly typing the settings payload as Partial<SettingsFormData> or SettingsFormData in updateSettingsAction. Then make CI run npm run lint and npm run check-types on every PR. Consider removing eslint-plugin-only-warn because the package script uses --max-warnings 0 but the plugin downgrades many rule failures to warnings.
-
-High - Encoding corruption appears throughout user-facing strings.
-Files:
-- apps/web/app/layout.tsx:22 contains "The Pit Preacher â€”".
-- apps/web/app/auth/login/page.tsx and many app pages display mojibake such as â€” / Â· / Ã—.
-- build-output.txt and apps/web-build-output.txt also show corrupted symbols.
-
-Issue:
-The source contains UTF-8 punctuation that is being read or committed with the wrong encoding. This is visible to users and affects brand quality, SEO snippets, and copy clarity.
-
-Recommendation:
-Normalize files to UTF-8 without BOM and replace corrupted sequences. Add an editorconfig with charset = utf-8 and run a one-time content sweep. Prefer plain ASCII punctuation in source unless typography is intentional and verified.
-
-High - Business logic is embedded in large client components and API routes.
-Files:
-- apps/web/app/api/preacher/route.ts is a large route containing prompt construction, rate limiting, Anthropic calls, event parsing, and gating.
-- apps/web/app/cook/[id]/live/page.tsx handles image compression, chat state, event insertion, cook loading, prompt suggestions, and tier logic.
-- apps/web/app/cook/[id]/page.tsx handles cook loading, plan generation, editing, completion, and plan cache mutation.
+apps/web/app/cook/[id]/summary/page.tsx does the same for cook, items, events, logs, outcomes, and tracker notes. Updates/inserts later also only key by cookId or cookLog.id. If RLS is perfect, this is contained; still, the rest of the app has started adding .eq("user_id", user.id), so these should match that pattern.
 
-Issue:
-Large multi-responsibility files make it harder to test edge cases and to reuse logic safely.
-
-Recommendation:
-Split into domain modules: preacher/promptBuilders.ts, preacher/rateLimit.ts, preacher/anthropicClient.ts, cooks/repository.ts, cooks/events.ts, billing/entitlements.ts. Keep route handlers thin: authenticate, validate input, call service, map errors.
-
-3. Performance optimizations
+2. Medium: usage tracking looks wired but not actually used.
 
-High - Dashboard mutates stale cooks during page render and performs per-cook count queries.
-Files:
-- apps/web/app/dashboard/page.tsx:235-249 loops through all cooks, counts recent events per stale cook, then updates status during render.
+incrementUsage is defined but never referenced, and canUseFeature is also unused. The current Preacher limit is enforced separately by counting cook_events, so the daily_usage system is effectively dead code.
 
-Issue:
-This produces N+1 database calls and causes writes during a page request. Rendering the dashboard can become slow as cook history grows and can create unexpected side effects.
-
-Recommendation:
-Move stale cook archival into a scheduled job, Supabase Edge Function, or database function. For display, query active/in-progress cooks separately and aggregate recent event counts in one grouped query or view.
-
-High - Preacher chat sends multiple AI calls per user message.
-Files:
-- apps/web/app/cook/[id]/live/page.tsx:335-394 sends the main /api/preacher request, stores events, then sends another /api/preacher request for suggested prompts.
-- apps/web/app/api/preacher/route.ts:457-470 calls Anthropic for each request.
+Relevant files:
+- apps/web/lib/usage/track.ts
+- apps/web/lib/gating/canUseFeature.ts
 
-Issue:
-Each chat turn can trigger two model calls, which doubles latency and cost. Suggested prompts are helpful but should not block core chat or consume the same expensive route path by default.
-
-Recommendation:
-Have the main model return optional suggested prompts in the same response, or generate suggestions only after idle/debounce. Cache opening messages and plans. Add timeout/retry handling around Anthropic calls.
+3. Medium: /api/usage likely always returns unauthorized.
 
-Medium - Images are base64 encoded in memory before upload to the API.
-Files:
-- apps/web/app/cook/[id]/live/page.tsx:112-136 compresses to base64 using canvas.
-- apps/web/app/api/preacher/route.ts:450-455 embeds base64 directly into Anthropic request.
+apps/web/app/api/usage/route.ts creates a Supabase service client and calls auth.getUser() without passing a bearer token or using the cookie-aware server client. The client hook calls /api/usage?feature=... without an auth header, so this endpoint probably cannot identify the user.
 
-Issue:
-Base64 increases payload size by roughly one third and can hit route/body limits on mobile. The client also leaks object URLs unless revoked.
+Relevant files:
+- apps/web/app/api/usage/route.ts
+- apps/web/hooks/useUsage.ts
 
-Recommendation:
-Use Blob/FormData upload or store images temporarily in Supabase Storage and pass a signed URL where supported. Revoke URL.createObjectURL previews after use.
+4. Medium: billing entitlement logic is inconsistent for trialing and past_due.
 
-4. Security vulnerabilities or concerns
+The webhook can store trialing and past_due, but getTier only accepts status = active. Meanwhile apps/web/lib/billing/isPremium.ts treats trialing as premium. That can make a trialing user premium in one path and free in another.
 
-Critical - Several cook-owned reads/mutations are not explicitly scoped by user_id.
-Files:
-- apps/web/app/cook/[id]/events/page.tsx:182 reads cooks by id only.
-- apps/web/app/cook/[id]/events/page.tsx:184-188 reads cook_events and cook_logs by cook_id only.
-- apps/web/app/cook/[id]/page.tsx:228-229 updates cook plan by id only.
-- apps/web/app/cook/[id]/page.tsx:263 updates cook details by id only.
-- apps/web/app/cook/[id]/page.tsx:274-275 completes cook by id only.
-- apps/web/app/cook/[id]/page.tsx:288-289 updates plan by id only.
-- apps/web/app/cook/[id]/live/page.tsx:376-429 inserts cook_events with only cook_id.
+Relevant files:
+- apps/web/app/api/webhook/route.ts
+- apps/web/lib/premium.ts
+- apps/web/lib/billing/isPremium.ts
 
-Issue:
-If RLS is perfect, some operations may still be blocked. If RLS is missing or loosened, this becomes cross-user data exposure or mutation. Client-side Supabase calls should still filter through user-owned cook IDs and writes should be mediated by server-side ownership checks for important mutations.
+5. Low/Medium: checkout accepts arbitrary Stripe price IDs from the client.
 
-Recommendation:
-For reads, fetch cook by id and user_id first, then use owned cook IDs for related tables. For writes, move cook mutation/event insertion into server actions or API routes that verify auth and cook ownership. Keep RLS as the hard backstop, not the only visible ownership check.
+apps/web/app/api/billing/create-checkout-session/route.ts only validates that priceId is a non-empty string, then passes it to Stripe. Since the UI sends public env price IDs, the server should whitelist exactly the allowed monthly/annual IDs.
 
-High - Service-role Supabase clients are used directly inside routes without a shared admin wrapper or strict validation.
-Files:
-- apps/web/app/api/billing/create-checkout-session/route.ts:23-24.
-- apps/web/app/api/billing/portal/route.ts:17-18.
-- apps/web/app/api/usage/route.ts:8-10.
-- apps/web/app/api/preacher/route.ts:145-146.
-- apps/web/lib/usage/track.ts:7-10 and 22-25.
-- apps/web/lib/billing/isPremium.ts:4-7.
+6. Low: old /api/checkout is now duplicate billing plumbing.
 
-Issue:
-The service role bypasses RLS. That is appropriate for webhooks and internal billing jobs, but dangerous when combined with unvalidated request data or inconsistent auth extraction.
+It is not referenced by the UI, but it writes directly to subscriptions while the newer flow uses stripe_customers plus webhooks. Remove or clearly deprecate it before launch to avoid future drift.
 
-Recommendation:
-Create a server-only createAdminClient() module with import "server-only", never expose it to client bundles, and use it only after request auth and input validation. Add lint rules or code review checks for SUPABASE_SERVICE_ROLE_KEY usage.
+Verification
 
-High - /api/usage authentication is broken or incomplete.
-Files:
-- apps/web/app/api/usage/route.ts:8-15 creates a service-role client, then calls supabase.auth.getUser() without passing the browser access token.
-- apps/web/hooks/useUsage.ts:31 calls fetch(`/api/usage?feature=${feature}`) without Authorization.
+npm.cmd exec tsc -- --noEmit passed inside apps/web.
 
-Issue:
-With supabase-js service-role createClient, getUser() without a bearer token will not authenticate the browser user. This route likely returns 401 for legitimate users, or at minimum is not using the intended auth model.
+Root npm run check-types failed under PowerShell script policy when called as npm. npm.cmd run check-types exited with no useful Turbo detail, but the app-level type check passed.
 
-Recommendation:
-Use createServerClient() with cookies in /api/usage, or pass the Supabase access token from the client and call getUser(accessToken). Also validate feature before passing feature!.
+Paid Conversion Ideas
 
-Medium - Redirect URLs are built from NEXT_PUBLIC_SITE_URL and request query data without a central allowlist.
-Files:
-- apps/web/middleware.ts:36 redirects to /auth/login?redirectTo=pathname.
-- apps/web/app/auth/callback/route.ts:14-20 redirects to NEXT_PUBLIC_SITE_URL/dashboard.
-- apps/web/app/auth/login/page.tsx:100 and 116 use NEXT_PUBLIC_SITE_URL for OAuth/reset.
+The strongest upgrade path is already visible: users get coached during a real cook, then see what premium would have known afterward. Lean into that.
 
-Issue:
-Current code mostly uses pathnames, but the pattern should be centralized before redirectTo is consumed elsewhere. Misconfigured public site URLs can break auth flows across web/native.
+1. Make the post-cook summary the main upsell moment.
 
-Recommendation:
-Create a getAppUrl() helper and a safeRedirectPath() helper that only permits same-origin paths. Use it for OAuth, recovery, checkout, and post-login redirects.
+After a free cook, show blurred/teased Confidence Score, Fire Control Score, Next Cook Strategy, and What the Preacher learned about your pit. This matches the user's emotional peak: they just finished and want to improve.
 
-5. Database schema and Supabase usage
+2. Add a Cook Replay timeline for paid users.
 
-Critical - No generated database types are used.
-Files:
-- apps/web/lib/supabase.ts, apps/web/lib/supabase-server.ts create untyped clients.
-- Many files cast data to any or local interfaces, such as apps/web/app/dashboard/page.tsx:217-230 and apps/web/app/api/insights/route.ts:71-72.
+Competitors and BBQ log apps commonly emphasize time/temp charts, cook logs, photos, and notes. Your version can be more distinctive: "Here is where you lost time. Here is where the bark set. Here is what to do next time."
 
-Issue:
-The app relies on table names and column names as strings with no compile-time schema checking. This is already contributing to inconsistent profile fields and subscription table usage.
+3. Add photo-based bark/readiness checks as a Backyard/Pitmaster hook.
 
-Recommendation:
-Generate Supabase Database types and pass Database to createBrowserClient/createServerClient/createClient. Replace local row guesses with Database["public"]["Tables"]["..."]["Row"] and typed views/RPCs.
+The code already supports image upload for higher tiers. Make that front-and-center: "Send a photo. Get bark, moisture, wrap, and pull advice." This is visceral and easy to understand.
 
-High - Signup inserts profile data with inconsistent key shape.
-Files:
-- apps/web/app/auth/login/page.tsx:186-190 inserts profiles with id, display_name, home_region, profile_complete.
-- apps/web/lib/supabase/account.ts:17-19 queries profiles by user_id.
-- apps/web/types/account.ts Profile requires both id and user_id.
+4. Offer annual plans visibly on /premium.
 
-Issue:
-The signup insert does not include user_id, but the rest of the app queries profiles.user_id. This can make newly created profiles invisible unless a trigger fills user_id or id doubles as user_id. That assumption is not documented in migrations.
+The billing page has annual price IDs, but the pricing page only shows monthly. Annual plans are an easy revenue lift if positioned as "one season of cooks."
 
-Recommendation:
-Make profile creation server-side and explicit. Insert user_id: userId unless a database trigger owns this. Document the profile primary key strategy in migrations and generated types.
+5. Add a Next Cook Strategy Card preview to every completed free cook.
 
-High - Pit limit/default updates are race-prone.
-Files:
-- apps/web/lib/supabase/account.ts:74-99 checks pit count then inserts.
-- apps/web/lib/supabase/account.ts:90-93 and 110-113 clear default pit before setting another default.
+Product-led growth works best when upgrade prompts are tied to value moments and product usage signals, not generic paywalls. The best prompt here is specific: "Your last brisket finished 90 minutes late. Pitmaster can build your next timeline from that history."
 
-Issue:
-Two concurrent requests can both pass the count check and exceed the 3-pit limit. Clearing defaults and setting a new default are not transactional, so a failure can leave no default.
+Priority
 
-Recommendation:
-Enforce pit count and single default in the database with constraints/triggers or RPCs. Use a transaction/RPC such as create_pit_for_user(...) and set_default_pit(...).
-
-6. API route design and efficiency
-
-Critical - API request bodies are largely unvalidated.
-Files:
-- apps/web/app/api/checkout/route.ts:27 reads body.tier.
-- apps/web/app/api/billing/create-checkout-session/route.ts:8 reads priceId.
-- apps/web/app/api/preacher/route.ts:204 reads message, cookId, cookContext, imageBase64.
-- apps/web/app/api/insights/route.ts:10-14 uses cookId query parameter.
-
-Issue:
-The app already depends on zod, but API routes accept arbitrary JSON and then assume shape. This can produce 500s, unexpected expensive AI calls, or invalid DB writes.
-
-Recommendation:
-Add zod schemas per route. Validate body and query params before using them. For billing, never accept arbitrary priceId from the client; accept a plan enum and resolve price IDs server-side.
-
-High - Preacher rate limiting fails open.
-Files:
-- apps/web/app/api/preacher/route.ts:199 catches rate-limit errors, logs them, and returns true.
-
-Issue:
-If the rate limit table is unavailable or an update fails, the route allows unlimited expensive model calls.
-
-Recommendation:
-Fail closed or degrade to a small in-memory/IP limit when the DB limiter errors. Use atomic database increments or upsert with conflict handling to avoid lost updates.
-
-High - Internal server-to-self fetches add latency and can fail in deployments.
-Files:
-- apps/web/lib/insights/generateNextCookStrategy.ts:79-80 fetches `${siteUrl}/api/insights`.
-- apps/web/app/cook/[id]/plan/page.tsx:250-251 fetches `${siteUrl}/api/preacher`.
-
-Issue:
-Calling your own HTTP API from server code adds network overhead and can break when NEXT_PUBLIC_SITE_URL is unset or points to production from preview environments.
-
-Recommendation:
-Extract shared service functions and call them directly from routes/server components. Reserve HTTP fetch for browser-to-server boundaries.
-
-7. Authentication and authorization
-
-Critical - Middleware protects pages but not all data mutations, and client pages still need robust ownership checks.
-Files:
-- apps/web/middleware.ts:5-10 protects /dashboard, /cook, /account, /setup, /preacher.
-- apps/web/app/cook/[id]/events/page.tsx:182-188 lacks user_id filters.
-- apps/web/app/cook/[id]/live/page.tsx:376-429 inserts events client-side.
-
-Issue:
-Middleware only controls route access. It does not prove ownership of cook IDs or related rows. Client-side Supabase mutations are only as safe as RLS.
-
-Recommendation:
-Keep middleware for UX redirects, but enforce authz in server APIs/actions and RLS. Add tests for cross-user cook access attempts.
-
-High - Auth helper usage is duplicated and partially stale.
-Files:
-- apps/web/package.json includes @supabase/auth-helpers-nextjs and @supabase/ssr.
-- apps/web/lib/supabase-middleware.ts defines updateSession but apps/web/middleware.ts implements separate logic.
-
-Issue:
-Two middleware/session refresh implementations invite drift, and auth-helpers-nextjs is no longer the preferred package when @supabase/ssr is already used.
-
-Recommendation:
-Remove unused auth helper dependency if not needed. Use one updateSession implementation from @supabase/ssr and call it from the Next middleware/proxy entry.
-
-8. Stripe integration and billing logic
-
-Critical - Billing client accepts arbitrary priceId.
-Files:
-- apps/web/app/account/billing/page.tsx:127 posts priceId.
-- apps/web/app/premium/page.tsx:106 posts priceId.
-- apps/web/app/api/billing/create-checkout-session/route.ts:8-15 accepts priceId directly.
-
-Issue:
-Anyone can post any Stripe price ID to the route. Even if the price belongs to your account, the app might assign an entitlement you did not intend if webhook mapping/gating is loose.
-
-Recommendation:
-Client should send plan and interval only. Server should map that enum to an allowed STRIPE_PRICE_* env var and persist entitlement based on that known mapping.
-
-Critical - Incompatible env variable names are used for Stripe prices.
-Files:
-- turbo.json lists STRIPE_PRICE_BASIC_MONTHLY and related STRIPE_PRICE_* names.
-- apps/web/app/api/checkout/route.ts:14-16 expects STRIPE_BASIC_PRICE_ID, STRIPE_BACKYARD_PRICE_ID, STRIPE_PITMASTER_PRICE_ID.
-- apps/web/app/premium/page.tsx:67-69 expects NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID, etc.
-- apps/web/app/account/billing/page.tsx:43-79 expects several NEXT_PUBLIC_STRIPE_* names.
-
-Issue:
-The build cache/env declaration and runtime code do not agree. This can silently disable checkout or expose wrong plan options.
-
-Recommendation:
-Create a single billing config module that validates all required env vars at startup. Align turbo.json with real env names. Prefer server-only price IDs and public display metadata from code/config, not public env.
-
-High - Webhook handling lacks idempotency/event audit.
-Files:
-- apps/web/app/api/webhook/route.ts and apps/web/app/api/stripe/webhook/route.ts.
-
-Issue:
-Stripe can retry events. The code upserts subscription state but does not persist processed event IDs, record webhook failures, or handle checkout.session.completed in the newer /api/stripe/webhook path.
-
-Recommendation:
-Create stripe_webhook_events table with event_id unique, received_at, processed_at, error. Process idempotently and alert on failures. Handle checkout.session.completed if customer mapping is created at checkout time.
-
-9. Frontend component structure and reusability
-
-High - Inline styles dominate the UI and component reuse is thin.
-Files:
-- apps/web/app/auth/login/page.tsx contains a large inline-styled multi-step auth form.
-- apps/web/app/cook/[id]/summary/page.tsx is very large with repeated card/stat/list styles.
-- apps/web/components/ui/shared.tsx has some reusable primitives but is not consistently used.
-
-Issue:
-Inline styles make responsive behavior, visual consistency, accessibility states, and theme maintenance harder. Repeated sticky nav and card patterns are copied across cook pages.
-
-Recommendation:
-Create shared layout primitives: CookShell, CookBottomNav, Card, StatRow, EmptyState, PaywallOverlay, FormField. Move style constants into component modules or CSS modules. Use Tailwind or CSS modules consistently rather than one-off inline objects.
-
-Medium - Some pages that could be server components are marked client because data fetching and mutation are mixed.
-Files:
-- apps/web/app/cook/[id]/page.tsx.
-- apps/web/app/cook/[id]/events/page.tsx.
-- apps/web/app/cook/[id]/live/page.tsx.
-
-Issue:
-This increases client JavaScript and shifts database logic into the browser.
-
-Recommendation:
-Use server components for initial data load and client components only for interactive sections. Server actions/API routes should perform writes.
-
-10. TypeScript usage and type safety
-
-Critical - any is pervasive in database and insight logic.
-Files:
-- apps/web/app/dashboard/page.tsx:217-230.
-- apps/web/app/api/insights/route.ts:71-72 and many filters.
-- apps/web/lib/insights/generateTrends.ts and generatePitProfile.ts contain many any casts.
-- apps/web/app/cook/[id]/timeline/engine.ts:31-52 accepts any.
-
-Issue:
-With heavy data logic, any removes the main safety benefit of TypeScript. Changes to schema or JSON plan shape can silently break production.
-
-Recommendation:
-Introduce generated Supabase types, Zod schemas for JSON plan/cookContext, and typed domain DTOs. Make no-explicit-any a warning initially, then an error for app/api and lib.
-
-High - Environment variables are non-null asserted everywhere.
-Files:
-- apps/web/lib/supabase.ts:5-6.
-- apps/web/lib/supabase-server.ts:8-9.
-- apps/web/app/api/preacher/route.ts:461-465.
-- apps/web/app/api/stripe/webhook/route.ts:8 and 20.
-
-Issue:
-Missing env vars become runtime crashes in arbitrary code paths rather than clear startup/config errors.
-
-Recommendation:
-Add apps/web/lib/env.ts with zod validation. Split public, server, stripe, anthropic, and supabase env schemas. Import validated env instead of process.env.*!.
-
-11. Error handling throughout the codebase
-
-High - Many Supabase errors are ignored or collapsed to empty data.
-Files:
-- apps/web/lib/supabase/account.ts:20, 43, 68 return null/[] on errors.
-- apps/web/app/api/insights/route.ts:47-53 ignores query errors.
-- apps/web/app/cook/[id]/page.tsx:141 reads subscription with .single() but ignores error.
-
-Issue:
-Auth failures, schema mismatches, RLS denials, and missing rows become indistinguishable. This hides production bugs and can show misleading empty states.
-
-Recommendation:
-Create typed error helpers. Distinguish not_found from permission_denied from internal_error. Log server-side with context and return stable user-safe messages.
-
-High - Anthropic response parsing is fragile.
-Files:
-- apps/web/app/api/preacher/route.ts:480-486 tries JSON.parse(replyText) then falls back to raw text.
-- apps/web/app/cook/[id]/live/page.tsx:283-285 parses opening message JSON.
-- apps/web/app/cook/[id]/live/page.tsx:399-403 parses suggested prompts JSON.
-
-Issue:
-When JSON parsing fails, event logging silently degrades and UI suggestions disappear. The API relies on prompt instructions rather than schema-enforced model output.
-
-Recommendation:
-Use a schema validator on model output and repair/retry once with a small JSON-fix prompt if needed. Consider Anthropic tool use or structured output patterns instead of free text JSON.
-
-12. Mobile responsiveness and Capacitor setup
-
-High - Capacitor config points the native app at the production website and allows cleartext.
-Files:
-- apps/web/capacitor.config.ts:5-8 uses server.url = https://thepitpreacher.com and cleartext: true.
-- apps/web/www/index.html is empty.
-
-Issue:
-This is not a packaged offline-capable app; it is a native shell around production web. cleartext true is unnecessary for HTTPS production and weakens security posture.
-
-Recommendation:
-Decide between hosted-web shell and packaged static app. If hosted shell is intentional, set cleartext false, configure deep links, auth callback URLs, Stripe return flows, and iOS associated domains. If packaged, generate webDir output and remove server.url for production.
-
-Medium - Fixed/sticky mobile layouts are likely fragile.
-Files:
-- apps/web/app/cook/[id]/live/page.tsx uses height: calc(100vh - 64px), fixed bottom nav, and input bars.
-- apps/web/app/cook/[id]/page.tsx and events/page.tsx have repeated fixed bottom navs.
-
-Issue:
-Mobile browsers and Capacitor WebViews need safe-area insets and dynamic viewport units. Fixed bars can overlap inputs and content on iOS.
-
-Recommendation:
-Use 100dvh, env(safe-area-inset-bottom), a shared CookBottomNav, and test in iOS simulator. Add padding-bottom equal to nav/input height plus safe area.
-
-13. SEO and metadata
-
-High - Root metadata contains corrupted punctuation and relative OpenGraph image URLs.
-Files:
-- apps/web/app/layout.tsx:21-43.
-
-Issue:
-The title/description contain mojibake. OpenGraph images use /logo.jpeg, which may not resolve as an absolute URL in all crawlers unless metadataBase is set.
-
-Recommendation:
-Fix encoding and set metadataBase to the production URL. Use absolute OG/Twitter images or rely on metadataBase. Add canonical alternates for key public pages.
-
-Medium - robots/sitemap can generate invalid empty-base URLs.
-Files:
-- apps/web/app/robots.ts:4 and 12.
-- apps/web/app/sitemap.ts:34 and route mapping.
-
-Issue:
-If NEXT_PUBLIC_SITE_URL is missing, sitemap URLs become relative/invalid for sitemap consumers.
-
-Recommendation:
-Require SITE_URL through env validation for production builds. Use a server-only SITE_URL env, not NEXT_PUBLIC_ unless it is needed in the browser.
-
-14. Environment variable usage and security
-
-Critical - Env naming is inconsistent and public env is overused for billing.
-Files:
-- turbo.json env block.
-- apps/web/app/premium/page.tsx:67-69.
-- apps/web/app/account/billing/page.tsx:43-79.
-- apps/web/app/api/webhook/route.ts:137-142.
-
-Issue:
-Plan price IDs are spread between public and private env vars with different names. This causes misconfiguration risk and pushes business configuration into client bundles.
-
-Recommendation:
-Keep Stripe secret key, webhook secret, and price IDs server-only. Expose only display labels/prices in code or through an authenticated config endpoint if needed. Align naming to STRIPE_PRICE_BASIC_MONTHLY, etc., or another single convention.
-
-High - No central env validation means missing secrets fail late.
-Files:
-- Most Supabase, Stripe, and Anthropic usages rely on process.env.X!.
-
-Recommendation:
-Add env.ts using zod and fail fast with a readable message. Include checks for production-only requirements such as STRIPE_WEBHOOK_SECRET, ANTHROPIC_API_KEY, SUPABASE_SERVICE_ROLE_KEY, and SITE_URL.
-
-15. Technical debt and deprecated patterns
-
-High - Next.js 16 deprecates the middleware file convention.
-Files:
-- apps/web-build-output.txt reports: "The middleware file convention is deprecated. Please use proxy instead."
-- apps/web/middleware.ts.
-
-Issue:
-The app is already on Next 16.2.0, so this warning should be treated as upcoming migration work.
-
-Recommendation:
-Follow the Next migration to proxy.ts/proxy convention and keep the Supabase session refresh logic in one helper.
-
-Medium - @supabase/auth-helpers-nextjs appears unnecessary alongside @supabase/ssr.
-Files:
-- apps/web/package.json dependencies include both.
-
-Issue:
-Keeping old and new auth packages increases bundle/install surface and developer confusion.
-
-Recommendation:
-Remove @supabase/auth-helpers-nextjs if no imports remain. Standardize docs and helpers on @supabase/ssr.
-
-Medium - Tests are effectively absent.
-Files:
-- package scripts include lint/check-types/build, but no test script.
-- Jest dependencies are installed in apps/web/package.json, but no visible tests/config were found.
-
-Issue:
-Billing, entitlement, cook ownership, plan generation, and insight calculations are high-value logic without automated coverage.
-
-Recommendation:
-Add focused tests first: billing webhook event handling, getTier/isPremium, cook ownership checks, API validation schemas, and insight generators. Use integration tests against a local Supabase test database for RLS-critical flows.
-
-Recommended remediation order
-1. Fix the failing TypeScript build in apps/web/app/account/actions.ts and enforce check-types in CI.
-2. Consolidate Stripe into one implementation and one entitlement table/view. Remove duplicate routes.
-3. Add Supabase migrations, generated Database types, and an RLS audit.
-4. Move cook writes/event inserts behind server routes/actions with explicit ownership checks.
-5. Add zod validation for all API route inputs and central env validation.
-6. Clean repo structure and corrupted encoding.
-7. Refactor the Preacher route and large cook pages into testable service/components.
-8. Address mobile safe-area/Capacitor production settings.
-9. Fix SEO metadataBase, sitemap base URL, and page-level metadata gaps.
-10. Add tests around billing, authz, usage limits, and cook insights.
-
-Verification performed
-- Inspected repository structure with rg --files.
-- Reviewed package/config files, Supabase helpers, middleware, auth, account actions, API routes, billing/webhook logic, cook pages, metadata, sitemap/robots, and Capacitor config.
-- Attempted npm run check-types through PowerShell; npm.ps1 is blocked by execution policy.
-- Attempted npm.cmd run check-types; it exited non-zero without useful Turbo logs in this shell.
-- Reviewed existing apps/web-build-output.txt, which shows the web build failing TypeScript at apps/web/app/account/actions.ts:67.
+Fix the ownership checks, clean up entitlement consistency, then improve the post-cook upgrade moment. That gives both safety and a better reason for users to pay.

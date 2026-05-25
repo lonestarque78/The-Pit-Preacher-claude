@@ -1,16 +1,11 @@
-import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "../supabase-server";
+import { isPremium as checkIsPremium } from "../premium";
 
-export async function isPremium(userId: string) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const { data } = await supabase
-    .from("subscriptions")
-    .select("status")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  return data?.status === "active" || data?.status === "trialing";
+/**
+ * Server-side helper to check if user is premium
+ * @deprecated Use isPremium from @/lib/premium with explicit supabase client instead
+ */
+export async function isPremium(userId: string): Promise<boolean> {
+  const supabase = await createServerClient();
+  return checkIsPremium(userId, supabase);
 }

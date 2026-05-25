@@ -24,9 +24,26 @@ export async function getTier(userId: string | undefined, supabase: SupabaseClie
   return data.tier || "free";
 }
 
+/**
+ * Check if user is premium (active/trialing subscription with tier >= basic)
+ * Unified implementation that checks BOTH subscription status AND tier
+ */
 export async function isPremium(userId: string | undefined, supabase: SupabaseClient): Promise<boolean> {
-  const tier = await getTier(userId, supabase);
-  return (TIER_RANK[tier] ?? 0) >= (TIER_RANK["basic"] ?? 1);
+  if (!userId) return false;
+
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("status, tier")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error || !data) return false;
+
+  // Must be active or trialing AND tier must be basic or higher
+  const isActiveSubscription = data.status === "active" || data.status === "trialing";
+  const isPaidTier = (TIER_RANK[data.tier] ?? 0) >= (TIER_RANK["basic"] ?? 1);
+
+  return isActiveSubscription && isPaidTier;
 }
 
 export function tierMeetsRequirement(userTier: string, requiredTier: string): boolean {

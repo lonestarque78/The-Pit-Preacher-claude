@@ -360,98 +360,35 @@ export default function Home() {
     if (!user) { setAuthError(true); return; }
     setSaving(true);
 
-    // ── FREE TIER COOK LIMIT ────────────────────────────────────────────────────
-    const { data: subData } = await supabase.from("subscriptions").select("tier").eq("user_id", user.id).maybeSingle();
-    const userTier = subData?.tier ?? "free";
+    const res = await fetch("/api/cooks/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        selectedItems,
+        cookingStyle: styleSubOption || cookingStyle,
+        eatingTime,
+        flavorSmoke,
+        flavorBark,
+        flavorTenderness,
+        smokers,
+      }),
+    });
 
-    if (userTier === "free") {
-      const now = new Date();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
-      const { count: monthlyCount } = await supabase
-        .from("cooks")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .gte("created_at", monthStart)
-        .lt("created_at", monthEnd);
-      if ((monthlyCount ?? 0) >= 2) {
-        setAtCookLimit(true);
-        setSaving(false);
-        return;
-      }
-    }
+    const data = await res.json();
 
-    // Insert meal_prep_session
-    const { data: sessionData, error: sessionError } = await supabase
-      .from("meal_prep_sessions")
-      .insert({
-        user_id: user.id,
-        selected_items: selectedItems,
-        cooking_style: styleSubOption || cookingStyle,
-        eating_time: eatingTime,
-        flavor_smoke: flavorSmoke,
-        flavor_bark: flavorBark,
-        flavor_tenderness: flavorTenderness,
-        notes: "",
-        tools: smokers,
-      })
-      .select()
-      .single();
-
-    if (sessionError || !sessionData) {
-      console.error(sessionError);
-      setBuildError("Failed to save prep session: " + (sessionError?.message ?? "unknown error"));
+    if (res.status === 403 && data.error === "COOK_LIMIT_REACHED") {
+      setAtCookLimit(true);
       setSaving(false);
       return;
     }
 
-    // Insert cook
-    const label = selectedItems.map(i => i.name).join(" + ") || "Cook";
-    const smokerType = smokers.map(s => s.name).filter(Boolean).join(", ");
-    const woodType = smokers.map(s => s.wood).filter(Boolean).join(", ");
-
-    const { data: cook, error: cookError } = await supabase
-      .from("cooks")
-      .insert({
-        user_id: user.id,
-        prep_session_id: sessionData.id,
-        label,
-        cooking_style: styleSubOption || cookingStyle,
-        smoker_type: smokerType,
-        wood_type: woodType,
-        eat_time: eatingTime,
-        status: "in_progress",
-        plan: { tools: smokers, items: selectedItems },
-      })
-      .select()
-      .single();
-
-    if (cookError || !cook?.id) {
-      console.error(cookError);
-      setBuildError("Failed to create cook: " + (cookError?.message ?? "ID not returned"));
+    if (!res.ok || !data.cookId) {
+      setBuildError("Failed to create cook. Please try again.");
       setSaving(false);
       return;
     }
 
-    // Insert cook_items
-    if (selectedItems.length > 0) {
-      const { error: itemsError } = await supabase
-        .from("cook_items")
-        .insert(selectedItems.map(item => ({
-          cook_id: cook.id,
-          name: item.name,
-          notes: item.notes || "",
-        })));
-
-      if (itemsError) {
-        console.error(itemsError);
-        setBuildError("Cook created but failed to save items: " + itemsError.message);
-        setSaving(false);
-        return;
-      }
-    }
-
-    window.location.href = `/cook/${cook.id}`;
+    window.location.href = `/cook/${data.cookId}`;
   };
 
   // ── Tile renderer ────────────────────────────────────────────────────────────

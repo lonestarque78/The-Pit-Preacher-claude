@@ -177,9 +177,20 @@ export default function CookJournalPage({
       return;
     }
 
-    const [{ data: cookData }, { data: eventsData }, { data: logData }] =
+    const { data: cookData } = await supabase
+      .from("cooks")
+      .select("*")
+      .eq("id", cookId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (!cookData) {
+      window.location.href = "/dashboard";
+      return;
+    }
+
+    const [{ data: eventsData }, { data: logData }] =
       await Promise.all([
-        supabase.from("cooks").select("*").eq("id", cookId).single(),
         supabase
           .from("cook_events")
           .select("*")

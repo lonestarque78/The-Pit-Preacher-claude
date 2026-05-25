@@ -9,6 +9,29 @@ const CheckoutRequestSchema = z.object({
   priceId: z.string().min(1, "priceId is required"),
 });
 
+// Build whitelist of allowed Stripe price IDs from environment variables
+function getAllowedPriceIds(): Set<string> {
+  const allowedPriceIds = new Set<string>();
+
+  const priceIdEnvs = [
+    process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID,
+    process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID,
+    process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID,
+    process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID,
+    process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID,
+    process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID,
+    process.env.NEXT_PUBLIC_STRIPE_PHOTO_PACK_PRICE_ID,
+  ];
+
+  for (const priceId of priceIdEnvs) {
+    if (priceId) {
+      allowedPriceIds.add(priceId);
+    }
+  }
+
+  return allowedPriceIds;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const bodyParseResult = CheckoutRequestSchema.safeParse(await req.json());
@@ -20,6 +43,15 @@ export async function POST(req: NextRequest) {
     }
 
     const { priceId } = bodyParseResult.data;
+
+    // Validate priceId against whitelist
+    const allowedPriceIds = getAllowedPriceIds();
+    if (!allowedPriceIds.has(priceId)) {
+      return NextResponse.json(
+        { error: "Invalid price ID" },
+        { status: 400 }
+      );
+    }
 
     const authHeader = req.headers.get("Authorization");
     const accessToken = authHeader?.replace("Bearer ", "");
