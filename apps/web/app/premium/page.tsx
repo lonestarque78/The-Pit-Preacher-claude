@@ -119,34 +119,6 @@ export default function PremiumPage() {
     }
   }
 
-  function getButton(tierKey: string) {
-    const tierLevel = TIER_ORDER.indexOf(currentTier);
-    const targetLevel = TIER_ORDER.indexOf(tierKey);
-
-    if (tierKey === currentTier) {
-      return (
-        <span style={{
-          display: "inline-block",
-          padding: "var(--space-2) var(--space-4)",
-          background: "var(--color-bg-alt)",
-          borderRadius: "var(--radius-md)",
-          fontFamily: "var(--font-ui)",
-          color: "var(--color-text-muted)",
-          border: "1px solid var(--color-border)",
-          fontSize: "0.85rem",
-        }}>
-          ✓ Current Plan
-        </span>
-      );
-    }
-
-    if (targetLevel > tierLevel) {
-      return <Button onClick={() => startCheckout(tierKey)}>Upgrade</Button>;
-    }
-
-    return <Button onClick={openPortal}>Downgrade</Button>;
-  }
-
   if (loading) {
     return (
       <div style={{ padding: "20px" }}>
@@ -156,16 +128,145 @@ export default function PremiumPage() {
   }
 
   return (
-    <div style={{
-      height: "100vh",
-      overflow: "hidden",
-      display: "flex",
-      flexDirection: "column",
-      boxSizing: "border-box",
-      padding: "12px 24px",
-      maxWidth: "1100px",
-      margin: "0 auto",
-    }}>
+    <div className="pricing-outer">
+      <style>{`
+        .pricing-outer {
+          box-sizing: border-box;
+          padding: 12px 24px 32px;
+          max-width: 1100px;
+          margin: 0 auto;
+        }
+
+        .pricing-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          align-items: stretch;
+        }
+
+        .pricing-card {
+          background: var(--color-bg-alt);
+          border-radius: 8px;
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
+
+        .pricing-card-commandment {
+          font-family: var(--font-ui);
+          color: #C9973A;
+          font-size: 0.65rem;
+          text-transform: uppercase;
+          letter-spacing: 0.15em;
+          margin: 0 0 8px;
+        }
+
+        .pricing-card-name {
+          font-family: var(--font-heading);
+          font-size: 1.4rem;
+          color: #F5E6C8;
+          margin: 0 0 6px;
+        }
+
+        .pricing-card-tagline {
+          font-family: var(--font-body);
+          font-style: italic;
+          font-size: 0.875rem;
+          color: #D9C9A8;
+          margin: 0 0 12px;
+          line-height: 1.5;
+        }
+
+        .pricing-card-price {
+          font-family: var(--font-heading);
+          font-size: 1.6rem;
+          color: #F5E6C8;
+          margin: 0 0 16px;
+          line-height: 1;
+        }
+
+        .pricing-card-price-period {
+          font-size: 0.85rem;
+          color: var(--color-text-muted);
+          font-family: var(--font-body);
+        }
+
+        .pricing-card-divider {
+          border: none;
+          border-top: 1px solid rgba(201,151,58,0.15);
+          margin: 0 0 14px;
+        }
+
+        .pricing-card-features {
+          list-style: none;
+          margin: 0 0 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          flex: 1;
+        }
+
+        .pricing-card-feature {
+          font-family: var(--font-body);
+          font-size: 0.85rem;
+          line-height: 1.45;
+          color: var(--color-text-muted);
+          display: flex;
+          gap: 8px;
+          align-items: flex-start;
+        }
+
+        .pricing-card-feature-dot {
+          color: #C9973A;
+          flex-shrink: 0;
+          margin-top: 1px;
+        }
+
+        .pricing-card-cta {
+          margin-top: 20px;
+          padding-top: 16px;
+          border-top: 1px solid rgba(201,151,58,0.15);
+        }
+
+        .pricing-card-cta button,
+        .pricing-card-cta span {
+          width: 100%;
+          display: block;
+          text-align: center;
+          box-sizing: border-box;
+        }
+
+        .pricing-current-badge {
+          display: block;
+          width: 100%;
+          box-sizing: border-box;
+          padding: 12px 20px;
+          background: var(--color-bg-alt);
+          border-radius: var(--radius-md);
+          font-family: var(--font-ui);
+          color: var(--color-text-muted);
+          border: 1px solid rgba(201,151,58,0.25);
+          font-size: 0.9rem;
+          text-align: center;
+        }
+
+        @media (max-width: 768px) {
+          .pricing-outer {
+            padding: 12px 16px 40px;
+          }
+
+          .pricing-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+
+          .pricing-card {
+            padding: 20px;
+          }
+        }
+      `}</style>
 
       {/* Back nav */}
       <div style={{ marginBottom: "8px" }}>
@@ -175,11 +276,11 @@ export default function PremiumPage() {
       </div>
 
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "12px" }}>
+      <div style={{ textAlign: "center", marginBottom: "20px" }}>
         <p style={{ fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.2em", margin: "0 0 4px" }}>
           The Congregation
         </p>
-        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(1.8rem, 4vw, 2.5rem)", color: "#F5E6C8", margin: "0 0 4px" }}>
+        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(1.8rem, 4vw, 2.5rem)", color: "#F5E6C8", margin: "0 0 6px" }}>
           Plans & Pricing
         </h1>
         <p style={{ fontFamily: "var(--font-body)", color: "var(--color-text-muted)", fontSize: "0.9rem", maxWidth: "480px", margin: "0 auto", lineHeight: 1.6 }}>
@@ -188,97 +289,41 @@ export default function PremiumPage() {
       </div>
 
       {/* Tier cards */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gap: "var(--space-3)",
-        alignItems: "flex-start",
-        flex: 1,
-        minHeight: 0,
-      }}>
+      <div className="pricing-grid">
         {TIERS.map((tier) => (
           <div
             key={tier.key}
+            className="pricing-card"
             style={{
-              background: "var(--color-bg-alt)",
-              padding: "16px",
-              borderRadius: "8px",
               border: currentTier === tier.key
                 ? "2px solid #C9973A"
                 : "1px solid rgba(201,151,58,0.15)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-              overflow: "hidden",
             }}
           >
-            {/* Commandment label */}
-            <p style={{
-              fontFamily: "var(--font-ui)",
-              color: "#C9973A",
-              fontSize: "0.65rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.15em",
-              margin: 0,
-            }}>
-              {tier.commandment}
-            </p>
-
-            {/* Tier name */}
-            <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.3rem", color: "#F5E6C8", margin: 0 }}>
-              {tier.name}
-            </h2>
-
-            {/* Tagline */}
-            <p style={{
-              fontFamily: "var(--font-body)",
-              fontStyle: "italic",
-              fontSize: "0.9rem",
-              color: "#D9C9A8",
-              margin: 0,
-              lineHeight: 1.5,
-            }}>
-              {tier.tagline}
-            </p>
-
-            {/* Price */}
-            <div style={{ fontFamily: "var(--font-heading)", fontSize: "1.4rem", color: "#F5E6C8", margin: 0 }}>
+            <p className="pricing-card-commandment">{tier.commandment}</p>
+            <h2 className="pricing-card-name">{tier.name}</h2>
+            <p className="pricing-card-tagline">{tier.tagline}</p>
+            <div className="pricing-card-price">
               {tier.price}
-              <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", fontFamily: "var(--font-body)" }}>{tier.period}</span>
+              <span className="pricing-card-price-period">{tier.period}</span>
             </div>
-
-            {/* Features */}
-            <ul style={{ margin: "4px 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "4px" }}>
-              {tier.features.slice(0, 4).map((feature) => (
-                <li key={feature} style={{
-                  fontFamily: "var(--font-body)",
-                  fontSize: "0.75rem",
-                  lineHeight: 1.4,
-                  color: "var(--color-text-muted)",
-                  display: "flex",
-                  gap: "8px",
-                  alignItems: "flex-start",
-                }}>
-                  <span style={{ color: "#C9973A", flexShrink: 0 }}>·</span>
+            <hr className="pricing-card-divider" />
+            <ul className="pricing-card-features">
+              {tier.features.map((feature) => (
+                <li key={feature} className="pricing-card-feature">
+                  <span className="pricing-card-feature-dot">·</span>
                   {feature}
                 </li>
               ))}
-              {tier.features.length > 4 && (
-                <li style={{
-                  fontFamily: "var(--font-body)",
-                  fontSize: "0.75rem",
-                  color: "var(--color-text-muted)",
-                  opacity: 0.5,
-                  paddingLeft: "16px",
-                }}>
-                  ...and more
-                </li>
-              )}
             </ul>
-
-            {/* CTA */}
-            <div style={{ marginTop: "12px", paddingTop: "8px" }}>
-              {getButton(tier.key)}
+            <div className="pricing-card-cta">
+              {currentTier === tier.key ? (
+                <span className="pricing-current-badge">✓ Current Plan</span>
+              ) : TIER_ORDER.indexOf(tier.key) > TIER_ORDER.indexOf(currentTier) ? (
+                <Button onClick={() => startCheckout(tier.key)} style={{ width: "100%" }}>Upgrade</Button>
+              ) : (
+                <Button onClick={openPortal} style={{ width: "100%" }}>Downgrade</Button>
+              )}
             </div>
           </div>
         ))}
@@ -290,7 +335,7 @@ export default function PremiumPage() {
         fontSize: "0.8rem",
         color: "var(--color-text-muted)",
         textAlign: "center",
-        margin: "8px 0 0",
+        margin: "20px 0 0",
         fontStyle: "italic",
       }}>
         All plans include a free tier to get started. Cancel anytime.
