@@ -8,6 +8,7 @@ const footerLinks = [
   { label: "Features", href: "/features" },
   { label: "About", href: "/about" },
   { label: "Plans & Pricing", href: "/premium" },
+  { label: "Privacy Policy", href: "/privacy" },
 ];
 
 export default function Footer() {
