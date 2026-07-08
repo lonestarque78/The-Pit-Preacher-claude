@@ -109,15 +109,8 @@ export function Sidebar({ isOpen, onClose, user, onLogout }: SidebarProps) {
 
               <div className="sidebar-section">
                 <h3 className="sidebar-section-title">Tools</h3>
-                <Link href="/fix" className={linkClass("/fix")}>Pit Rescue</Link>
-                <Link href="/lab" className={linkClass("/lab")}>Wood Lab</Link>
-              </div>
-
-              <div className="sidebar-section">
-                <h3 className="sidebar-section-title">Pitmaster</h3>
-                <Link href="/pitmaster/trends" className={linkClass("/pitmaster/trends")}>Trend Analysis</Link>
-                <Link href="/pitmaster/meat/brisket" className={linkClass("/pitmaster/meat/brisket")}>Meat Profiles</Link>
-                <Link href="/pitmaster/pit/offset" className={linkClass("/pitmaster/pit/offset")}>Pit Profiles</Link>
+                <Link href="/dashboard?fix=1" className={linkClass("/fix")}>Pit Rescue</Link>
+                <Link href="/dashboard?lab=1" className={linkClass("/lab")}>Wood Lab</Link>
               </div>
 
               <div className="sidebar-section">

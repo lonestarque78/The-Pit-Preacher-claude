@@ -38,47 +38,6 @@ export default function BillingPage() {
   const [customer, setCustomer] = useState<CustomerRow | null>(null);
   const [user, setUser] = useState<UserRow | null>(null);
 
-  const priceMap: Record<string, string> = {
-    [process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID!]: "Basic (Monthly)",
-    [process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID!]: "Basic (Annual)",
-    [process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID!]: "Backyard (Monthly)",
-    [process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID!]: "Backyard (Annual)",
-    [process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID!]: "Pitmaster (Monthly)",
-    [process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID!]: "Pitmaster (Annual)",
-  };
-
-  const priceToTier: Record<string, string> = {
-    [process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID!]: "basic",
-    [process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID!]: "basic",
-    [process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID!]: "backyard",
-    [process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID!]: "backyard",
-    [process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID!]: "pitmaster",
-    [process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID!]: "pitmaster",
-  };
-
-  const TIER_ORDER = ["free", "basic", "backyard", "pitmaster"];
-
-  const TIERS = [
-    {
-      key: "basic",
-      label: "Basic",
-      monthly: { label: "Basic — $3.99/mo", priceId: process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID! },
-      annual: { label: "Basic — $29.99/yr (save ~37%)", priceId: process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID! },
-    },
-    {
-      key: "backyard",
-      label: "Backyard",
-      monthly: { label: "Backyard — $7.99/mo", priceId: process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID! },
-      annual: { label: "Backyard — $79.99/yr (save ~16%)", priceId: process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID! },
-    },
-    {
-      key: "pitmaster",
-      label: "Pitmaster",
-      monthly: { label: "Pitmaster — $11.99/mo", priceId: process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID! },
-      annual: { label: "Pitmaster — $119.99/yr (save ~17%)", priceId: process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID! },
-    },
-  ];
-
   // -----------------------------
   // Load Billing Data
   // -----------------------------
@@ -118,24 +77,6 @@ export default function BillingPage() {
   }, []);
 
   // -----------------------------
-  // Checkout
-  // -----------------------------
-  async function startCheckout(priceId: string) {
-    const token = (await supabase.auth.getSession()).data.session?.access_token;
-
-    const res = await fetch("/api/billing/create-checkout-session", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ priceId }),
-    });
-
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-  }
-
-  // -----------------------------
   // Portal
   // -----------------------------
   async function openPortal() {
@@ -162,11 +103,6 @@ export default function BillingPage() {
   // -----------------------------
   const isSubscribed =
     subscription?.status && subscription.status !== "inactive";
-
-  const currentTierKey =
-    isSubscribed && subscription
-      ? (subscription.tier ?? "free")
-      : "free";
 
   // -----------------------------
   // Render

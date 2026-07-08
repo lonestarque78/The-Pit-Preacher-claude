@@ -1417,7 +1417,7 @@ if (!user) {
               </p>
               <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-2)" }}>
                 <Link href="/premium" style={{ display: "inline-block", background: "#C9973A", color: "var(--color-bg)", fontFamily: "var(--font-ui)", fontSize: "0.9rem", padding: "10px 20px", borderRadius: "var(--radius-md)", textDecoration: "none" }}>
-                  Upgrade — $3.99/mo →
+                  Upgrade to Pitmaster — $7.99/mo →
                 </Link>
                 <Link href="/premium" style={{ display: "inline-block", background: "transparent", border: "1px solid rgba(201,151,58,0.4)", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.9rem", padding: "10px 20px", borderRadius: "var(--radius-md)", textDecoration: "none" }}>
                   See Plans

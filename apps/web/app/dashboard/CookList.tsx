@@ -204,7 +204,7 @@ export default function CookList({ cooks, logsMap }: Props) {
                           ⚠ Inactive 36+ hrs — complete or it will be archived
                         </p>
                       )}
-                      <Link href="/fix" style={{ fontFamily: "var(--font-ui)", fontSize: "0.85rem", color: "#C9973A", textDecoration: "none", display: "inline-block", marginTop: "4px", paddingLeft: "8px", borderLeft: "3px solid #C0392B", lineHeight: 1.4 }}>
+                      <Link href="/dashboard?fix=1" style={{ fontFamily: "var(--font-ui)", fontSize: "0.85rem", color: "#C9973A", textDecoration: "none", display: "inline-block", marginTop: "4px", paddingLeft: "8px", borderLeft: "3px solid #C0392B", lineHeight: 1.4 }}>
                         Pit Rescue →
                       </Link>
                     </>
@@ -230,11 +230,11 @@ export default function CookList({ cooks, logsMap }: Props) {
                 {/* Right buttons */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", flex: "0 0 auto" }}>
                   {isActive && (
-                    <Link href={`/cook/${cook.id}/live`} style={{ display: "block", textAlign: "center", background: "#C9973A", color: "var(--color-bg)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "6px 16px", borderRadius: "var(--radius-md)", textDecoration: "none", whiteSpace: "nowrap" }}>
+                    <Link href={`/cook/${cook.id}?tab=live`} style={{ display: "block", textAlign: "center", background: "#C9973A", color: "var(--color-bg)", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "6px 16px", borderRadius: "var(--radius-md)", textDecoration: "none", whiteSpace: "nowrap" }}>
                       Live Mode →
                     </Link>
                   )}
-                  <Link href={isActive ? `/cook/${cook.id}` : `/cook/${cook.id}/summary`} style={{ display: "block", textAlign: "center", background: "transparent", border: "1px solid rgba(201,151,58,0.5)", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "6px 16px", borderRadius: "var(--radius-md)", textDecoration: "none", whiteSpace: "nowrap" }}>
+                  <Link href={isActive ? `/cook/${cook.id}` : `/cook/${cook.id}?tab=summary`} style={{ display: "block", textAlign: "center", background: "transparent", border: "1px solid rgba(201,151,58,0.5)", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.8rem", padding: "6px 16px", borderRadius: "var(--radius-md)", textDecoration: "none", whiteSpace: "nowrap" }}>
                     View Cook →
                   </Link>
                 </div>
@@ -246,7 +246,7 @@ export default function CookList({ cooks, logsMap }: Props) {
 
       {nonAbandoned.length > 0 && (
         <div style={{ textAlign: "right", marginTop: "var(--space-3)" }}>
-          <Link href="/logs" style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "#C9973A", textDecoration: "none" }}>
+          <Link href="/dashboard?logs=1" style={{ fontFamily: "var(--font-ui)", fontSize: "0.8rem", color: "#C9973A", textDecoration: "none" }}>
             View All History →
           </Link>
         </div>

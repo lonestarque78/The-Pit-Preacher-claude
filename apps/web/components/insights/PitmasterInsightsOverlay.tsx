@@ -1,7 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import MeatProfilePanel from "./MeatProfilePanel";
+import PitProfilePanel from "./PitProfilePanel";
+import TrendsPanel from "./TrendsPanel";
+
+type DeepView = "main" | "trends" | "meat" | "pit";
 
 interface InsightsData {
   patternInsights: string[];
@@ -22,6 +27,7 @@ interface Props {
   isPitmaster: boolean;
   pitType?: string;
   meatLabel?: string;
+  initialView?: DeepView;
 }
 
 const PIT_REASONING: Record<string, string[]> = {
@@ -199,14 +205,22 @@ function BulletList({ items, color = "#C9973A", bullet = "—" }: { items: strin
   );
 }
 
-export default function PitmasterInsightsOverlay({ cookId, isPitmaster, pitType = "", meatLabel = "" }: Props) {
-  const [open, setOpen] = useState(false);
+export default function PitmasterInsightsOverlay({ cookId, isPitmaster, pitType = "", meatLabel = "", initialView = "main" }: Props) {
+  const [open, setOpen] = useState(initialView !== "main");
+  const [view, setView] = useState<DeepView>(initialView);
   const [insights, setInsights] = useState<InsightsData | null>(null);
   const [trends, setTrends] = useState<TrendsData | null>(null);
   const [loading, setLoading] = useState(false);
 
   const pitReasoning = getPitReasoning(pitType);
   const meatReasoning = getMeatReasoning(meatLabel);
+
+  useEffect(() => {
+    if (initialView !== "main") {
+      handleOpen();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleOpen = async () => {
     setOpen(true);
@@ -330,8 +344,16 @@ export default function PitmasterInsightsOverlay({ cookId, isPitmaster, pitType 
                   color: "#F5E6C8",
                   margin: 0,
                 }}>
-                  Deep Insights
+                  {view === "trends" ? "Trend Analysis" : view === "meat" ? "Meat Profile" : view === "pit" ? "Pit Profile" : "Deep Insights"}
                 </h2>
+                {view !== "main" && (
+                  <button
+                    onClick={() => setView("main")}
+                    style={{ background: "none", border: "none", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.75rem", cursor: "pointer", padding: "6px 0 0", }}
+                  >
+                    ← Back to Deep Insights
+                  </button>
+                )}
               </div>
               <button
                 onClick={() => setOpen(false)}
@@ -404,8 +426,25 @@ export default function PitmasterInsightsOverlay({ cookId, isPitmaster, pitType 
               </div>
             )}
 
+            {/* Deep-dive panels */}
+            {isPitmaster && !loading && view === "trends" && (
+              <div style={{ flex: 1, overflowY: "auto", padding: "var(--space-4)" }}>
+                <TrendsPanel />
+              </div>
+            )}
+            {isPitmaster && !loading && view === "meat" && (
+              <div style={{ flex: 1, overflowY: "auto", padding: "var(--space-4)" }}>
+                <MeatProfilePanel initialMeatType={meatLabel || "brisket"} />
+              </div>
+            )}
+            {isPitmaster && !loading && view === "pit" && (
+              <div style={{ flex: 1, overflowY: "auto", padding: "var(--space-4)" }}>
+                <PitProfilePanel initialPitType={pitType || "offset"} />
+              </div>
+            )}
+
             {/* Content */}
-            {isPitmaster && !loading && (
+            {isPitmaster && !loading && view === "main" && (
               <div style={{ flex: 1, overflowY: "auto" }}>
 
                 {/* Section 1 — Why These Insights */}
@@ -421,7 +460,15 @@ export default function PitmasterInsightsOverlay({ cookId, isPitmaster, pitType 
                 {/* Section 2 — Multi-Cook Patterns */}
                 {trends && (
                   <div style={sectionStyle}>
-                    <div style={labelStyle}>Multi-Cook Patterns</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={labelStyle}>Multi-Cook Patterns</div>
+                      <button
+                        onClick={() => setView("trends")}
+                        style={{ background: "none", border: "none", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.7rem", cursor: "pointer", padding: 0 }}
+                      >
+                        Full Trend Analysis →
+                      </button>
+                    </div>
                     {trends.consistency.length > 0 && (
                       <div style={{ marginBottom: "var(--space-3)" }}>
                         <p style={{ ...mutedStyle, fontFamily: "var(--font-ui)", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "#7a6a55", marginBottom: "6px" }}>
@@ -454,7 +501,15 @@ export default function PitmasterInsightsOverlay({ cookId, isPitmaster, pitType 
 
                 {/* Section 3 — Pit-Specific Reasoning */}
                 <div style={sectionStyle}>
-                  <div style={labelStyle}>Pit-Specific Reasoning</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={labelStyle}>Pit-Specific Reasoning</div>
+                    <button
+                      onClick={() => setView("pit")}
+                      style={{ background: "none", border: "none", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.7rem", cursor: "pointer", padding: 0 }}
+                    >
+                      Full Pit Profile →
+                    </button>
+                  </div>
                   {pitType ? (
                     <div>
                       <p style={{ ...mutedStyle, fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "var(--space-2)" }}>
@@ -470,7 +525,15 @@ export default function PitmasterInsightsOverlay({ cookId, isPitmaster, pitType 
                 {/* Section 4 — Meat-Specific Reasoning */}
                 {meatReasoning.length > 0 && (
                   <div style={sectionStyle}>
-                    <div style={labelStyle}>Meat-Specific Reasoning</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={labelStyle}>Meat-Specific Reasoning</div>
+                      <button
+                        onClick={() => setView("meat")}
+                        style={{ background: "none", border: "none", color: "#C9973A", fontFamily: "var(--font-ui)", fontSize: "0.7rem", cursor: "pointer", padding: 0 }}
+                      >
+                        Full Meat Profile →
+                      </button>
+                    </div>
                     <p style={{ ...mutedStyle, fontFamily: "var(--font-ui)", fontSize: "0.7rem", color: "#C9973A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "var(--space-2)" }}>
                       {meatLabel}
                     </p>

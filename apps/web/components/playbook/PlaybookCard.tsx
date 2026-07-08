@@ -9,6 +9,7 @@ interface PlaybookCardProps {
   locked: boolean;
   requiredTier?: string; // e.g. "Basic", "Backyard"
   pitmaster?: boolean; // shows Pitmaster badge
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export default function PlaybookCard({
@@ -18,6 +19,7 @@ export default function PlaybookCard({
   locked,
   requiredTier,
   pitmaster,
+  onClick,
 }: PlaybookCardProps) {
   if (locked) {
     return (
@@ -48,7 +50,7 @@ export default function PlaybookCard({
   }
 
   return (
-    <Link href={href} className="group block">
+    <Link href={href} className="group block" onClick={onClick}>
       <div className="relative border border-[#3a2e1e] rounded-sm bg-[#161310] p-6 transition-all duration-200 hover:border-[#c9a96e] hover:bg-[#1a1610]">
         {/* Pitmaster badge */}
         {pitmaster && (

@@ -3,79 +3,21 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
-import { getTier } from "@/lib/premium";
+import { isPitmaster } from "@/lib/premium";
 import Button from "@/components/Button";
 import Link from "next/link";
+import { PITMASTER_TIER, PITMASTER_MONTHLY_PRICE_ID, PITMASTER_ANNUAL_PRICE_ID } from "@/lib/pricing";
 
-const TIERS = [
-  {
-    key: "basic",
-    commandment: "The First Commandment",
-    name: "Basic",
-    tagline: "You shall not cook blind.",
-    price: "$3.99",
-    annualMonthlyPrice: "$3.19",
-    period: "/mo",
-    description: "The Preacher speaks. Ask anything about your cook, your pit, or your meat. Unlimited questions. No more guessing.",
-    features: [
-      "Ask the Preacher — unlimited questions",
-      "Smart Cook Planner",
-      "Fire & Time Blueprint",
-      "Pitmaster's Playbook — foundational modules",
-      "Smoker Profile Engine",
-    ],
-  },
-  {
-    key: "backyard",
-    commandment: "The Second Commandment",
-    name: "Backyard",
-    tagline: "You shall tend the pit with purpose.",
-    price: "$7.99",
-    annualMonthlyPrice: "$6.39",
-    period: "/mo",
-    description: "Everything in Basic, plus the full Pitmaster's Playbook, Pit Rescue Mode, and your Cook Log. Your setup, your wood, your history — all in one place.",
-    features: [
-      "Everything in Basic",
-      "Full Pitmaster's Playbook",
-      "Pit Rescue Mode",
-      "Cook Log & Notes",
-      "Flavor Autograph Builder",
-      "Wood Flavor Lab",
-    ],
-  },
-  {
-    key: "pitmaster",
-    commandment: "The Third Commandment",
-    name: "Pitmaster",
-    tagline: "You shall know yourself as a cook.",
-    price: "$11.99",
-    annualMonthlyPrice: "$9.59",
-    period: "/mo",
-    description: "The full congregation. Trend Analysis, Meat Profiles, Pit Profiles, Cook Confidence Scores, Fire Control Scores, Deep Insights, and a personalized strategy before every cook.",
-    features: [
-      "Everything in Backyard",
-      "Trend Analysis",
-      "Meat & Pit Profiles",
-      "Cook Confidence Score",
-      "Fire Control Score",
-      "Next Cook Strategy Card",
-      "Deep Insights Overlay",
-    ],
-  },
-];
+const TIERS = [PITMASTER_TIER];
 
-const TIER_ORDER = ["free", "basic", "backyard", "pitmaster"];
+const TIER_ORDER = ["free", "pitmaster"];
 
 const MONTHLY_PRICE_IDS: Record<string, string> = {
-  basic: process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID!,
-  backyard: process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID!,
-  pitmaster: process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID!,
+  pitmaster: PITMASTER_MONTHLY_PRICE_ID,
 };
 
 const ANNUAL_PRICE_IDS: Record<string, string> = {
-  basic: process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID!,
-  backyard: process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID!,
-  pitmaster: process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID!,
+  pitmaster: PITMASTER_ANNUAL_PRICE_ID,
 };
 
 export default function PremiumPage() {
@@ -88,8 +30,8 @@ export default function PremiumPage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data?.user) {
-        getTier(data.user.id, supabase).then((tier) => {
-          setCurrentTier(tier || "free");
+        isPitmaster(data.user.id, supabase).then((result) => {
+          setCurrentTier(result ? "pitmaster" : "free");
         });
 
         // Check if user qualifies for Pitmaster trial
@@ -161,7 +103,8 @@ export default function PremiumPage() {
 
         .pricing-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: minmax(0, 420px);
+          justify-content: center;
           gap: 16px;
           align-items: stretch;
         }

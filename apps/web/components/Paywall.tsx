@@ -3,16 +3,15 @@
 
 import { useEffect, useState, ReactNode } from "react";
 import { createClient } from "@/lib/supabase";
-import { getTier, tierMeetsRequirement } from "@/lib/premium";
+import { isPitmaster } from "@/lib/premium";
 import Link from "next/link";
 
 type PaywallProps = {
-  requiredTier: "basic" | "backyard" | "pitmaster";
   children: ReactNode;
 };
 
-export default function Paywall({ requiredTier, children }: PaywallProps) {
-  const [userTier, setUserTier] = useState<string>("free");
+export default function Paywall({ children }: PaywallProps) {
+  const [unlocked, setUnlocked] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,8 +19,8 @@ export default function Paywall({ requiredTier, children }: PaywallProps) {
 
     supabase.auth.getUser().then(({ data }) => {
       if (data?.user) {
-        getTier(data.user.id, supabase).then((tier) => {
-          setUserTier(tier || "free");
+        isPitmaster(data.user.id, supabase).then((result) => {
+          setUnlocked(result);
           setLoading(false);
         });
       } else {
@@ -34,7 +33,7 @@ export default function Paywall({ requiredTier, children }: PaywallProps) {
     return null;
   }
 
-  if (tierMeetsRequirement(userTier, requiredTier)) {
+  if (unlocked) {
     return <>{children}</>;
   }
 
@@ -62,7 +61,7 @@ export default function Paywall({ requiredTier, children }: PaywallProps) {
           color: "var(--color-text-muted)",
         }}
       >
-        This feature requires a {requiredTier} subscription or higher.
+        This feature requires a Pitmaster subscription.
       </p>
       <Link
         href="/premium"

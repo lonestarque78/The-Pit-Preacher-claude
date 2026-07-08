@@ -14,11 +14,7 @@ function getAllowedPriceIds(): Set<string> {
   const allowedPriceIds = new Set<string>();
 
   const priceIdEnvs = [
-    process.env.NEXT_PUBLIC_STRIPE_BASIC_PRICE_ID,
-    process.env.NEXT_PUBLIC_STRIPE_BACKYARD_PRICE_ID,
     process.env.NEXT_PUBLIC_STRIPE_PITMASTER_PRICE_ID,
-    process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID,
-    process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID,
     process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID,
     process.env.NEXT_PUBLIC_STRIPE_PHOTO_PACK_PRICE_ID,
   ];

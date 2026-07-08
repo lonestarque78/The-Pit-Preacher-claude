@@ -18,9 +18,11 @@ const SubscriptionEventSchema = z.object({
   customer: z.string({ error: "customer is required on subscription event" }),
   status: z.string(),
   items: z.object({
-    data: z.array(z.object({ price: z.object({ id: z.string() }) })),
+    data: z.array(z.object({
+      price: z.object({ id: z.string() }),
+      current_period_end: z.number().optional(),
+    })),
   }),
-  current_period_end: z.number().optional(),
 });
 
 const InvoiceEventSchema = z.object({
@@ -62,7 +64,7 @@ export async function POST(req: NextRequest) {
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const priceId = subscription.items.data[0]?.price.id ?? "";
         const tier = getTierFromPriceId(priceId);
-        const rawPeriodEnd = (subscription as any).current_period_end as number | undefined;
+        const rawPeriodEnd = (subscription.items.data[0] as any)?.current_period_end as number | undefined;
         const periodEnd = rawPeriodEnd ? new Date(rawPeriodEnd * 1000).toISOString() : null;
 
         const { data: existing } = await supabase
@@ -116,10 +118,11 @@ export async function POST(req: NextRequest) {
           console.error(`${event.type} data validation failed:`, subParse.error.flatten().fieldErrors);
           return NextResponse.json({ error: "Invalid event data", details: subParse.error.flatten().fieldErrors }, { status: 400 });
         }
-        const { id: subscriptionId, customer: customerId, status: stripeStatus, items, current_period_end } = subParse.data;
+        const { id: subscriptionId, customer: customerId, status: stripeStatus, items } = subParse.data;
         const priceId = items.data[0]?.price.id ?? "";
         const tier = getTierFromPriceId(priceId);
-        const periodEnd = current_period_end ? new Date(current_period_end * 1000).toISOString() : null;
+        const rawPeriodEnd = items.data[0]?.current_period_end;
+        const periodEnd = rawPeriodEnd ? new Date(rawPeriodEnd * 1000).toISOString() : null;
         const status = ["active", "trialing", "past_due"].includes(stripeStatus)
           ? stripeStatus
           : "inactive";
@@ -220,14 +223,10 @@ export async function POST(req: NextRequest) {
 }
 
 function getTierFromPriceId(priceId: string): string {
-  const priceMap: Record<string, string> = {
-    [process.env.STRIPE_BASIC_PRICE_ID!]: "basic",
-    [process.env.NEXT_PUBLIC_STRIPE_BASIC_ANNUAL_PRICE_ID!]: "basic",
-    [process.env.STRIPE_BACKYARD_PRICE_ID!]: "backyard",
-    [process.env.NEXT_PUBLIC_STRIPE_BACKYARD_ANNUAL_PRICE_ID!]: "backyard",
-    [process.env.STRIPE_PITMASTER_PRICE_ID!]: "pitmaster",
-    [process.env.NEXT_PUBLIC_STRIPE_PITMASTER_ANNUAL_PRICE_ID!]: "pitmaster",
-  };
+  const pitmasterPriceIds = [
+    process.env.STRIPE_PITMASTER_PRICE_ID,
+    process.env.STRIPE_PITMASTER_ANNUAL_PRICE_ID,
+  ];
 
-  return priceMap[priceId] ?? "free";
+  return pitmasterPriceIds.includes(priceId) ? "pitmaster" : "free";
 }
