@@ -58,7 +58,7 @@ export async function autoAdjustPlan(
   let nextTimeRecommendations: string[] = [];
 
   try {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const siteUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
     const res = await fetch(`${siteUrl}/api/insights?cookId=${cookId}`, {
       cache: "no-store",
     });

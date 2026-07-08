@@ -102,9 +102,8 @@ export default function LoginPage() {
     }
     setForgotLoading(true);
     const supabase = createClient();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
     const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
-      redirectTo: `${siteUrl}/auth/reset`,
+      redirectTo: `${window.location.origin}/auth/reset`,
     });
     setForgotLoading(false);
     if (error) { setForgotError(error.message); return; }

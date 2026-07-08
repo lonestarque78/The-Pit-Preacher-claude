@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
 
   let aiReply = "";
   try {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const siteUrl = req.nextUrl.origin;
     const res = await fetch(`${siteUrl}/api/preacher`, {
       method: "POST",
       headers: {
